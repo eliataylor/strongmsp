@@ -19,6 +19,6 @@ bash ../django/deploy/create-service-account.sh .env.gcp
 bash deploy/create-bucket-lb-webapp.sh ../django/.env.gcp
 
 # deploy to cloud ru
-bash deploy/upload-app.sh ../django/.env.gcp
+bash deploy/upload-app.sh ../django/.env.private
 
 ```

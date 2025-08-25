@@ -34,27 +34,27 @@ export REACT_APP_DEFAULT_PERMS=$DEFAULT_PERMS
 echo "DEFAULT_PERMS: $DEFAULT_PERMS vs $REACT_APP_DEFAULT_PERMS"
 
 # Set SSL certificate paths
-DEFAULT_SSL_DIR="/app/ssl"
+DEFAULT_SSL_DIR="/Users/trackauthoritymusic/Developer/strongmindstrongperformance/platform/.ssl"
 mkdir -p "$DEFAULT_SSL_DIR"
-export SSL_CRT_FILE="${SSL_CRT_FILE:-$DEFAULT_SSL_DIR/certificate.crt}"
-export SSL_KEY_FILE="${SSL_KEY_FILE:-$DEFAULT_SSL_DIR/certificate.key}"
+export SSL_CRT_FILE="${SSL_CRT_FILE:-$DEFAULT_SSL_DIR/certificate-localapi.strongmindstrongperformance.com.crt}"
+export SSL_KEY_FILE="${SSL_KEY_FILE:-$DEFAULT_SSL_DIR/certificate-localapi.strongmindstrongperformance.com.key}"
 
 # Ensure SSL certificate exists if HTTPS is enabled
 if [[ "$HTTPS" == "true" ]]; then
     if [[ ! -f "$SSL_CRT_FILE" || ! -f "$SSL_KEY_FILE" ]]; then
         echo "No SSL certificate found. Creating a certificate with mkcert..."
-        
+
         # Try to use mkcert if available
         if command -v mkcert &> /dev/null; then
             echo "Using mkcert to generate certificate..."
             mkcert -install 2>/dev/null || true
-            
+
             # Extract base domain for wildcard certificate
             BASE_DOMAIN=$(echo "$HOST" | sed -E 's|^[^.]+\.(.+)$|\1|')
             if [[ "$BASE_DOMAIN" == "$HOST" ]]; then
                 BASE_DOMAIN="$HOST"
             fi
-            
+
             if [[ "$BASE_DOMAIN" != "$HOST" ]]; then
                 # Create wildcard certificate for subdomains
                 mkcert -key-file "$SSL_KEY_FILE" \

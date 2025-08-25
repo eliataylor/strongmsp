@@ -940,7 +940,7 @@ export interface AgentResponses extends SuperModel {
 	ai_reasoning?: string | null;
 }
 export interface CoachContent extends SuperModel {
-	author?: RelEntity<"Users"> | null;
+	author: RelEntity<"Users">;
 	title: string;
 	body: string;
 	icon?: string | null;

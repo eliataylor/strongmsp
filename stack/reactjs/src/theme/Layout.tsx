@@ -11,7 +11,6 @@ import Snackbar from "@mui/material/Snackbar";
 import OALogo from "../object-actions/docs/OALogo";
 // import TrackingConsent from "../components/TrackingConsent"; // enable this if your publishing features in an area that require a cookie consent
 import {FadedPaper, StyledDrawer} from "./StyledFields";
-import OaMenu from "../object-actions/docs/OaMenu";
 import ContentMenu from "../components/ContentMenu";
 import AuthMenu, { NavBarItem } from "../components/AuthMenu";
 import AllMenus from "../components/AllMenus";
@@ -37,8 +36,6 @@ const Layout: React.FC = () => {
   const handleOAClose = () => {
     setOAAnchorEl(null);
   };
-
-  const openOAMenu = Boolean(oaAnchorEl);
 
   const closeSnackbar = (
     event: React.SyntheticEvent | Event,
@@ -104,36 +101,6 @@ const Layout: React.FC = () => {
       <Grid container justifyContent={"space-around"} flexWrap={"nowrap"}>
         {isMobile === false && (
           <div style={{position:'relative'}}>
-            <Fab
-              aria-label={"Menu Context Popup"}
-              aria-describedby={"OA Menu Popup"}
-              onClick={handleOAClick}
-              color="primary"
-              size="small"
-              sx={{ position: "fixed", backgroundColor: "background.paper", padding: .2, left: 8, bottom: 8 }}
-            >
-              {isOaPage() ? <Logo /> : <OALogo filter={"none"} />}
-
-            </Fab>
-            <Popover
-              id={"OA Menu Popup"}
-              open={openOAMenu}
-              anchorEl={oaAnchorEl}
-              onClose={handleOAClose}
-              anchorOrigin={{
-                vertical: "top",
-                horizontal: "right"
-              }}
-              transformOrigin={{
-                vertical: "bottom",
-                horizontal: "left"
-              }}
-            >
-              <Box p={1}>
-                {!isOaPage() ? <OaMenu handleClick={() => null} /> : <ContentMenu />}
-              </Box>
-
-            </Popover>
             <Grid
               aria-label={"Menu Mounted"}
               item
@@ -167,7 +134,7 @@ const Layout: React.FC = () => {
               />
 
               <List dense={true}>
-                {isOaPage() ? <OaMenu handleClick={() => null} /> : <ContentMenu />}
+                <ContentMenu />
               </List>
             </Grid>
             <FadedPaper style={{position:'absolute', top:0, left:0, minHeight:'100vh', maxHeight:'100vh', width:'100%', padding:0, margin:0, zIndex:0}} />
