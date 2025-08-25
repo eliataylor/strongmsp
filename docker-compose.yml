@@ -1,0 +1,65 @@
+services:
+
+  # MySQL Database Service
+  mysqlv8:
+    image: mysql:8.0
+    container_name: mysqlv8-strongmsp
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data-strongmsp:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: localdb
+      MYSQL_USER: localuser
+      MYSQL_PASSWORD: localpassword
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Django Service
+  django:
+    build:
+      context: ./stack/django
+      dockerfile: Dockerfile
+    container_name: django-service-strongmsp
+    volumes:
+      - ./stack/keys:/app/ssl
+      - ./stack/django:/app/django
+      - ./stack/django/__pycache__:/app/django/__pycache__:cached  # Speed up reloads
+    env_file:
+      - ./stack/django/.env
+    depends_on:
+      mysqlv8:
+        condition: service_healthy
+    ports:
+      - "8088:8088"
+    extra_hosts:
+      - "localapi.strongmindstrongperformance.com:127.0.0.1"
+
+  # ReactJS Frontend Service
+  reactjs:
+    build:
+      context: ./stack/reactjs
+      dockerfile: Dockerfile
+    container_name: reactjs-service-strongmsp
+    volumes:
+      - ./stack/keys:/app/ssl
+      - ./stack/reactjs:/app/reactjs
+    depends_on:
+      django:
+        condition: service_started
+    ports:
+      - "3008:3008"
+    extra_hosts:
+      - "localhost.strongmindstrongperformance.com:127.0.0.1"
+
+
+networks:
+  default:
+    name: my_strongmsp_network
+
+volumes:
+  mysql-data-strongmsp:

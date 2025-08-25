@@ -1,0 +1,28 @@
+My app is a pickup sports community organizer where users can organize and join pick games in any sport.
+Merge the UserProfile under User and consider that Registrations can be approved or declined by the Game organizer. Also set a capacity to each game.
+"Introduce the concept of 2 more teams for every Game and that game registrations can designate a team or not, but once approved that user is assigned to the team."
+Make Teams an content type and allow a Game to have any number of them.
+Game should a reference to Team and could replace the Team.game field and the GameTeams reference table . Also flesh out the fields for a Team with branding fields, stats, but create a reference table for Teams-Players to allow many-to-many relationships with field positions.
+My app is a recipe generator based on what people have in their fridge.
+For the UserFridge, the quantity needs a unit, and dates for last stocked, expiration, and optional references to a receipt for tracking spending and projecting costs.
+My app is a wedding organizer for hosts and invite friends and setup a bridal registry and accept RSVPs
+Expanding on Discussions with Threading
+My app idea is for wedding planning and event invitations and gift registries.
+Merge Profile under User, allow multiple Hosts for an Event and expand on the Invitation features for including messages, allowed guests and RSVPs that respond to that.
+My app is collaborative database schema builder that allows people to describe app features and settings and generate spreadsheets describing the necessary data structures.
+Redefine Spreadsheet.Content as a list of Field Descriptors and introduce the concept of versioning at the whole Spreadsheet level.
+Spreadsheet.FieldDescriptions has to allow infinite entries.
+Allow Notes on the Spreadsheet level and Collaborators on the Project level.
+Make an Owner optional
+What is the Feature table for?
+My app is for building and managing todo lists
+Merge Profile in User
+What is Attachment related to?
+What is the Attachment table for?
+Expand on Locations to include any number of Fields of any Sport in order to help organizers find fields and courts.
+Expand on the User profile with stats and sport / location preferences.
+This works. Please validate and schema.
+A location should be able to have multiple fields of any field type.
+"The Relationship field always needs to name a Model defined in the Schema, not just say ""Foreign Key""."
+Always validate the schema and return it in the stream.
+You're missing the Sport table.

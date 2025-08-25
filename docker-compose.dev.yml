@@ -1,0 +1,27 @@
+services:
+
+  # MySQL Database Service
+  mysqlv8:
+    extends:
+      file: docker-compose.yml
+      service: mysqlv8
+
+  # Django Service
+  django:
+    extends:
+      file: docker-compose.yml
+      service: django
+
+  # ReactJS Frontend Service
+  reactjs:
+    extends:
+      file: docker-compose.yml
+      service: reactjs
+
+
+networks:
+  default:
+    name: my_strongmsp_network
+
+volumes:
+  mysql-data-strongmsp:

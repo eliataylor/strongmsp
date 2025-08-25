@@ -1,0 +1,58 @@
+# Multi-stage build for better reliability
+FROM python:3.12-slim as builder
+
+# Install build dependencies with proper GPG handling
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        gcc \
+        libmariadb-dev \
+        python3-dev \
+        libssl-dev \
+        pkg-config \
+        wget \
+        ca-certificates \
+        gnupg && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install mkcert
+RUN wget --no-verbose -O /usr/local/bin/mkcert https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64 && \
+    chmod +x /usr/local/bin/mkcert
+
+# Copy and install Python dependencies
+COPY requirements.txt /tmp/
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+# Final stage
+FROM python:3.12-slim
+
+# Set working directory
+WORKDIR /app/django
+
+# Install runtime dependencies only with proper GPG handling
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        libmariadb3 \
+        openssl \
+        ca-certificates \
+        gnupg && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy mkcert from builder stage
+COPY --from=builder /usr/local/bin/mkcert /usr/local/bin/mkcert
+
+# Copy Python packages from builder stage
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy the Django project source code
+COPY . /app/django/
+
+RUN chmod +x /app/django/entrypoint.sh
+
+# Expose the Django development server port
+EXPOSE 8088
+
+# Run the Django application
+CMD ["bash", "entrypoint.sh"]

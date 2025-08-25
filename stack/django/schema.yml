@@ -1,0 +1,4529 @@
+openapi: 3.0.3
+info:
+  title: ''
+  version: 0.0.0
+paths:
+  /:
+    get:
+      operationId: root_retrieve
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/agent-responses:
+    get:
+      operationId: api_agent_responses_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAgentResponsesList'
+          description: ''
+    post:
+      operationId: api_agent_responses_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentResponses'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AgentResponses'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AgentResponses'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponses'
+          description: ''
+  /api/agent-responses/{id}:
+    get:
+      operationId: api_agent_responses_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Agent Response.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponses'
+          description: ''
+    put:
+      operationId: api_agent_responses_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Agent Response.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentResponses'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AgentResponses'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AgentResponses'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponses'
+          description: ''
+    patch:
+      operationId: api_agent_responses_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Agent Response.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAgentResponses'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAgentResponses'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAgentResponses'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponses'
+          description: ''
+    delete:
+      operationId: api_agent_responses_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Agent Response.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/assessment-questions:
+    get:
+      operationId: api_assessment_questions_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAssessmentQuestionsList'
+          description: ''
+    post:
+      operationId: api_assessment_questions_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentQuestions'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AssessmentQuestions'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AssessmentQuestions'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentQuestions'
+          description: ''
+  /api/assessment-questions/{id}:
+    get:
+      operationId: api_assessment_questions_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Assessment Question.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentQuestions'
+          description: ''
+    put:
+      operationId: api_assessment_questions_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Assessment Question.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentQuestions'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AssessmentQuestions'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AssessmentQuestions'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentQuestions'
+          description: ''
+    patch:
+      operationId: api_assessment_questions_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Assessment Question.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAssessmentQuestions'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAssessmentQuestions'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAssessmentQuestions'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentQuestions'
+          description: ''
+    delete:
+      operationId: api_assessment_questions_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Assessment Question.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/assessments:
+    get:
+      operationId: api_assessments_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAssessmentsList'
+          description: ''
+    post:
+      operationId: api_assessments_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Assessments'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Assessments'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Assessments'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assessments'
+          description: ''
+  /api/assessments/{id}:
+    get:
+      operationId: api_assessments_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Assessment.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assessments'
+          description: ''
+    put:
+      operationId: api_assessments_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Assessment.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Assessments'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Assessments'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Assessments'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assessments'
+          description: ''
+    patch:
+      operationId: api_assessments_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Assessment.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAssessments'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAssessments'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAssessments'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assessments'
+          description: ''
+    delete:
+      operationId: api_assessments_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Assessment.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/coach-content:
+    get:
+      operationId: api_coach_content_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCoachContentList'
+          description: ''
+    post:
+      operationId: api_coach_content_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoachContent'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CoachContent'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CoachContent'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoachContent'
+          description: ''
+  /api/coach-content/{id}:
+    get:
+      operationId: api_coach_content_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Coach Content.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoachContent'
+          description: ''
+    put:
+      operationId: api_coach_content_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Coach Content.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoachContent'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CoachContent'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CoachContent'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoachContent'
+          description: ''
+    patch:
+      operationId: api_coach_content_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Coach Content.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCoachContent'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCoachContent'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCoachContent'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoachContent'
+          description: ''
+    delete:
+      operationId: api_coach_content_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Coach Content.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/courses:
+    get:
+      operationId: api_courses_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCoursesList'
+          description: ''
+    post:
+      operationId: api_courses_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Courses'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Courses'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Courses'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Courses'
+          description: ''
+  /api/courses/{id}:
+    get:
+      operationId: api_courses_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Courses'
+          description: ''
+    put:
+      operationId: api_courses_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Courses'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Courses'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Courses'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Courses'
+          description: ''
+    patch:
+      operationId: api_courses_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCourses'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCourses'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCourses'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Courses'
+          description: ''
+    delete:
+      operationId: api_courses_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/oa-testers:
+    get:
+      operationId: api_oa_testers_list
+      description: List all users in the 'oa-tester' group.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOATesterList'
+          description: ''
+    post:
+      operationId: api_oa_testers_create
+      description: Create a new user and add them to the 'oa-tester' group.
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OATester'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OATester'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OATester'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OATester'
+          description: ''
+  /api/oa-testers/{id}:
+    get:
+      operationId: api_oa_testers_retrieve
+      description: Retrieve a specific 'oa-tester' user by ID.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this User.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OATester'
+          description: ''
+    put:
+      operationId: api_oa_testers_update
+      description: Add the 'oa-tester' group to a specific user by ID.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this User.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OATester'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OATester'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OATester'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OATester'
+          description: ''
+    patch:
+      operationId: api_oa_testers_partial_update
+      description: Add the 'oa-tester' group to a specific user by ID.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this User.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOATester'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOATester'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOATester'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OATester'
+          description: ''
+    delete:
+      operationId: api_oa_testers_destroy
+      description: Delete a specific 'oa-tester' user by ID, along with their content.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this User.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/oa-testers/search:
+    get:
+      operationId: api_oa_testers_search_retrieve
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OATester'
+          description: ''
+  /api/payments:
+    get:
+      operationId: api_payments_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPaymentsList'
+          description: ''
+    post:
+      operationId: api_payments_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payments'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Payments'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Payments'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payments'
+          description: ''
+  /api/payments/{id}:
+    get:
+      operationId: api_payments_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Payment.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payments'
+          description: ''
+    put:
+      operationId: api_payments_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Payment.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payments'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Payments'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Payments'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payments'
+          description: ''
+    patch:
+      operationId: api_payments_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Payment.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPayments'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPayments'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPayments'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payments'
+          description: ''
+    delete:
+      operationId: api_payments_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Payment.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/prompt-templates:
+    get:
+      operationId: api_prompt_templates_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPromptTemplatesList'
+          description: ''
+    post:
+      operationId: api_prompt_templates_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptTemplates'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PromptTemplates'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PromptTemplates'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromptTemplates'
+          description: ''
+  /api/prompt-templates/{id}:
+    get:
+      operationId: api_prompt_templates_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Prompt Template.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromptTemplates'
+          description: ''
+    put:
+      operationId: api_prompt_templates_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Prompt Template.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptTemplates'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PromptTemplates'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PromptTemplates'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromptTemplates'
+          description: ''
+    patch:
+      operationId: api_prompt_templates_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Prompt Template.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPromptTemplates'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPromptTemplates'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPromptTemplates'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromptTemplates'
+          description: ''
+    delete:
+      operationId: api_prompt_templates_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Prompt Template.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/question-responses:
+    get:
+      operationId: api_question_responses_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedQuestionResponsesList'
+          description: ''
+    post:
+      operationId: api_question_responses_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestionResponses'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QuestionResponses'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/QuestionResponses'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionResponses'
+          description: ''
+  /api/question-responses/{id}:
+    get:
+      operationId: api_question_responses_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Question Response.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionResponses'
+          description: ''
+    put:
+      operationId: api_question_responses_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Question Response.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestionResponses'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QuestionResponses'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/QuestionResponses'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionResponses'
+          description: ''
+    patch:
+      operationId: api_question_responses_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Question Response.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedQuestionResponses'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedQuestionResponses'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedQuestionResponses'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionResponses'
+          description: ''
+    delete:
+      operationId: api_question_responses_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Question Response.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/questions:
+    get:
+      operationId: api_questions_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedQuestionsList'
+          description: ''
+    post:
+      operationId: api_questions_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Questions'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Questions'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Questions'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Questions'
+          description: ''
+  /api/questions/{id}:
+    get:
+      operationId: api_questions_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Question.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Questions'
+          description: ''
+    put:
+      operationId: api_questions_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Question.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Questions'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Questions'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Questions'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Questions'
+          description: ''
+    patch:
+      operationId: api_questions_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Question.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedQuestions'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedQuestions'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedQuestions'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Questions'
+          description: ''
+    delete:
+      operationId: api_questions_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Question.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/schema:
+    get:
+      operationId: api_schema_retrieve
+      description: |-
+        OpenApi3 schema for this API. Format can be selected via content negotiation.
+
+        - YAML: application/vnd.oai.openapi
+        - JSON: application/vnd.oai.openapi+json
+      parameters:
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - json
+          - yaml
+      - in: query
+        name: lang
+        schema:
+          type: string
+          enum:
+          - af
+          - ar
+          - ar-dz
+          - ast
+          - az
+          - be
+          - bg
+          - bn
+          - br
+          - bs
+          - ca
+          - ckb
+          - cs
+          - cy
+          - da
+          - de
+          - dsb
+          - el
+          - en
+          - en-au
+          - en-gb
+          - eo
+          - es
+          - es-ar
+          - es-co
+          - es-mx
+          - es-ni
+          - es-ve
+          - et
+          - eu
+          - fa
+          - fi
+          - fr
+          - fy
+          - ga
+          - gd
+          - gl
+          - he
+          - hi
+          - hr
+          - hsb
+          - hu
+          - hy
+          - ia
+          - id
+          - ig
+          - io
+          - is
+          - it
+          - ja
+          - ka
+          - kab
+          - kk
+          - km
+          - kn
+          - ko
+          - ky
+          - lb
+          - lt
+          - lv
+          - mk
+          - ml
+          - mn
+          - mr
+          - ms
+          - my
+          - nb
+          - ne
+          - nl
+          - nn
+          - os
+          - pa
+          - pl
+          - pt
+          - pt-br
+          - ro
+          - ru
+          - sk
+          - sl
+          - sq
+          - sr
+          - sr-latn
+          - sv
+          - sw
+          - ta
+          - te
+          - tg
+          - th
+          - tk
+          - tr
+          - tt
+          - udm
+          - ug
+          - uk
+          - ur
+          - uz
+          - vi
+          - zh-hans
+          - zh-hant
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.oai.openapi:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/yaml:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/vnd.oai.openapi+json:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/shares:
+    get:
+      operationId: api_shares_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSharesList'
+          description: ''
+    post:
+      operationId: api_shares_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shares'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Shares'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Shares'
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shares'
+          description: ''
+  /api/shares/{id}:
+    get:
+      operationId: api_shares_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Share.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shares'
+          description: ''
+    put:
+      operationId: api_shares_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Share.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shares'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Shares'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Shares'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shares'
+          description: ''
+    patch:
+      operationId: api_shares_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Share.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedShares'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedShares'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedShares'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shares'
+          description: ''
+    delete:
+      operationId: api_shares_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Share.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/users:
+    get:
+      operationId: api_users_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUsersList'
+          description: ''
+    post:
+      operationId: api_users_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Users'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Users'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Users'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Users'
+          description: ''
+  /api/users/{id}:
+    get:
+      operationId: api_users_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this User.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Users'
+          description: ''
+    put:
+      operationId: api_users_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this User.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Users'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Users'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Users'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Users'
+          description: ''
+    patch:
+      operationId: api_users_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this User.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUsers'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUsers'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUsers'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Users'
+          description: ''
+    delete:
+      operationId: api_users_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this User.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/users/{user_id}/{model_name}/list:
+    get:
+      operationId: api_users_list_retrieve
+      parameters:
+      - in: path
+        name: model_name
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Search term
+      - in: path
+        name: user_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
+          description: ''
+  /api/users/{user_id}/{model_name}/stats:
+    get:
+      operationId: api_users_stats_retrieve
+      parameters:
+      - in: path
+        name: model_name
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: user_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/users/{user_id}/question-response-category-stats:
+    get:
+      operationId: api_users_question_response_category_stats_retrieve
+      description: Get aggregated sum of response values in QuestionResponses for
+        each question category by a given author.
+      parameters:
+      - in: path
+        name: user_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
+          description: ''
+  /api/worksheets:
+    get:
+      operationId: api_worksheets_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSchemaVersionList'
+          description: ''
+    post:
+      operationId: api_worksheets_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemaVersion'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SchemaVersion'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SchemaVersion'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaVersion'
+          description: ''
+  /api/worksheets/{id}:
+    get:
+      operationId: api_worksheets_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Schema Version.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaVersion'
+          description: ''
+    put:
+      operationId: api_worksheets_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Schema Version.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemaVersion'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SchemaVersion'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SchemaVersion'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaVersion'
+          description: ''
+    patch:
+      operationId: api_worksheets_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Schema Version.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSchemaVersion'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSchemaVersion'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSchemaVersion'
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaVersion'
+          description: ''
+    delete:
+      operationId: api_worksheets_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Schema Version.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/worksheets/{id}/delete-version:
+    delete:
+      operationId: api_worksheets_delete_version_destroy
+      description: |-
+        Delete a specific version of a schema.
+        Only the author can delete their versions.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Schema Version.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/worksheets/{id}/download:
+    get:
+      operationId: api_worksheets_download_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Schema Version.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaVersion'
+          description: ''
+  /api/worksheets/{id}/enhance:
+    post:
+      operationId: api_worksheets_enhance_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Schema Version.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemaVersion'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SchemaVersion'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SchemaVersion'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaVersion'
+          description: ''
+  /api/worksheets/generate:
+    post:
+      operationId: api_worksheets_generate_create
+      description: Toggle between streaming and non-streaming responses based on query
+        param `stream=true`.
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemaVersion'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SchemaVersion'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SchemaVersion'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaVersion'
+          description: ''
+  /objectactions/auth/sms:
+    post:
+      operationId: objectactions_auth_sms_create
+      tags:
+      - objectactions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PhoneNumber'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PhoneNumber'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PhoneNumber'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: SMS sent successfully
+        '400':
+          description: Bad request
+  /objectactions/auth/verify-sms:
+    post:
+      operationId: objectactions_auth_verify_sms_create
+      tags:
+      - objectactions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyPhone'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/VerifyPhone'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VerifyPhone'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: SMS sent successfully
+        '400':
+          description: Bad request
+components:
+  schemas:
+    AgentResponses:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        purpose:
+          $ref: '#/components/schemas/PurposeEnum'
+        message_body:
+          type: string
+        ai_response:
+          type: string
+        ai_reasoning:
+          type: string
+          nullable: true
+        author:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        athlete:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        prompt_template:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        _type:
+          type: string
+          description: Type name of the object
+          example: AgentResponses
+      required:
+      - ai_response
+      - created_at
+      - id
+      - message_body
+      - modified_at
+      - purpose
+    AssessmentQuestions:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        conditions:
+          nullable: true
+        author:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        question:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        _type:
+          type: string
+          description: Type name of the object
+          example: AssessmentQuestions
+      required:
+      - created_at
+      - id
+      - modified_at
+      - order
+      - question
+    Assessments:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        author:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        questions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: Primary key of the related object
+              str:
+                type: string
+                description: String representation of the related object
+              _type:
+                type: string
+                description: Type name of the related object
+              entity:
+                type: object
+                additionalProperties: true
+                description: Additional fields based on query parameters
+                nullable: true
+              img:
+                type: string
+                format: uri
+                description: Image URL if available
+                nullable: true
+            required:
+            - id
+            - str
+            - _type
+        _type:
+          type: string
+          description: Type name of the object
+          example: Assessments
+      required:
+      - created_at
+      - id
+      - modified_at
+      - questions
+      - title
+    BlankEnum:
+      enum:
+      - ''
+    CoachContent:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        title:
+          type: string
+        body:
+          type: string
+        icon:
+          type: string
+          format: uri
+          nullable: true
+        cover_photo:
+          type: string
+          format: uri
+          nullable: true
+        privacy:
+          $ref: '#/components/schemas/CoachContentPrivacyEnum'
+        author:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        _type:
+          type: string
+          description: Type name of the object
+          example: CoachContent
+      required:
+      - body
+      - created_at
+      - id
+      - modified_at
+      - title
+    CoachContentPrivacyEnum:
+      enum:
+      - public
+      - authenticated
+      - mentioned
+      type: string
+      description: |-
+        * `public` - Public
+        * `authenticated` -  authenticated
+        * `mentioned` -  mentioned
+    Courses:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        icon:
+          type: string
+          format: uri
+          nullable: true
+        cover_photo:
+          type: string
+          format: uri
+          nullable: true
+        author:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        preassessment:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        postassessment:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        _type:
+          type: string
+          description: Type name of the object
+          example: Courses
+      required:
+      - created_at
+      - id
+      - modified_at
+      - price
+      - title
+    NullEnum:
+      enum:
+      - null
+    OATester:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        last_login:
+          type: string
+          format: date-time
+          nullable: true
+        is_superuser:
+          type: boolean
+          title: Superuser status
+          description: Designates that this user has all permissions without explicitly
+            assigning them.
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        is_staff:
+          type: boolean
+          title: Staff status
+          description: Designates whether the user can log into this admin site.
+        is_active:
+          type: boolean
+          title: Active
+          description: Designates whether this user should be treated as active. Unselect
+            this instead of deleting accounts.
+        date_joined:
+          type: string
+          format: date-time
+        real_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        bio:
+          type: string
+          nullable: true
+        user_types:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/UserTypesEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        confidence_score:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        groups:
+          type: array
+          items:
+            type: integer
+          description: The groups this user belongs to. A user will get all permissions
+            granted to each of their groups.
+        user_permissions:
+          type: array
+          items:
+            type: integer
+          description: Specific permissions for this user.
+      required:
+      - id
+      - username
+    PaginatedAgentResponsesList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentResponses'
+    PaginatedAssessmentQuestionsList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssessmentQuestions'
+    PaginatedAssessmentsList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assessments'
+    PaginatedCoachContentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoachContent'
+    PaginatedCoursesList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Courses'
+    PaginatedOATesterList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/OATester'
+    PaginatedPaymentsList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Payments'
+    PaginatedPromptTemplatesList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromptTemplates'
+    PaginatedQuestionResponsesList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestionResponses'
+    PaginatedQuestionsList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Questions'
+    PaginatedSchemaVersionList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchemaVersion'
+    PaginatedSharesList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Shares'
+    PaginatedUsersList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Users'
+    PatchedAgentResponses:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        purpose:
+          $ref: '#/components/schemas/PurposeEnum'
+        message_body:
+          type: string
+        ai_response:
+          type: string
+        ai_reasoning:
+          type: string
+          nullable: true
+        author:
+          type: integer
+          nullable: true
+        athlete:
+          type: integer
+          nullable: true
+        prompt_template:
+          type: integer
+          nullable: true
+    PatchedAssessmentQuestions:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        conditions:
+          nullable: true
+        author:
+          type: integer
+          nullable: true
+        question:
+          type: integer
+    PatchedAssessments:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        author:
+          type: integer
+          nullable: true
+        questions:
+          type: array
+          items:
+            type: integer
+    PatchedCoachContent:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        title:
+          type: string
+        body:
+          type: string
+        icon:
+          type: string
+          format: uri
+          nullable: true
+        cover_photo:
+          type: string
+          format: uri
+          nullable: true
+        privacy:
+          $ref: '#/components/schemas/CoachContentPrivacyEnum'
+        author:
+          type: integer
+          nullable: true
+          title: Coach
+    PatchedCourses:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        icon:
+          type: string
+          format: uri
+          nullable: true
+        cover_photo:
+          type: string
+          format: uri
+          nullable: true
+        author:
+          type: integer
+          nullable: true
+        preassessment:
+          type: integer
+          nullable: true
+          title: Pre-Assessment
+        postassessment:
+          type: integer
+          nullable: true
+          title: Post-Assessment
+    PatchedOATester:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        last_login:
+          type: string
+          format: date-time
+          nullable: true
+        is_superuser:
+          type: boolean
+          title: Superuser status
+          description: Designates that this user has all permissions without explicitly
+            assigning them.
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        is_staff:
+          type: boolean
+          title: Staff status
+          description: Designates whether the user can log into this admin site.
+        is_active:
+          type: boolean
+          title: Active
+          description: Designates whether this user should be treated as active. Unselect
+            this instead of deleting accounts.
+        date_joined:
+          type: string
+          format: date-time
+        real_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        bio:
+          type: string
+          nullable: true
+        user_types:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/UserTypesEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        confidence_score:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        groups:
+          type: array
+          items:
+            type: integer
+          description: The groups this user belongs to. A user will get all permissions
+            granted to each of their groups.
+        user_permissions:
+          type: array
+          items:
+            type: integer
+          description: Specific permissions for this user.
+    PatchedPayments:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        paid:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        status:
+          $ref: '#/components/schemas/PaymentsStatusEnum'
+        subscription_ends:
+          type: string
+          format: date
+          nullable: true
+        author:
+          type: integer
+          nullable: true
+        athlete:
+          type: integer
+          nullable: true
+        preferred_coach:
+          type: integer
+          nullable: true
+        course:
+          type: integer
+          nullable: true
+    PatchedPromptTemplates:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        prompt:
+          type: string
+        instructions:
+          type: string
+          nullable: true
+        model:
+          type: string
+          nullable: true
+          maxLength: 255
+        status:
+          $ref: '#/components/schemas/PromptTemplatesStatusEnum'
+        purpose:
+          $ref: '#/components/schemas/PurposeEnum'
+        response_format:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ResponseFormatEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        author:
+          type: integer
+          nullable: true
+    PatchedQuestionResponses:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        response:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        author:
+          type: integer
+          nullable: true
+          title: Athlete
+        question:
+          type: integer
+          nullable: true
+    PatchedQuestions:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        help_text:
+          type: string
+          nullable: true
+          maxLength: 255
+        question_category:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/QuestionCategoryEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        scale:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ScaleEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        author:
+          type: integer
+          nullable: true
+    PatchedSchemaVersion:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        parent:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        prompt:
+          type: string
+          maxLength: 4000
+        privacy:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SchemaVersionPrivacyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        assistant_id:
+          type: string
+          maxLength: 100
+        thread_id:
+          type: string
+          nullable: true
+          maxLength: 100
+        message_id:
+          type: string
+          nullable: true
+          maxLength: 100
+        run_id:
+          type: string
+          nullable: true
+          maxLength: 100
+        openai_model:
+          type: string
+          nullable: true
+          maxLength: 100
+        reasoning:
+          type: string
+          nullable: true
+        schema:
+          nullable: true
+        versions_count:
+          type: integer
+          readOnly: true
+        version_tree:
+          readOnly: true
+          nullable: true
+        version_notes:
+          type: string
+          nullable: true
+        author:
+          type: integer
+          nullable: true
+        project:
+          type: integer
+          nullable: true
+    PatchedShares:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        expires:
+          type: string
+          format: date
+          nullable: true
+        author:
+          type: integer
+          nullable: true
+        recipient:
+          type: integer
+          nullable: true
+        content:
+          type: integer
+          nullable: true
+    PatchedUsers:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        last_login:
+          type: string
+          format: date-time
+          nullable: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        date_joined:
+          type: string
+          format: date-time
+        real_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        bio:
+          type: string
+          nullable: true
+        user_types:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/UserTypesEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        confidence_score:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        groups:
+          type: array
+          items:
+            type: integer
+          description: The groups this user belongs to. A user will get all permissions
+            granted to each of their groups.
+        user_permissions:
+          type: array
+          items:
+            type: integer
+          description: Specific permissions for this user.
+    Payments:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        paid:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        status:
+          $ref: '#/components/schemas/PaymentsStatusEnum'
+        subscription_ends:
+          type: string
+          format: date
+          nullable: true
+        author:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        athlete:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        preferred_coach:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        course:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        _type:
+          type: string
+          description: Type name of the object
+          example: Payments
+      required:
+      - created_at
+      - id
+      - modified_at
+      - paid
+      - status
+    PaymentsStatusEnum:
+      enum:
+      - paid
+      - order
+      - request
+      - declined
+      type: string
+      description: |-
+        * `paid` - Paid
+        * `order` -  order
+        * `request` -  request
+        * `declined` -  declined
+    PhoneNumber:
+      type: object
+      properties:
+        phone:
+          type: string
+      required:
+      - phone
+    PromptTemplates:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        prompt:
+          type: string
+        instructions:
+          type: string
+          nullable: true
+        model:
+          type: string
+          nullable: true
+          maxLength: 255
+        status:
+          $ref: '#/components/schemas/PromptTemplatesStatusEnum'
+        purpose:
+          $ref: '#/components/schemas/PurposeEnum'
+        response_format:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ResponseFormatEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        author:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        _type:
+          type: string
+          description: Type name of the object
+          example: PromptTemplates
+      required:
+      - created_at
+      - id
+      - modified_at
+      - prompt
+      - purpose
+    PromptTemplatesStatusEnum:
+      enum:
+      - active
+      - archived
+      type: string
+      description: |-
+        * `active` - Active
+        * `archived` -  archived
+    PurposeEnum:
+      enum:
+      - lessonpackage
+      - 12sessions
+      - talkingpoints
+      - feedbackreport
+      - parentemail
+      type: string
+      description: |-
+        * `lessonpackage` - Lesson-package
+        * `12sessions` -  12-sessions
+        * `talkingpoints` -  talking-points
+        * `feedbackreport` -  feedback-report
+        * `parentemail` -  parent-email
+    QuestionCategoryEnum:
+      enum:
+      - performance_mindset
+      - emotional_regulation
+      - confidence
+      - resilience__motivation
+      - concentration
+      - leadership
+      - mental_wellbeing
+      type: string
+      description: |-
+        * `performance_mindset` - Performance Mindset
+        * `emotional_regulation` -  Emotional Regulation
+        * `confidence` -  Confidence
+        * `resilience__motivation` - Resilience & Motivation
+        * `concentration` -  Concentration
+        * `leadership` -  Leadership
+        * `mental_wellbeing` -  Mental Well-being
+    QuestionResponses:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        response:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        author:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        question:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        _type:
+          type: string
+          description: Type name of the object
+          example: QuestionResponses
+      required:
+      - created_at
+      - id
+      - modified_at
+      - response
+    Questions:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        help_text:
+          type: string
+          nullable: true
+          maxLength: 255
+        question_category:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/QuestionCategoryEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        scale:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ScaleEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        author:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        _type:
+          type: string
+          description: Type name of the object
+          example: Questions
+      required:
+      - created_at
+      - id
+      - modified_at
+      - title
+    ResponseFormatEnum:
+      enum:
+      - text
+      - json
+      type: string
+      description: |-
+        * `text` - Text
+        * `json` - Json
+    ScaleEnum:
+      enum:
+      - percentage
+      - onetofive
+      - onetoten
+      type: string
+      description: |-
+        * `percentage` - Percentage
+        * `onetofive` - One-to-five
+        * `onetoten` - One-to-ten
+    SchemaVersion:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        parent:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        prompt:
+          type: string
+          maxLength: 4000
+        privacy:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SchemaVersionPrivacyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        assistant_id:
+          type: string
+          maxLength: 100
+        thread_id:
+          type: string
+          nullable: true
+          maxLength: 100
+        message_id:
+          type: string
+          nullable: true
+          maxLength: 100
+        run_id:
+          type: string
+          nullable: true
+          maxLength: 100
+        openai_model:
+          type: string
+          nullable: true
+          maxLength: 100
+        reasoning:
+          type: string
+          nullable: true
+        schema:
+          nullable: true
+        versions_count:
+          type: integer
+          readOnly: true
+        version_tree:
+          readOnly: true
+          nullable: true
+        version_notes:
+          type: string
+          nullable: true
+        author:
+          type: integer
+          nullable: true
+        project:
+          type: integer
+          nullable: true
+      required:
+      - assistant_id
+      - created_at
+      - id
+      - parent
+      - prompt
+      - version_tree
+      - versions_count
+    SchemaVersionPrivacyEnum:
+      enum:
+      - public
+      - unlisted
+      - inviteonly
+      - authusers
+      - onlyme
+      - archived
+      type: string
+      description: |-
+        * `public` - Public
+        * `unlisted` - Unlisted
+        * `inviteonly` - Invite Only
+        * `authusers` - Authenticated Users
+        * `onlyme` - Only Me
+        * `archived` - archived
+    Shares:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        expires:
+          type: string
+          format: date
+          nullable: true
+        author:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        recipient:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        content:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Primary key of the related object
+            str:
+              type: string
+              description: String representation of the related object
+            _type:
+              type: string
+              description: Type name of the related object
+            entity:
+              type: object
+              additionalProperties: true
+              description: Additional fields based on query parameters
+              nullable: true
+            img:
+              type: string
+              format: uri
+              description: Image URL if available
+              nullable: true
+          required:
+          - id
+          - str
+          - _type
+        _type:
+          type: string
+          description: Type name of the object
+          example: Shares
+      required:
+      - created_at
+      - id
+      - modified_at
+    UserTypesEnum:
+      enum:
+      - athlete
+      - parent
+      - coach
+      type: string
+      description: |-
+        * `athlete` - Athlete
+        * `parent` -  parent
+        * `coach` -  coach
+    Users:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        last_login:
+          type: string
+          format: date-time
+          nullable: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        date_joined:
+          type: string
+          format: date-time
+        real_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        bio:
+          type: string
+          nullable: true
+        user_types:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/UserTypesEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        confidence_score:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        groups:
+          type: array
+          items:
+            type: integer
+          description: The groups this user belongs to. A user will get all permissions
+            granted to each of their groups.
+        user_permissions:
+          type: array
+          items:
+            type: integer
+          description: Specific permissions for this user.
+      required:
+      - id
+      - username
+    VerifyPhone:
+      type: object
+      properties:
+        phone:
+          type: string
+        code:
+          type: string
+      required:
+      - code
+      - phone
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
