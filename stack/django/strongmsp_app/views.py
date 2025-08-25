@@ -47,7 +47,7 @@ class UsersViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['first_name', 'last_name']
 
-    
+
 class CoursesViewSet(viewsets.ModelViewSet):
     queryset = Courses.objects.all().order_by('id')
     serializer_class = CoursesSerializer
@@ -55,7 +55,7 @@ class CoursesViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['title']
 
-    
+
 class AssessmentsViewSet(viewsets.ModelViewSet):
     queryset = Assessments.objects.all().order_by('id')
     serializer_class = AssessmentsSerializer
@@ -63,15 +63,15 @@ class AssessmentsViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['title']
 
-    
+
 class AssessmentQuestionsViewSet(viewsets.ModelViewSet):
     queryset = AssessmentQuestions.objects.all().order_by('id')
     serializer_class = AssessmentQuestionsSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [filters.SearchFilter]
     search_fields = ['question__title']
+    filterset_fields = ['assessment']
 
-    
 class QuestionsViewSet(viewsets.ModelViewSet):
     queryset = Questions.objects.all().order_by('id')
     serializer_class = QuestionsSerializer
@@ -79,7 +79,7 @@ class QuestionsViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['title']
 
-    
+
 class QuestionResponsesViewSet(viewsets.ModelViewSet):
     queryset = QuestionResponses.objects.all().order_by('id')
     serializer_class = QuestionResponsesSerializer
@@ -87,7 +87,7 @@ class QuestionResponsesViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['question__title']
 
-    
+
 class PaymentsViewSet(viewsets.ModelViewSet):
     queryset = Payments.objects.all().order_by('id')
     serializer_class = PaymentsSerializer
@@ -95,19 +95,19 @@ class PaymentsViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['course__title']
 
-    
+
 class PromptTemplatesViewSet(viewsets.ModelViewSet):
     queryset = PromptTemplates.objects.all().order_by('id')
     serializer_class = PromptTemplatesSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    
-    
+
+
 class AgentResponsesViewSet(viewsets.ModelViewSet):
     queryset = AgentResponses.objects.all().order_by('id')
     serializer_class = AgentResponsesSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    
-    
+
+
 class CoachContentViewSet(viewsets.ModelViewSet):
     queryset = CoachContent.objects.all().order_by('id')
     serializer_class = CoachContentSerializer
@@ -115,7 +115,7 @@ class CoachContentViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['title']
 
-    
+
 class SharesViewSet(viewsets.ModelViewSet):
     queryset = Shares.objects.all().order_by('id')
     serializer_class = SharesSerializer
@@ -123,7 +123,7 @@ class SharesViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['content__title']
 
-    
+
 ####OBJECT-ACTIONS-VIEWSETS-ENDS####
 
 
@@ -236,17 +236,17 @@ class UserModelListView(generics.GenericAPIView):
 )
 class QuestionResponseCategoryStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get(self, request, user_id):
         """
         Get aggregated sum of response values in QuestionResponses for each question category by a given author.
         """
         from django.db.models import Sum
         from .models import QuestionResponses, Questions
-        
+
         # Get all question responses for the given author
         responses = QuestionResponses.objects.filter(author_id=user_id)
-        
+
         # Aggregate responses by question category
         category_stats = responses.values(
             'question__question_category'
@@ -256,7 +256,7 @@ class QuestionResponseCategoryStatsView(APIView):
         ).filter(
             question__question_category__isnull=False
         ).order_by('question__question_category')
-        
+
         # Format the response data
         result = []
         for stat in category_stats:
@@ -268,7 +268,7 @@ class QuestionResponseCategoryStatsView(APIView):
                     'response_count': stat['response_count'],
                     'average_response': round(stat['total_response'] / stat['response_count'], 2) if stat['response_count'] > 0 else 0
                 })
-        
+
         return JsonResponse({
             'user_id': user_id,
             'category_stats': result,

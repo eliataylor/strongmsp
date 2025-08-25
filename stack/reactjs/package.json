@@ -38,7 +38,8 @@
   "scripts": {
     "start": "bash start.sh",
     "react-start": "cp -n .env.public .env || true && react-scripts start",
-    "start-ssl-in-docker": "HTTPS=true SSL_CRT_FILE=~/.ssl/certificate.crt HOST=0.0.0.0 PORT=3008 react-scripts start",
+    "start-ssl-in-docker": "HTTPS=true SSL_CRT_FILE=../keys/certificate.strongmindstrongperformance.com.crt HOST=localhost.strongmindstrongperformance.com PORT=3008 react-scripts start",
+    "start-on-osx": "HTTPS=true SSL_CRT_FILE=../keys/certificate.strongmindstrongperformance.com.crt HOST=localhost.strongmindstrongperformance.com PORT=3008 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
