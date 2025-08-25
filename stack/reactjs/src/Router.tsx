@@ -51,6 +51,8 @@ import WorksheetLoader from "./object-actions/generator/WorksheetLoader";
 import Consulting from "./object-actions/docs/Consulting";
 import ContentTypesHome from "./screens/ContentTypesHome";
 import LoadTesting from "./object-actions/docs/LoadTesting";
+import AssessmentScreen from "./screens/AssessmentScreen";
+import { AssessmentProvider } from "./screens/AssessmentContext";
 
 function createRouter() {
   const allRoutes = [
@@ -319,6 +321,11 @@ function createRouter() {
       path: `/${item.segment}/:id`,
       element: <EntityView />
     });
+  });
+
+  allRoutes[0].children.push({
+    path: `/assessment/:id`,
+    element: <AssessmentScreen />
   });
 
   allRoutes[0].children.push({

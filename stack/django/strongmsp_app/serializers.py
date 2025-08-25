@@ -166,10 +166,67 @@ class CoursesSerializer(CustomSerializer):
     class Meta:
         model = Courses
         fields = '__all__'
-class AssessmentsSerializer(CustomSerializer):
+        
+class AssessmentsSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Assessments that includes nested questions data.
+
+    This serializer flattens the AssessmentQuestions and Questions models to provide
+    a clean interface that matches the frontend QuestionData interface.
+
+    Response format:
+    {
+        "id": 1,
+        "title": "Assessment Title",
+        "created_at": "2024-01-01T00:00:00Z",
+        "modified_at": "2024-01-01T00:00:00Z",
+        "questions": [
+            {
+                "assessment_question_id": 1,
+                "title": "Question Title",
+                "help_text": "Question help text",
+                "question_category": "confidence",
+                "scale": "onetofive",
+                "id": 1,
+                "_type": "Questions"
+            }
+        ]
+    }
+    """
+    questions = serializers.SerializerMethodField()
+
     class Meta:
         model = Assessments
-        fields = '__all__'
+        exclude = ('author',)
+
+    def get_questions(self, obj):
+        """Return flattened question data that matches the QuestionData interface"""
+        questions_data = []
+
+        try:
+            # Get all AssessmentQuestions for this assessment, ordered by order
+            assessment_questions = obj.questions.all().order_by('order')
+
+            for assessment_question in assessment_questions:
+                if assessment_question.question:  # Check if question exists
+                    question_data = {
+                        'assessment_question_id': assessment_question.id,
+                        'title': assessment_question.question.title,
+                        'help_text': assessment_question.question.help_text,
+                        'question_category': assessment_question.question.question_category,
+                        'scale': assessment_question.question.scale,
+                        'id': assessment_question.question.id,
+                        '_type': 'Questions'
+                    }
+                    questions_data.append(question_data)
+        except Exception as e:
+            # Log error and return empty list
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error fetching questions for assessment {obj.id}: {str(e)}")
+            questions_data = []
+
+        return questions_data
 class AssessmentQuestionsSerializer(CustomSerializer):
     class Meta:
         model = AssessmentQuestions

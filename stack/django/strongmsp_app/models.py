@@ -130,8 +130,13 @@ class AssessmentQuestions(SuperModel):
 
 	def __str__(self):
 		if self.question:
-			question_title = self.question.title
-			return f'{self.order}. {question_title[:50]}{"..." if len(question_title) > 50 else ""}'
+			return f'{self.order}. {self.question.title}'
+		return f'Assessment Question {self.order} (No Question)'
+
+	def get_admin_display(self):
+		"""Returns truncated display for admin interface"""
+		if self.question:
+			return f'{self.order}. {self.question.get_admin_display()}'
 		return f'Assessment Question {self.order} (No Question)'
 
 	question = models.ForeignKey('Questions', on_delete=models.CASCADE, related_name='assessment_questions', verbose_name='Question')
@@ -145,6 +150,10 @@ class Questions(SuperModel):
 		verbose_name_plural = "Questions"
 
 	def __str__(self):
+		return self.title
+
+	def get_admin_display(self):
+		"""Returns truncated title for admin interface display"""
 		return self.title[:15] + "..." if len(self.title) > 15 else self.title
 
 	class Question_categoryChoices(models.TextChoices):

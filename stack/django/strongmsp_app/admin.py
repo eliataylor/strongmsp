@@ -154,8 +154,7 @@ class AssessmentQuestionsAdmin(BaseModelAdmin):
 
     def display_question_text(self, obj):
         if obj.question:
-            question_text = obj.question.title
-            return question_text[:15] + "..." if len(question_text) > 15 else question_text
+            return obj.question.get_admin_display()
         return "No question"
     display_question_text.short_description = "Question Text"
 
@@ -238,7 +237,7 @@ class QuestionResponsesAdmin(BaseModelAdmin):
 
     def display_question(self, obj):
         if obj.question:
-            return obj.question.title[:50] + "..." if len(obj.question.title) > 50 else obj.question.title
+            return obj.question.get_admin_display()
         return "Unknown question"
     display_question.short_description = "Question"
 

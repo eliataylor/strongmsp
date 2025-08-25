@@ -1,7 +1,7 @@
 //---OBJECT-ACTIONS-API-RESP-STARTS---//
 export type ModelName = "Users" | "Courses" | "Assessments" | "AssessmentQuestions" | "Questions" | "QuestionResponses" | "Payments" | "PromptTemplates" | "AgentResponses" | "CoachContent" | "Shares";
 
-export type ModelType<T extends ModelName> = T extends 'Users' ? Users : 
+export type ModelType<T extends ModelName> = T extends 'Users' ? Users :
 T extends 'Courses' ? Courses :
 T extends 'Assessments' ? Assessments :
 T extends 'AssessmentQuestions' ? AssessmentQuestions :
@@ -862,7 +862,7 @@ export const TypeFieldSchema: ITypeFieldSchema = {
 
 //---OBJECT-ACTIONS-TYPE-SCHEMA-STARTS---//
 export interface SuperModel {
-    readonly id: number | string; 
+    readonly id: number | string;
     author: RelEntity<'Users'>;
     created_at: string;
     modified_at: string;
@@ -899,12 +899,19 @@ export interface Assessments extends SuperModel {
 	title: string;
 	questions: RelEntity<"AssessmentQuestions">[];
 }
+
+export interface AssessmentData extends SuperModel {
+	title: string;
+	questions: Questions[];
+}
+
 export interface AssessmentQuestions extends SuperModel {
 	question: RelEntity<"Questions">[];
 	order: number;
 	conditions?: object | null;
 }
 export interface Questions extends SuperModel {
+    assessment_question_id?: number;
 	title: string;
 	help_text?: string | null;
 	question_category?: string | null;

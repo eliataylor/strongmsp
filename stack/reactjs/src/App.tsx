@@ -7,6 +7,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { AuthContextProvider } from "./allauth/auth";
 import { SnackbarProvider } from "notistack";
 import { EnvProvider } from "./object-actions/forming/EnvProvider";
+import { AssessmentProvider } from "./screens/AssessmentContext";
 
 export default function App() {
   return (
@@ -22,7 +23,9 @@ export default function App() {
           <AuthContextProvider>
             <NavDrawerProvider>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <AssessmentProvider>
                 <Router />
+                </AssessmentProvider>
               </LocalizationProvider>
             </NavDrawerProvider>
           </AuthContextProvider>

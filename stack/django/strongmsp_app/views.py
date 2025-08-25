@@ -57,7 +57,9 @@ class CoursesViewSet(viewsets.ModelViewSet):
 
 
 class AssessmentsViewSet(viewsets.ModelViewSet):
-    queryset = Assessments.objects.all().order_by('id')
+    queryset = Assessments.objects.prefetch_related(
+        'questions__question'
+    ).order_by('id')
     serializer_class = AssessmentsSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [filters.SearchFilter]
