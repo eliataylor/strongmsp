@@ -22,10 +22,15 @@ from django.utils.safestring import mark_safe
 from django.db.models import Count, Q
 from django.contrib.admin import SimpleListFilter
 from .admin_mixins import SmartAdminMixin
-
+from django_summernote.admin import SummernoteModelAdmin
 
 image_html = '<div style="width: 50px; height: 50px; background-image: url({}); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>'
 no_image_html = "No Image"
+
+admin.site.site_header = "Strong Mind Strong Performance"
+admin.site.site_title = "Strong Mind Strong Performance"
+admin.site.index_title = "Welcome Coach!"
+
 
 # Custom pagination for large datasets
 class LargeTablePaginator(admin.AdminSite):
@@ -445,8 +450,9 @@ class AgentResponsesAdmin(BaseModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(CoachContent)
-class CoachContentAdmin(BaseModelAdmin):
+class CoachContentAdmin(SummernoteModelAdmin, BaseModelAdmin):
     readonly_fields = ('id', 'created_at', 'modified_at')
+    summernote_fields = ('body',)
 
     def image_tag(self, obj):
         if obj.icon:

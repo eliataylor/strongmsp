@@ -1,0 +1,260 @@
+/* Admin Enhancements CSS */
+
+/* Base admin improvements */
+.admin-form {
+    max-width: 100%;
+}
+
+/* Better spacing for form fields */
+.form-row {
+    margin-bottom: 15px;
+}
+
+/* Enhanced field descriptions */
+.field-description {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #666;
+}
+
+/* Better list display */
+.admin-list {
+    width: 100%;
+}
+
+/* Enhanced buttons */
+.admin-button {
+    margin: 5px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background: #f8f8f8;
+    cursor: pointer;
+}
+
+.admin-button:hover {
+    background: #e8e8e8;
+}
+
+/* Better table styling */
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+}
+
+.admin-table th {
+    background: #f5f5f5;
+    font-weight: bold;
+}
+
+/* Enhanced form styling */
+.admin-form input[type="text"],
+.admin-form input[type="email"],
+.admin-form input[type="password"],
+.admin-form textarea,
+.admin-form select {
+    width: 100%;
+    max-width: 500px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.admin-form textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Better error styling */
+.admin-errors {
+    background: #ffe6e6;
+    border: 1px solid #ffcccc;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+
+.admin-errors ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+/* Enhanced success messages */
+.admin-success {
+    background: #e6ffe6;
+    border: 1px solid #ccffcc;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+    color: #006600;
+}
+
+/* Better pagination */
+.admin-pagination {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.admin-pagination a,
+.admin-pagination span {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 0 2px;
+    border: 1px solid #ddd;
+    text-decoration: none;
+    color: #333;
+}
+
+.admin-pagination a:hover {
+    background: #f0f0f0;
+}
+
+.admin-pagination .current {
+    background: #007cba;
+    color: white;
+    border-color: #007cba;
+}
+
+/* Enhanced filters */
+.admin-filters {
+    background: #f9f9f9;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+/* Better search styling */
+.admin-search {
+    margin-bottom: 15px;
+}
+
+.admin-search input[type="search"] {
+    width: 300px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Enhanced list display */
+.admin-list-display {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.admin-list-display th {
+    background: #f5f5f5;
+    padding: 10px;
+    border-bottom: 2px solid #ddd;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.admin-list-display td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+}
+
+/* Better action buttons */
+.admin-actions {
+    margin: 10px 0;
+}
+
+.admin-actions select {
+    margin-right: 10px;
+    padding: 5px;
+}
+
+.admin-actions button {
+    padding: 5px 10px;
+    background: #007cba;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.admin-actions button:hover {
+    background: #005a87;
+}
+
+/* Enhanced form layout */
+.admin-form-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.admin-form-row .field-box {
+    flex: 1;
+    margin-right: 15px;
+    min-width: 200px;
+}
+
+.admin-form-row .field-box:last-child {
+    margin-right: 0;
+}
+
+/* Better field styling */
+.admin-field {
+    margin-bottom: 15px;
+}
+
+.admin-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.admin-field .help-text {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* Enhanced error display */
+.admin-field .errorlist {
+    color: #d63384;
+    font-size: 12px;
+    margin-top: 5px;
+    list-style: none;
+    padding: 0;
+}
+
+.admin-field .errorlist li {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 5px 10px;
+    border-radius: 3px;
+    margin-bottom: 5px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .admin-form-row {
+        flex-direction: column;
+    }
+
+    .admin-form-row .field-box {
+        margin-right: 0;
+        margin-bottom: 15px;
+    }
+
+    .admin-list-display {
+        font-size: 12px;
+    }
+
+    .admin-search input[type="search"] {
+        width: 100%;
+    }
+}

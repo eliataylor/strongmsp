@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
+    'django_summernote',
 
     #    'address',
     #    'djmoney',
@@ -55,6 +56,48 @@ INSTALLED_APPS = [
     'oasheets_app',
     'drf_spectacular',
 ]
+
+# Summernote Configuration
+SUMMERNOTE_CONFIG = {
+    'iframe': True,
+    'summernote': {
+        'width': '100%',
+        'height': '480',
+        'toolbar': [
+            ['style', ['style']],
+            ['font', ['bold', 'italic', 'underline', 'clear']],
+            ['fontname', ['fontname']],
+            ['color', ['color']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['table', ['table']],
+            ['insert', ['link', 'picture', 'video']],
+            ['view', ['fullscreen', 'codeview', 'help']],
+        ],
+        'codemirror': {
+            'mode': 'htmlmixed',
+            'lineNumbers': 'true',
+            # You have to include theme file in 'css' or 'css_for_inplace' before using it.
+            'theme': 'monokai',
+        },
+    },
+    'disable_attachment': False,
+    'css': (
+         '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.29.0/theme/monokai.min.css',
+        '/static/strongmsp_app/css/summernote-custom.css',  # Use absolute static path
+    ),
+    # Additional configuration for better integration
+    'attachment_upload_to': 'summernote_uploads/',
+    'attachment_storage_class': None,  # Use default storage
+    'attachment_filesize_limit': 1024 * 1024 * 5,  # 5MB limit
+    'attachment_image_only': False,  # Allow other file types
+    # Cloud Run specific settings
+    'attachment_require_authentication': True,  # Require authentication for file uploads
+    # Additional CSS configuration to ensure proper loading
+    'css_for_inplace': (
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.29.0/theme/monokai.min.css',
+        '/static/strongmsp_app/css/summernote-custom.css',
+    ),
+}
 
 if DEBUG == True or DJANGO_ENV != 'production':
     INSTALLED_APPS += ['django_extensions']

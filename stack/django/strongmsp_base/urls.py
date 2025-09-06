@@ -18,6 +18,9 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("_allauth/", include("allauth.headless.urls")),
 
+    # Summernote URLs for file uploads and image handling
+    path('summernote/', include('django_summernote.urls')),
+
     # Optional API docs:
     path('api/schema', SpectacularAPIView.as_view(), name='schema'),
     path('api/schema/swagger', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger'),

@@ -77,7 +77,7 @@ if OA_ENV_STORAGE == 'gcp':
     MEDIA_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/{MEDIAFILES_LOCATION}/"
 
     # Additional Django settings for staticfiles
-    STATICFILES_DIRS = []  # Include any additional static file directories
+    STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static')]  # Include additional static file directories
 else:
     BASE_DIR = os.path.dirname(PROJECT_DIR)
 
