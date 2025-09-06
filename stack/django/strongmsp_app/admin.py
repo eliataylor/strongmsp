@@ -363,7 +363,7 @@ class PaymentsAdmin(BaseModelAdmin):
 
 @admin.register(PromptTemplates)
 class PromptTemplatesAdmin(BaseModelAdmin):
-    readonly_fields = ('id', 'created_at', 'modified_at')
+    readonly_fields = ('id', 'created_at', 'modified_at', 'available_tokens_info')
 
     def display_status(self, obj):
         if obj.status:
@@ -389,12 +389,123 @@ class PromptTemplatesAdmin(BaseModelAdmin):
         return "No prompt"
     display_prompt_preview.short_description = "Prompt Preview"
 
+    def available_tokens_info(self, obj):
+        """Display available token options for prompt templates"""
+        # Import here to avoid circular imports
+        try:
+            from oasheets_app.services.prompt_tester import TokenReplacer
+            token_replacer = TokenReplacer()
+            available_tokens = token_replacer.get_available_tokens()
+        except ImportError:
+            # Fallback if import fails
+            available_tokens = [
+                "assesment_aggregated", "assesment_responses", 
+                "lessonpackage", "12sessions", "talkingpoints", 
+                "feedbackreport", "parentemail"
+            ]
+        
+        # Create token descriptions
+        token_descriptions = {
+            "assesment_aggregated": "Aggregated assessment results by category",
+            "assesment_responses": "Detailed question responses",
+            "lessonpackage": "Most recent lesson package response",
+            "12sessions": "Most recent 12-sessions response",
+            "talkingpoints": "Most recent talking points response",
+            "feedbackreport": "Most recent feedback report response",
+            "parentemail": "Most recent parent email response"
+        }
+        
+        # Build the HTML dynamically
+        assessment_tokens = [token for token in available_tokens if token.startswith('assesment')]
+        agent_tokens = [token for token in available_tokens if not token.startswith('assesment')]
+        
+        token_info = f"""
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0;">
+            <h4 style="margin-top: 0; color: #495057;">Available Token Replacements</h4>
+            <p style="margin-bottom: 10px; color: #6c757d;">
+                Use these tokens in your prompt or instructions by wrapping them in double curly braces: <code>{{{{token_name}}}}</code>
+            </p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <h5 style="margin: 10px 0 5px 0; color: #495057;">Assessment Data:</h5>
+                    <ul style="margin: 0; padding-left: 20px;">
+        """
+        
+        for token in assessment_tokens:
+            description = token_descriptions.get(token, "No description available")
+            token_info += f'<li><code>{{{{{token}}}}}</code> - {description}</li>'
+        
+        token_info += """
+                    </ul>
+                </div>
+                <div>
+                    <h5 style="margin: 10px 0 5px 0; color: #495057;">Agent Responses:</h5>
+                    <ul style="margin: 0; padding-left: 20px;">
+        """
+        
+        for token in agent_tokens:
+            description = token_descriptions.get(token, "No description available")
+            token_info += f'<li><code>{{{{{token}}}}}</code> - {description}</li>'
+        
+        token_info += """
+                    </ul>
+                </div>
+            </div>
+            <div style="margin-top: 15px; padding: 10px; background-color: #e9ecef; border-radius: 3px;">
+                <strong>Note:</strong> Tokens will be replaced with actual data when the prompt is processed. 
+                If no data is available, appropriate fallback messages will be displayed.
+            </div>
+        </div>
+        """
+        return format_html(token_info)
+    available_tokens_info.short_description = "Available Tokens"
+    available_tokens_info.help_text = "Documentation of available token replacements for prompts and instructions"
+
     list_display = ('id', 'author', 'purpose', 'display_prompt_preview','modified_at')
     list_filter = ('status', 'purpose', 'response_format', 'model', 'created_at', 'modified_at', 'author')
     search_fields = ('prompt', 'instructions', 'model', 'author__username', 'author__email')
-    readonly_fields = ('id', 'created_at', 'modified_at')
+    readonly_fields = ('id', 'created_at', 'modified_at', 'available_tokens_info')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
+
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('author', 'purpose', 'status', 'model', 'response_format')
+        }),
+        ('Content', {
+            'fields': ('instructions', 'prompt'),
+            'description': 'Use {{token_name}} syntax for dynamic content replacement'
+        }),
+        ('Token Documentation', {
+            'fields': ('available_tokens_info',),
+            'classes': ('collapse',),
+            'description': 'Reference for available token replacements'
+        }),
+        ('Timestamps', {
+            'fields': ('id', 'created_at', 'modified_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        
+        # Add help text to prompt and instructions fields
+        if 'prompt' in form.base_fields:
+            form.base_fields['prompt'].help_text = (
+                "Enter your prompt template. Use {{token_name}} syntax for dynamic content. "
+                "Available tokens: {{assesment_aggregated}}, {{assesment_responses}}, "
+                "{{lessonpackage}}, {{12sessions}}, {{talkingpoints}}, {{feedbackreport}}, {{parentemail}}"
+            )
+        
+        if 'instructions' in form.base_fields:
+            form.base_fields['instructions'].help_text = (
+                "Additional instructions for the AI. Use {{token_name}} syntax for dynamic content. "
+                "Available tokens: {{assesment_aggregated}}, {{assesment_responses}}, "
+                "{{lessonpackage}}, {{12sessions}}, {{talkingpoints}}, {{feedbackreport}}, {{parentemail}}"
+            )
+        
+        return form
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "author":
@@ -404,7 +515,7 @@ class PromptTemplatesAdmin(BaseModelAdmin):
 
 @admin.register(AgentResponses)
 class AgentResponsesAdmin(BaseModelAdmin):
-    readonly_fields = ('id', 'created_at', 'modified_at')
+    readonly_fields = ('id', 'created_at', 'modified_at', 'token_usage_info')
 
     def display_athlete(self, obj):
         if obj.athlete:
@@ -436,12 +547,55 @@ class AgentResponsesAdmin(BaseModelAdmin):
         return "No AI response"
     display_ai_response_preview.short_description = "AI Response Preview"
 
+    def token_usage_info(self, obj):
+        """Display information about token usage in this response"""
+        if not obj.prompt_template:
+            return "No template associated"
+        
+        # Check if the template uses any tokens
+        template_text = f"{obj.prompt_template.instructions or ''} {obj.prompt_template.prompt or ''}"
+        import re
+        token_pattern = r'\{\{([^}]+)\}\}'
+        tokens_used = re.findall(token_pattern, template_text)
+        
+        if not tokens_used:
+            return "No tokens used in this template"
+        
+        token_list = ", ".join([f"{{{{{token}}}}}" for token in set(tokens_used)])
+        return format_html(
+            '<div style="background-color: #e7f3ff; padding: 10px; border-radius: 3px; border-left: 4px solid #007bff;">'
+            '<strong>Tokens used in template:</strong><br>'
+            '<code style="background-color: #f8f9fa; padding: 2px 4px; border-radius: 2px;">{}</code>'
+            '</div>',
+            token_list
+        )
+    token_usage_info.short_description = "Token Usage"
+    token_usage_info.help_text = "Shows which tokens were used in the prompt template for this response"
+
     list_display = ('id', 'display_athlete', 'display_purpose', 'display_template', 'display_message_preview', 'display_ai_response_preview', 'created_at', 'modified_at')
     list_filter = ('purpose', 'created_at', 'modified_at', 'athlete', 'prompt_template')
     search_fields = ('message_body', 'ai_response', 'ai_reasoning', 'athlete__username', 'athlete__email', 'athlete__first_name', 'athlete__last_name')
-    readonly_fields = ('id', 'created_at', 'modified_at')
+    readonly_fields = ('id', 'created_at', 'modified_at', 'token_usage_info')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
+
+    fieldsets = (
+        ('Response Information', {
+            'fields': ('athlete', 'purpose', 'prompt_template', 'message_body')
+        }),
+        ('AI Response', {
+            'fields': ('ai_response', 'ai_reasoning')
+        }),
+        ('Token Usage', {
+            'fields': ('token_usage_info',),
+            'classes': ('collapse',),
+            'description': 'Shows which tokens were used in the prompt template'
+        }),
+        ('Timestamps', {
+            'fields': ('id', 'created_at', 'modified_at'),
+            'classes': ('collapse',)
+        })
+    )
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "athlete":

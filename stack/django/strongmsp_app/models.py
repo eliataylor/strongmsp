@@ -211,7 +211,7 @@ class PromptTemplates(SuperModel):
 		verbose_name_plural = "Prompt Templates"
 
 	def __str__(self):
-		return self.purpose
+		return self.purpose.replace("_", " ").title()
 
 	def save(self, *args, **kwargs):
 		if not self.purpose:
