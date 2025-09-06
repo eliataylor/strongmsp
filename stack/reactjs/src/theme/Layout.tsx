@@ -1,6 +1,6 @@
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import MenuIcon from "@mui/icons-material/Menu";
-import { AppBar, Box, Divider, Grid, List } from "@mui/material";
+import { AppBar, Box, Divider, Grid, List, ListItemButton } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import Snackbar from "@mui/material/Snackbar";
 import { styled } from "@mui/material/styles";
@@ -10,7 +10,7 @@ import { useNavDrawer } from "../NavDrawerProvider";
 import Logo from "./Logo";
 // import TrackingConsent from "../components/TrackingConsent"; // enable this if your publishing features in an area that require a cookie consent
 import AllMenus from "../components/AllMenus";
-import AuthMenu, { NavBarItem } from "../components/AuthMenu";
+import AuthMenu from "../components/AuthMenu";
 import ContentMenu from "../components/ContentMenu";
 import FontSelector from "./FontSelector";
 import { FadedPaper, StyledDrawer } from "./StyledFields";
@@ -92,11 +92,12 @@ const Layout: React.FC = () => {
               style={{ maxWidth: 240, minWidth: 181, zIndex: 2, position: 'relative' }}
             >
               <Box sx={{ marginBottom: 1 }}>
-                <NavBarItem
-                  to={`/content`}
-                  icon={<Logo height={20} />}
-                  name="Home"
-                />
+                <ListItemButton dense={true} alignItems={"center"}>
+                  <Logo height={33} />
+                  <Link to={`/home`} style={{ textDecoration: "none", marginLeft: 10, fontSize: 12, fontWeight: 800 }}>
+                    Strong Mind Strong Performance
+                  </Link>
+                </ListItemButton>
               </Box>
 
               <AuthMenu />

@@ -47,6 +47,7 @@ roles=(
     "roles/serviceusage.serviceUsageAdmin"
     "roles/resourcemanager.projects.get"
     "roles/storage.admin"
+    "roles/iam.serviceAccountTokenCreator"
 )
 for role in "${roles[@]}"; do
     if [ "$(gcloud projects get-iam-policy $GCP_PROJECT_ID --flatten="bindings[].members" --format='table(bindings.role)' --filter="bindings.members:$GCP_SERVICE_NAME@$GCP_PROJECT_ID.iam.gserviceaccount.com AND bindings.role:$role")" == ROLE* ]; then

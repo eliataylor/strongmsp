@@ -67,7 +67,7 @@ const Home: React.FC<HomeProps> = ({ loading = false }) => {
                   fontWeight: 'bold'
                 }}
               >
-                🔵 Buy the Confidence Assessment – $250
+                Buy the Confidence Assessment
               </Button>
             </Grid>
             <Grid item>
@@ -81,7 +81,7 @@ const Home: React.FC<HomeProps> = ({ loading = false }) => {
                   fontWeight: 'bold'
                 }}
               >
-                ⚪ Contact Us for More Info
+                Contact Us for More Info
               </Button>
             </Grid>
           </Grid>
