@@ -43,6 +43,7 @@ import ContentTypesHome from "./screens/ContentTypesHome";
 import EntityForm from "./screens/EntityForm";
 import EntityList from "./screens/EntityList";
 import EntityView from "./screens/EntityView";
+import PromptTesterScreen from "./screens/PromptTesterScreen";
 import TempLanding from "./screens/TempLanding";
 import UserView from "./screens/UserView";
 
@@ -333,6 +334,9 @@ function createRouter() {
     path: `/forms/:model/0/add`,
     element: <EntityForm />
   });
+
+  allRoutes[0].children.push({ path: `/prompt-tester`, element: <PromptTesterScreen /> });
+
 
   allRoutes[0].children.push({ path: `/oa/schemas`, element: <WorksheetList /> });
   allRoutes[0].children.push({ path: `/oa/schemas/:id`, element: <WorksheetLoader /> });

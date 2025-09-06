@@ -67,3 +67,19 @@ class SchemaVersionSerializer(serializers.ModelSerializer):
 
         return count_children(obj)
     """
+
+
+class PromptTestSerializer(serializers.Serializer):
+    """Serializer for testing prompt templates"""
+    message_body = serializers.CharField(required=True, help_text="The message body to test with the prompt template")
+    athlete_id = serializers.IntegerField(required=False, allow_null=True, help_text="ID of the athlete (optional)")
+    
+    def validate_athlete_id(self, value):
+        if value is not None:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            try:
+                User.objects.get(id=value)
+            except User.DoesNotExist:
+                raise serializers.ValidationError("Athlete with this ID does not exist.")
+        return value

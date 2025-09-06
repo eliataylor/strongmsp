@@ -962,6 +962,24 @@ export interface Shares extends SuperModel {
   content: RelEntity<"CoachContent">;
   expires?: string | null;
 }
+
+// Prompt Testing Interfaces
+export interface StreamChunk {
+  type: "message" | "done" | "keep_alive" | "error";
+  content?: string;
+  agent_response_id?: number;
+  ai_response?: string;
+  error?: string;
+}
+
+export interface PurposeOption {
+  value: string;
+  label: string;
+  description: string;
+  responseFormat: string;
+  model: string;
+}
+
 //---OBJECT-ACTIONS-TYPE-SCHEMA-ENDS---//
 
 
@@ -984,7 +1002,6 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "Users",
     "segment": "users",
     "api": "/api/users",
-    "model_type": "vocabulary",
     "search_fields": [
       "first_name",
       "last_name"
@@ -1060,7 +1077,6 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "PromptTemplates",
     "segment": "prompt-templates",
     "api": "/api/prompt-templates",
-    "model_type": "vocabulary",
     "search_fields": []
   },
   {
@@ -1069,7 +1085,6 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "AgentResponses",
     "segment": "agent-responses",
     "api": "/api/agent-responses",
-    "model_type": "vocabulary",
     "search_fields": []
   },
   {
@@ -1078,7 +1093,6 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "CoachContent",
     "segment": "coach-content",
     "api": "/api/coach-content",
-    "model_type": "vocabulary",
     "search_fields": [
       "title"
     ]

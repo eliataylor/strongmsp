@@ -1,6 +1,7 @@
 import csv
 
 from django.db import models
+from django.db.models import Q
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.http import StreamingHttpResponse
@@ -11,8 +12,14 @@ from rest_framework.response import Response
 from rest_framework import viewsets
 
 from .models import SchemaVersions
-from .serializers import SchemaVersionSerializer, PostedPromptSerializer
+from .serializers import (
+    SchemaVersionSerializer, 
+    PostedPromptSerializer, 
+    PromptTestSerializer
+)
+from strongmsp_app.serializers import PromptTemplatesSerializer
 from .services.generator_service import SchemaGenerator
+from .services.prompt_tester import PromptTester
 
 # Import the custom pagination class
 from strongmsp_app.pagination import CustomLimitOffsetPagination
@@ -204,3 +211,92 @@ class SchemaVersionsViewSet(viewsets.ModelViewSet):
                             status=status.HTTP_403_FORBIDDEN)
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PromptTemplatesViewSet(viewsets.ModelViewSet):
+    """ViewSet for testing PromptTemplates with streaming"""
+    from strongmsp_app.models import PromptTemplates
+    
+    queryset = PromptTemplates.objects.filter(status='active').order_by('-created_at')
+    serializer_class = PromptTemplatesSerializer
+    permission_classes = [AllowAny]
+    pagination_class = CustomLimitOffsetPagination
+
+    @action(detail=True, methods=['post'])
+    def test(self, request, pk=None):
+        """Test a prompt template with streaming response"""
+        prompt_template = self.get_object()
+        
+        serializer = PromptTestSerializer(data=request.data, context={"request": request})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        test_data = serializer.validated_data
+        
+        # Get athlete if provided
+        athlete = None
+        if test_data.get('athlete_id'):
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            try:
+                athlete = User.objects.get(id=test_data['athlete_id'])
+            except User.DoesNotExist:
+                return Response({"error": "Athlete not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Create prompt tester
+        tester = PromptTester(
+            prompt_template=prompt_template,
+            user=request.user,
+            athlete=athlete,
+            message_body=test_data['message_body']
+        )
+        
+        # Build the prompt
+        prompt = tester.build_prompt()
+        
+        # Stream the response
+        response_generator = tester.stream(prompt)
+        response = StreamingHttpResponse(response_generator, content_type="application/json")
+        response["Cache-Control"] = "no-cache"
+        response["X-Accel-Buffering"] = "no"  # Important for Nginx (disable buffering)
+        return response
+
+    @action(detail=False, methods=['post'], url_path='test-by-purpose')
+    def test_by_purpose(self, request):
+        """Test a prompt template by purpose with streaming response"""
+        purpose = request.data.get('purpose')
+        if not purpose:
+            return Response({"error": "Purpose is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get athlete if provided
+        athlete = None
+        athlete_id = request.data.get('athlete_id')
+        if athlete_id:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            try:
+                athlete = User.objects.get(id=athlete_id)
+            except User.DoesNotExist:
+                return Response({"error": "Athlete not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Create prompt tester by purpose
+        tester = PromptTester.create_by_purpose(
+            purpose=purpose,
+            user=request.user,
+            athlete=athlete,
+            message_body=request.data.get('message_body', '')
+        )
+        
+        if not tester:
+            return Response({"error": f"No active template found for purpose: {purpose}"}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        
+        # Build the prompt
+        prompt = tester.build_prompt()
+        
+        # Stream the response
+        response_generator = tester.stream(prompt)
+        response = StreamingHttpResponse(response_generator, content_type="application/json")
+        response["Cache-Control"] = "no-cache"
+        response["X-Accel-Buffering"] = "no"  # Important for Nginx (disable buffering)
+        return response
