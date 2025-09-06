@@ -1,5 +1,5 @@
-import React, { useContext, useEffect } from "react";
 import { InputAdornment, MenuItem, TextField } from "@mui/material";
+import React, { useContext, useEffect } from "react";
 import { ThemeContext } from "./ThemeContext";
 
 type GoogleFont = {
@@ -10,12 +10,12 @@ type GoogleFont = {
 const ALLFONTS: GoogleFont[] = [
   { family: "Roboto", variants: "Roboto:ital,wght@0,100..900;1,100..900" },
   { family: "Roboto Condensed", variants: "Roboto+Condensed:ital,wght@0,100..900;1,100..900" },
-  { family: "Jost", variants: "Jost:ital,wght@0,100..900;1,100..900" },
+  { family: "Montserrat", variants: "Montserrat:ital,wght@0,100..900;1,100..900&display=swap" },
   { family: "Noto Serif", variants: "Noto+Serif:ital,wght@0,100..900;1,100..900" },
   { family: "Merienda", variants: "Merienda:wght@300..900" },
-//  { family: "The Nautigal", variants: "The+Nautigal:wght@400;700" },
-//  { family: "Mea Culpa", variants: "Mea+Culpa" },
-//  { family: "The Nautigal", variants: "Italianno" },
+  //  { family: "The Nautigal", variants: "The+Nautigal:wght@400;700" },
+  //  { family: "Mea Culpa", variants: "Mea+Culpa" },
+  //  { family: "The Nautigal", variants: "Italianno" },
   { family: "IBM Plex Serif", variants: "IBM+Plex+Serif:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700" }
 ];
 

@@ -1,19 +1,20 @@
-import React, { useCallback, useEffect } from "react";
-import { Link, Outlet, useLocation } from "react-router-dom";
-import { AppBar, Box, Divider, Fab, Grid, List, Popover } from "@mui/material";
-import IconButton from "@mui/material/IconButton";
-import MenuIcon from "@mui/icons-material/Menu";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { styled } from "@mui/material/styles";
-import Logo from "./Logo";
-import { useNavDrawer } from "../NavDrawerProvider";
+import MenuIcon from "@mui/icons-material/Menu";
+import { AppBar, Box, Divider, Grid, List } from "@mui/material";
+import IconButton from "@mui/material/IconButton";
 import Snackbar from "@mui/material/Snackbar";
-import OALogo from "../object-actions/docs/OALogo";
+import { styled } from "@mui/material/styles";
+import React, { useEffect } from "react";
+import { Link, Outlet, useLocation } from "react-router-dom";
+import { useNavDrawer } from "../NavDrawerProvider";
+import Logo from "./Logo";
 // import TrackingConsent from "../components/TrackingConsent"; // enable this if your publishing features in an area that require a cookie consent
-import {FadedPaper, StyledDrawer} from "./StyledFields";
-import ContentMenu from "../components/ContentMenu";
-import AuthMenu, { NavBarItem } from "../components/AuthMenu";
 import AllMenus from "../components/AllMenus";
+import AuthMenu, { NavBarItem } from "../components/AuthMenu";
+import ContentMenu from "../components/ContentMenu";
+import FontSelector from "./FontSelector";
+import { FadedPaper, StyledDrawer } from "./StyledFields";
+import ThemeSwitcher from "./ThemeSwitcher";
 
 const DrawerHeader = styled("div")(({ theme }) => ({
   display: "flex",
@@ -26,16 +27,6 @@ const Layout: React.FC = () => {
   const location = useLocation();
   const { navDrawerWidth, setNavDrawerWidth, isMobile } = useNavDrawer();
   const [snack, showSnackBar] = React.useState("");
-
-  const [oaAnchorEl, setOAAnchorEl] = React.useState<HTMLButtonElement | null>(null);
-
-  const handleOAClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setOAAnchorEl(event.currentTarget);
-  };
-
-  const handleOAClose = () => {
-    setOAAnchorEl(null);
-  };
 
   const closeSnackbar = (
     event: React.SyntheticEvent | Event,
@@ -56,9 +47,9 @@ const Layout: React.FC = () => {
     setNavDrawerWidth(0);
   };
 
-  const isOaPage = useCallback((): boolean => {
-    return location.pathname.indexOf("/oa/") === 0 || location.pathname === "/";
-  }, [location.pathname]);
+  const isHomePage = (): boolean => {
+    return location.pathname === "/";
+  };
 
   function formatPathnameToDocTitle(pathname: string) {
     // Remove leading and trailing slashes, then split by remaining slashes
@@ -75,15 +66,8 @@ const Layout: React.FC = () => {
   }
 
   useEffect(() => {
-    handleOAClose();
-    if (isOaPage() === true) {
-      document.title = `O/A ${formatPathnameToDocTitle(location.pathname.replace("/oa", ""))}`;
-    } else {
-      document.title = formatPathnameToDocTitle(location.pathname);
-    }
+    document.title = formatPathnameToDocTitle(location.pathname);
   }, [location.pathname]);
-
-  const MainLogo = isOaPage() ? OALogo : Logo;
 
   return (
     <React.Fragment>
@@ -99,29 +83,20 @@ const Layout: React.FC = () => {
       */}
 
       <Grid container justifyContent={"space-around"} flexWrap={"nowrap"}>
-        {isMobile === false && (
-          <div style={{position:'relative'}}>
+        {isMobile === false && !isHomePage() && (
+          <div style={{ position: 'relative' }}>
             <Grid
               aria-label={"Menu Mounted"}
               item
               sx={{ mt: 1 }}
-              style={{ maxWidth: 240, minWidth: 181, zIndex:2, position:'relative' }}
+              style={{ maxWidth: 240, minWidth: 181, zIndex: 2, position: 'relative' }}
             >
-              <Box style={{marginBottom:5}}>
-              {isOaPage() ?
-                <NavBarItem
-                  to={`/`}
-                  icon={<OALogo height={20} />}
-                  name="Objects / Actions"
-                />
-                :
-
+              <Box sx={{ marginBottom: 1 }}>
                 <NavBarItem
                   to={`/content`}
                   icon={<Logo height={20} />}
                   name="Your Content"
                 />
-              }
               </Box>
 
               <AuthMenu />
@@ -136,13 +111,29 @@ const Layout: React.FC = () => {
               <List dense={true}>
                 <ContentMenu />
               </List>
+
+              <Divider
+                sx={{
+                  marginTop: 1,
+                  backgroundColor: "background.dark"
+                }}
+              />
+
+              <Box sx={{ my: 2, px: 1 }}>
+                <ThemeSwitcher />
+              </Box>
+
+              <Box sx={{ mt: 3, px: 1 }}>
+                <FontSelector />
+              </Box>
+
             </Grid>
-            <FadedPaper style={{position:'absolute', top:0, left:0, minHeight:'100vh', maxHeight:'100vh', width:'100%', padding:0, margin:0, zIndex:0}} />
+            <FadedPaper style={{ position: 'absolute', top: 0, left: 0, minHeight: '100vh', maxHeight: '100vh', width: '100%', padding: 0, margin: 0, zIndex: 0 }} />
           </div>)
         }
 
         <Grid item flexGrow={1}>
-          {isMobile === true &&
+          {isMobile === true && !isHomePage() &&
             <AppBar position="fixed" color={"default"}>
               <Grid
                 container
@@ -153,7 +144,7 @@ const Layout: React.FC = () => {
               >
                 <Grid item>
                   <Link to={"/"}>
-                    <MainLogo height={35} />
+                    <Logo height={35} />
                   </Link>
                 </Grid>
                 <Grid item style={{ flexGrow: 1 }}></Grid>
@@ -181,7 +172,7 @@ const Layout: React.FC = () => {
         </Grid>
       </Grid>
 
-      {isMobile === true &&
+      {isMobile === true && !isHomePage() &&
         <StyledDrawer
           id={"MobileDrawer"}
           anchor="right"
@@ -199,7 +190,7 @@ const Layout: React.FC = () => {
           }}
         >
           <DrawerHeader>
-            <MainLogo height={34} />
+            <Logo height={34} />
             <IconButton aria-label={"Close Drawer"} onClick={handleDrawerClose}>
               <ChevronRightIcon />
             </IconButton>

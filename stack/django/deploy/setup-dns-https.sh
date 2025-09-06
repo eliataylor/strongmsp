@@ -115,7 +115,9 @@ show_loading "Creating a Backend Service..."
 if ! gcloud compute backend-services describe "$GCP_SERVICE_NAME-api-bs" --global > /dev/null 2>&1; then
     gcloud compute backend-services create "$GCP_SERVICE_NAME-api-bs" \
         --load-balancing-scheme=EXTERNAL_MANAGED \
-        --global
+        --global \
+        --enable-cdn \
+        --cache-mode=CACHE_ALL_STATIC
     if [ $? -ne 0 ]; then
         print_error "$GCP_SERVICE_NAME-api-bs backend service creation" "Failed"
         exit 1
@@ -128,15 +130,20 @@ fi
 
 # Add serverless NEG to the backend service
 show_loading "Adding serverless NEG to the backend service..."
-gcloud compute backend-services add-backend "$GCP_SERVICE_NAME-api-bs" \
-    --global \
-    --network-endpoint-group="$GCP_SERVICE_NAME-api-neg" \
-    --network-endpoint-group-region="$GCP_BUCKET_API_ZONE"
-if [ $? -ne 0 ]; then
-    print_error "Adding $GCP_SERVICE_NAME-api-neg to backend service" "Failed"
-    exit 1
+# Check if NEG is already added to the backend service by listing backends
+if ! gcloud compute backend-services describe "$GCP_SERVICE_NAME-api-bs" --global --format="value(backends[].group)" | grep -q "$GCP_SERVICE_NAME-api-neg"; then
+    gcloud compute backend-services add-backend "$GCP_SERVICE_NAME-api-bs" \
+        --global \
+        --network-endpoint-group="$GCP_SERVICE_NAME-api-neg" \
+        --network-endpoint-group-region="$GCP_BUCKET_API_ZONE"
+    if [ $? -ne 0 ]; then
+        print_error "Adding $GCP_SERVICE_NAME-api-neg to backend service" "Failed"
+        exit 1
+    else
+        print_success "Adding $GCP_SERVICE_NAME-api-neg to backend service" "Success"
+    fi
 else
-    print_success "Adding $GCP_SERVICE_NAME-api-neg to backend service" "Success"
+    print_warning "$GCP_SERVICE_NAME-api-neg already added to backend service" "Skipped"
 fi
 
 
@@ -180,7 +187,7 @@ echo "Creating HTTPS target proxy..."
 if ! gcloud compute target-https-proxies describe "$GCP_SERVICE_NAME-api-https-proxy" > /dev/null 2>&1; then
     gcloud compute target-https-proxies create "$GCP_SERVICE_NAME-api-https-proxy" \
         --ssl-certificates="$GCP_SERVICE_NAME-api-ssl" \
-        --url-map="$GCP_SERVICE_NAME-api-url-map"
+        --url-map="$GCP_SERVICE_NAME-api-url-map" \ 
         --global
 else
     printf "\e[31m$GCP_SERVICE_NAME-api-https-proxy already exists. Skipping creation.\e[0m"

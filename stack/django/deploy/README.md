@@ -9,16 +9,16 @@ Follow installation instructions here: https://cloud.google.com/sdk/docs/install
 cp .env.public .env.gcp # and update your project ID, zones, passwords, and listed resource names
 
 # enable all necessary APIs
-bash deploy/enable-apis.sh .env.deploy
+bash deploy/enable-apis.sh .env.private
 
 # create IAM permissions
-bash deploy/create-service-account.sh .env.deploy
+bash deploy/create-service-account.sh .env.private
 # then update your .env.gcp with GCP_SA_KEY_PATH=[output path]
 
 Go to https://console.cloud.google.com/apis/credentials > your service account > Keys > Create JSON key > download it > set the path in your .env.gcp `GCP_SA_KEY_PATH` variable
 
 # create Cloud SQL instance and DB
-bash deploy/create-sql.sh .env.deploy
+bash deploy/create-sql.sh .env.private
 # then update your .env.gcp with your MySQL host and 
 
 # create bucket for API uploads
@@ -29,12 +29,12 @@ bash deploy/create-bucket.sh .env.private
 bash deploy/setup-dns-https.sh .env.private
 
 # push private credentials to Secrets Manager
-bash deploy/create-secrets.sh .env.deploy
+bash deploy/create-secrets.sh .env.private
 
 # build and upload docker repo 
-bash deploy/build-docker.sh .env.deploy
+bash deploy/build-docker.sh .env.private
 
 # deploy to cloud ru
-bash deploy/cloud-run.sh .env.deploy
+bash deploy/cloud-run.sh .env.private
 
 ```

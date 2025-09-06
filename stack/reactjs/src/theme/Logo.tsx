@@ -1,30 +1,37 @@
-import React from "react";
-import { GradientButton } from "./StyledFields";
-import { SxProps, useTheme } from "@mui/system";
+import { SvgIcon } from "@mui/material";
+import React, { useContext } from 'react';
+import { ReactComponent as LogoSvg } from "../logo.svg";
+import { ThemeContext } from "./ThemeContext";
 
 interface LogoProps {
-  height?: number | string;
-  width?: number | string;
-  filter?: string;
+  height?: number;
 }
 
-const Logo: React.FC<LogoProps> = ({ height = "100%", width, filter }) => {
-  const theme = useTheme();
+const Logo: React.FC<LogoProps> = (props) => {
+  const { darkMode } = useContext(ThemeContext);
 
-  // Determine the shadow color based on the theme mode
-  const shadowColor = theme.palette.mode === "dark"
-    ? "rgba(255, 255, 255, 0.3)"  // Light shadow for dark mode
-    : "rgba(114, 134, 71, 0.6)";  // Original color for light mode
-
-  const toPass: { sx: SxProps } = {
+  const toPass = {
     sx: {
-      height: height,
-      width: width || height, // If width is not provided, use height
-      filter: filter || `drop-shadow(0 2px 2px ${shadowColor})`
+      height: '100%',
+      maxWidth: '100%',
+      filter: `drop-shadow(0 2px 2px rgba(114, 134, 71, 0.6))`,
+      fill: darkMode === true ? '#FFF' : '#3B5700'
     }
   };
+  if (props.height && props.height > 0) {
+    // @ts-ignore
+    toPass.sx.fontSize = props.height;
+  }
 
-  return <GradientButton sx={toPass.sx} />;
+
+  return <SvgIcon
+    {...toPass}
+    component={LogoSvg}
+    viewBox="0 0 591.7 693.3"
+    inheritViewBox
+  />
 };
 
 export default Logo;
+
+

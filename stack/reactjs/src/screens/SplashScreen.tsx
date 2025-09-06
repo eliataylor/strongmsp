@@ -1,19 +1,12 @@
+import { CircularProgress, Grid } from "@mui/material";
 import React from "react";
-import { CircularProgress, Grid, SvgIcon } from "@mui/material";
-import { ReactComponent as LOGO } from "../logo.svg";
+import Logo from "src/theme/Logo";
 
 interface SplashScreenProps {
   loading?: string;
 }
 
 const SplashScreen: React.FC<SplashScreenProps> = ({ loading = undefined }) => {
-  const toPass = {
-    sx: {
-      height: "auto!important",
-      filter: `drop-shadow(0 2px 2px rgba(114, 134, 71, 0.6))`,
-      fontSize: 100
-    }
-  };
 
   return (
     <Grid
@@ -31,12 +24,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ loading = undefined }) => {
     >
       <Grid item>{loading}</Grid>
       <Grid item>
-        <SvgIcon
-          viewBox="0 0 292 116"
-          component={LOGO}
-          {...toPass}
-          inheritViewBox
-        />
+        <Logo height={300} />
       </Grid>
       <Grid item>
         <CircularProgress style={{ marginTop: 50, marginBottom: 50 }} />

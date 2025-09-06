@@ -1,8 +1,8 @@
 // ThemeContext.js
-import React, { createContext, useMemo, useState } from "react";
-import { createTheme, responsiveFontSizes, ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { green, orange } from "@mui/material/colors";
+import { createTheme, ThemeProvider as MuiThemeProvider, responsiveFontSizes } from "@mui/material/styles";
+import { createContext, useMemo, useState } from "react";
 
 import GlobalStyles from "./GlobalStyles";
 
@@ -21,8 +21,8 @@ const ThemeProvider = ({ children }) => {
     const plt = {
       mode: darkMode ? "dark" : "light",
       background: {
-        default: darkMode ? "#000000" : "#ffffff",
-        paper: darkMode ? "#202020" : "#F5F5F5"
+        default: darkMode ? "#32363F" : "#f4f4f4",
+        paper: darkMode ? "#32363F" : "#f4f4f4"
       },
       contrastText: darkMode ? "#e1e1e1" : "#202020",
       text: {
@@ -38,10 +38,10 @@ const ThemeProvider = ({ children }) => {
                 color: theme.palette.getContrastText(theme.palette.primary.main),
                  */
       primary: {
-        main: darkMode ? "#B70404" : "#8c0505"
+        main: darkMode ? "#f4ab2a" : "#877010"
       },
       secondary: {
-        main: darkMode ? "#1973af" : "#185C8A"
+        main: darkMode ? "#2ab1f4" : "#2a74b7"
       },
       warning: {
         main: orange[500]
@@ -129,4 +129,5 @@ const ThemeProvider = ({ children }) => {
   );
 };
 
-export { ThemeProvider, ThemeContext };
+export { ThemeContext, ThemeProvider };
+

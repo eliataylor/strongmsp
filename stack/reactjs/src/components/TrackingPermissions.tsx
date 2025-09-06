@@ -1,10 +1,10 @@
-import React from "react";
 import { FormHelperText, MenuItem } from "@mui/material";
-import OutlinedInput from "@mui/material/OutlinedInput";
-import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
 import ListItemText from "@mui/material/ListItemText";
+import OutlinedInput from "@mui/material/OutlinedInput";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
+import React from "react";
 import { Link } from "react-router-dom";
 
 export interface PermissionKeys {
@@ -93,7 +93,7 @@ const TrackingPermissions: React.FC<PermissionProps> = ({ permissions }) => {
       </Select>
       <FormHelperText>
         O/A only uses cookies for authentication and traffic
-        analysis. The select box here is for demo purposes only. <Link to={"/oa/privacy"}>Read our Privacy Policy.</Link>
+        analysis. The select box here is for demo purposes only. <Link to={"/privacy"}>Read our Privacy Policy.</Link>
       </FormHelperText>
     </FormControl>
   );

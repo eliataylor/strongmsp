@@ -1,17 +1,13 @@
-import React from "react";
-import { useLocation } from "react-router-dom";
-import { Collapse, Divider, List, ListItemButton, ListItemText } from "@mui/material";
-import AuthMenu from "../components/AuthMenu";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
-import OaMenu from "../object-actions/docs/OaMenu";
+import { Collapse, Divider, List, ListItemButton, ListItemText } from "@mui/material";
+import React from "react";
+import FontSelector from "src/theme/FontSelector";
+import ThemeSwitcher from "src/theme/ThemeSwitcher";
+import AuthMenu from "../components/AuthMenu";
 import ContentMenu from "./ContentMenu";
 
 const AllMenus = () => {
-  const location = useLocation();
   const [objectsOpen, setObjectsOpen] = React.useState(false);
-  const [oaMenuOpen, setOAMenuOpen] = React.useState(
-    location.pathname.indexOf("/oa/") === 0
-  );
 
   const handleClick = () => {
     setObjectsOpen(!objectsOpen);
@@ -52,21 +48,9 @@ const AllMenus = () => {
       <Divider
         sx={{ backgroundColor: "primary.dark" }}
       />
+      <ThemeSwitcher />
+      <FontSelector />
 
-      <List dense={true}>
-        <ListItemButton onClick={() => setOAMenuOpen(!oaMenuOpen)}>
-          <ListItemText primary={"Objects/Actions"} />
-          {oaMenuOpen ? (
-            <ExpandLess fontSize={"small"} />
-          ) : (
-            <ExpandMore fontSize={"small"} />
-          )}
-        </ListItemButton>
-
-        <Collapse in={oaMenuOpen} timeout="auto" unmountOnExit>
-          <OaMenu handleClick={() => null} />
-        </Collapse>
-      </List>
 
     </React.Fragment>
   );

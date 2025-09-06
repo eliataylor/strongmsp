@@ -1,58 +1,50 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Home from "./screens/Home";
 import Layout from "./theme/Layout";
 
-import { NAVITEMS } from "./object-actions/types/types";
-import EntityView from "./screens/EntityView";
-import EntityList from "./screens/EntityList";
-import EntityForm from "./screens/EntityForm";
-import { AnonymousRoute, AuthChangeRedirector, AuthenticatedRoute } from "./allauth/auth";
-import Login from "./allauth/account/Login";
-import RequestLoginCode from "./allauth/account/RequestLoginCode";
-import ConfirmLoginCode from "./allauth/account/ConfirmLoginCode";
-import Logout from "./allauth/account/Logout";
-import Signup from "./allauth/account/Signup";
-import ProviderSignup from "./allauth/socialaccount/ProviderSignup";
-import ProviderCallback from "./allauth/socialaccount/ProviderCallback";
 import ChangeEmail from "./allauth/account/ChangeEmail";
-import ManageProviders from "./allauth/socialaccount/ManageProviders";
-import VerifyEmail, { loader as verifyEmailLoader } from "./allauth/account/VerifyEmail";
-import VerificationEmailSent from "./allauth/account/VerificationEmailSent";
-import RequestPasswordReset from "./allauth/account/RequestPasswordReset";
 import ChangePassword from "./allauth/account/ChangePassword";
-import MFAOverview, { loader as mfaOverviewLoader } from "./allauth/mfa/MFAOverview";
-import ActivateTOTP, { loader as activateTOTPLoader } from "./allauth/mfa/ActivateTOTP";
-import DeactivateTOTP from "./allauth/mfa/DeactivateTOTP";
-import RecoveryCodes, { loader as recoveryCodesLoader } from "./allauth/mfa/RecoveryCodes";
-import AddWebAuthn from "./allauth/mfa/AddWebAuthn";
-import ReauthenticateWebAuthn from "./allauth/mfa/ReauthenticateWebAuthn";
-import ListWebAuthn, { loader as listWebAuthnLoader } from "./allauth/mfa/ListWebAuthn";
-import GenerateRecoveryCodes, { loader as generateRecoveryCodesLoader } from "./allauth/mfa/GenerateRecoveryCodes";
+import ConfirmLoginCode from "./allauth/account/ConfirmLoginCode";
+import Login from "./allauth/account/Login";
+import Logout from "./allauth/account/Logout";
+import Reauthenticate from "./allauth/account/Reauthenticate";
+import RequestLoginCode from "./allauth/account/RequestLoginCode";
+import RequestPasswordReset from "./allauth/account/RequestPasswordReset";
 import ResetPassword, { loader as resetPasswordLoader } from "./allauth/account/ResetPassword";
-import AuthenticateTOTP from "./allauth/mfa/AuthenticateTOTP";
+import Signup from "./allauth/account/Signup";
+import VerificationEmailSent from "./allauth/account/VerificationEmailSent";
+import VerifyEmail, { loader as verifyEmailLoader } from "./allauth/account/VerifyEmail";
+import { AnonymousRoute, AuthChangeRedirector, AuthenticatedRoute } from "./allauth/auth";
+import ActivateTOTP, { loader as activateTOTPLoader } from "./allauth/mfa/ActivateTOTP";
+import AddWebAuthn from "./allauth/mfa/AddWebAuthn";
 import AuthenticateRecoveryCodes from "./allauth/mfa/AuthenticateRecoveryCodes";
+import AuthenticateTOTP from "./allauth/mfa/AuthenticateTOTP";
 import AuthenticateWebAuthn from "./allauth/mfa/AuthenticateWebAuthn";
+import DeactivateTOTP from "./allauth/mfa/DeactivateTOTP";
+import GenerateRecoveryCodes, { loader as generateRecoveryCodesLoader } from "./allauth/mfa/GenerateRecoveryCodes";
+import ListWebAuthn, { loader as listWebAuthnLoader } from "./allauth/mfa/ListWebAuthn";
+import MFAOverview, { loader as mfaOverviewLoader } from "./allauth/mfa/MFAOverview";
 import ReauthenticateRecoveryCodes from "./allauth/mfa/ReauthenticateRecoveryCodes";
 import ReauthenticateTOTP from "./allauth/mfa/ReauthenticateTOTP";
-import Reauthenticate from "./allauth/account/Reauthenticate";
-import Sessions from "./allauth/usersessions/Sessions";
+import ReauthenticateWebAuthn from "./allauth/mfa/ReauthenticateWebAuthn";
+import RecoveryCodes, { loader as recoveryCodesLoader } from "./allauth/mfa/RecoveryCodes";
 import SmsSigninOrUp from "./allauth/SmsSigninOrUp";
-import UserView from "./screens/UserView";
-import ReadMe from "./object-actions/docs/ReadMe";
-import Privacy from "./screens/Privacy";
-import Install from "./object-actions/docs/Install";
-import Contribute from "./object-actions/docs/Contribute";
-import Extend from "./object-actions/docs/Extend";
-import Customize from "./object-actions/docs/Customize";
+import ManageProviders from "./allauth/socialaccount/ManageProviders";
+import ProviderCallback from "./allauth/socialaccount/ProviderCallback";
+import ProviderSignup from "./allauth/socialaccount/ProviderSignup";
+import Sessions from "./allauth/usersessions/Sessions";
 import NewSchemaForm from "./object-actions/generator/NewSchemaForm";
 import WorksheetList from "./object-actions/generator/WorksheetList";
 import WorksheetLoader from "./object-actions/generator/WorksheetLoader";
-import Consulting from "./object-actions/docs/Consulting";
-import ContentTypesHome from "./screens/ContentTypesHome";
-import LoadTesting from "./object-actions/docs/LoadTesting";
+import { NAVITEMS } from "./object-actions/types/types";
 import AssessmentScreen from "./screens/AssessmentScreen";
-import { AssessmentProvider } from "./screens/AssessmentContext";
+import ContentTypesHome from "./screens/ContentTypesHome";
+import EntityForm from "./screens/EntityForm";
+import EntityList from "./screens/EntityList";
+import EntityView from "./screens/EntityView";
+import TempLanding from "./screens/TempLanding";
+import UserView from "./screens/UserView";
 
 function createRouter() {
   const allRoutes = [
@@ -66,6 +58,10 @@ function createRouter() {
       children: [
         {
           path: "/",
+          element: <TempLanding />
+        },
+        {
+          path: "/home",
           element: <Home />
         },
         {
@@ -312,6 +308,7 @@ function createRouter() {
   ];
 
   allRoutes[0].children.push({ path: `/users/:uid`, element: <UserView /> });
+
   NAVITEMS.forEach((item) => {
     allRoutes[0].children.push({
       path: `/${item.segment}`,
@@ -337,25 +334,10 @@ function createRouter() {
     element: <EntityForm />
   });
 
-  allRoutes[0].children.push({ path: `/readme`, element: <ReadMe /> }); // legacy route
-  allRoutes[0].children.push({ path: `/oa/readme`, element: <ReadMe /> });
-  allRoutes[0].children.push({ path: `/oa/install`, element: <Install /> }); // legacy route
-  allRoutes[0].children.push({ path: `/oa/run`, element: <Install /> });
-  allRoutes[0].children.push({ path: `/oa/load-tests`, element: <LoadTesting /> });
-  allRoutes[0].children.push({ path: `/oa/customize`, element: <Customize /> });
-  allRoutes[0].children.push({ path: `/oa/extend`, element: <Extend /> });
   allRoutes[0].children.push({ path: `/oa/schemas`, element: <WorksheetList /> });
   allRoutes[0].children.push({ path: `/oa/schemas/:id`, element: <WorksheetLoader /> });
   allRoutes[0].children.push({ path: `/oa/schemas/:id/versions/:version`, element: <WorksheetLoader /> });
   allRoutes[0].children.push({ path: `/oa/schemas/add`, element: <NewSchemaForm /> });
-  allRoutes[0].children.push({ path: `/oa/consulting`, element: <Consulting /> });
-
-  allRoutes[0].children.push({
-    path: `/oa/contribute`,
-    element: <Contribute />
-  });
-  allRoutes[0].children.push({ path: `/oa/sponsor`, element: <ReadMe /> });
-  allRoutes[0].children.push({ path: `/oa/privacy`, element: <Privacy /> });
 
   return createBrowserRouter(allRoutes);
 }

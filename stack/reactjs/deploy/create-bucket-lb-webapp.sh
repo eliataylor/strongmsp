@@ -11,7 +11,12 @@ login_service_account "$GCP_SA_KEY_PATH" "$GCP_PROJECT_ID"
 set_project "$GCP_PROJECT_ID"
 
 # created in functions.sh
-# SANITIZED_GCP_BUCKET_APP_NAME=$(sanitize_bucket_name "$GCP_BUCKET_APP_NAME")
+SANITIZED_GCP_BUCKET_APP_NAME=$(sanitize_bucket_name "$GCP_BUCKET_APP_NAME")
+
+# Create SSL certificate name if not provided
+if [ -z "$SSL_CERT_NAME" ]; then
+  SSL_CERT_NAME="${SANITIZED_GCP_BUCKET_APP_NAME}-ssl-cert"
+fi
 
 progress() {
   local task_name="$1"
@@ -35,50 +40,37 @@ else
   printf "\e[31mIP address ${SANITIZED_GCP_BUCKET_APP_NAME}-ip already exists. Skipping creation.\e[0m\n"
 fi
 
-# Fetch and display the static IP address
-progress "Fetching static IP address..."
-STATIC_IP=$(gcloud compute addresses describe "${SANITIZED_GCP_BUCKET_APP_NAME}-ip" \
-  --format="get(address)" \
-  --global 2>/dev/null)
+# Get and display the static IP address
+STATIC_IP=$(gcloud compute addresses describe "${SANITIZED_GCP_BUCKET_APP_NAME}-ip" --global --format="value(address)")
+printf "\e[32mStatic IP Address: $STATIC_IP\e[0m\n"
 
-printf "\e[31mUsing Static IP: $STATIC_IP\e[0m\n"
-
-# Create DNS zone if it doesn't exist
-createDnsZone() {
-  progress "Creating DNS zone..."
-  if ! gcloud dns managed-zones describe "$GCP_DNS_ZONE_NAME" > /dev/null 2>&1; then
-    gcloud dns managed-zones create "$GCP_DNS_ZONE_NAME" \
-      --dns-name="$DOMAIN_NAME" \
-      --description="DNS zone for $DOMAIN_NAME"
-  else
-    echo -e "\e[31mDNS zone $GCP_DNS_ZONE_NAME already exists. Skipping creation.\e[0m"
-  fi
-}
-
-createDnsZone
-
-# Add DNS record set for the domain
-gcloud dns record-sets transaction start --zone="$GCP_DNS_ZONE_NAME"
-gcloud dns record-sets transaction add --zone="$GCP_DNS_ZONE_NAME" --name="$DOMAIN_NAME" --ttl=300 --type=A "$STATIC_IP"
-gcloud dns record-sets transaction execute --zone="$GCP_DNS_ZONE_NAME"
-
-show_loading "Creating DNS record..."
-if ! gcloud dns record-sets describe "${DOMAIN_NAME}." --type=A --zone="$GCP_DNS_ZONE_NAME" > /dev/null 2>&1; then
-    gcloud dns record-sets create "${DOMAIN_NAME}." \
-        --zone="$GCP_DNS_ZONE_NAME" \
-        --type="A" \
-        --ttl="300" \
-        --rrdatas="$STATIC_IP"
-    if [ $? -ne 0 ]; then
-        print_error "$DOMAIN_NAME DNS record creation" "Failed"
-        exit 1
-    else
-        print_success "$DOMAIN_NAME DNS record" "Created"
-    fi
+# Check if DNS zone exists and set up DNS records
+progress "Setting up DNS records..."
+if gcloud dns managed-zones describe "$GCP_DNS_ZONE_NAME" > /dev/null 2>&1; then
+  # Update DNS A record to point to the static IP
+  gcloud dns record-sets transaction start --zone="$GCP_DNS_ZONE_NAME" 2>/dev/null || true
+  gcloud dns record-sets transaction remove --zone="$GCP_DNS_ZONE_NAME" --name="$DOMAIN_NAME." --type=A --ttl=300 2>/dev/null || true
+  gcloud dns record-sets transaction add --zone="$GCP_DNS_ZONE_NAME" --name="$DOMAIN_NAME." --type=A --ttl=300 "$STATIC_IP"
+  gcloud dns record-sets transaction execute --zone="$GCP_DNS_ZONE_NAME" 2>/dev/null || true
+  printf "\e[32mDNS A record updated to point to $STATIC_IP\e[0m\n"
 else
-    print_warning "$DOMAIN_NAME DNS record already exists" "Skipped"
+  printf "\e[33mDNS zone $GCP_DNS_ZONE_NAME not found. Please set up DNS manually:\e[0m\n"
+  printf "\e[33mA record: $DOMAIN_NAME -> $STATIC_IP\e[0m\n"
 fi
 
+# Wait for DNS propagation
+progress "Waiting for DNS propagation..."
+sleep 30
+
+# Verify domain is accessible before creating SSL certificate
+progress "Verifying domain accessibility..."
+if curl -s -I "http://$DOMAIN_NAME" | grep -q "200\|301\|302"; then
+  printf "\e[32mDomain $DOMAIN_NAME is accessible\e[0m\n"
+else
+  printf "\e[33mWarning: Domain $DOMAIN_NAME may not be accessible yet. SSL certificate creation may fail.\e[0m\n"
+  printf "\e[33mCurrent DNS points to: $(nslookup $DOMAIN_NAME | grep 'Address:' | tail -1 | awk '{print $2}')\e[0m\n"
+  printf "\e[33mExpected IP: $STATIC_IP\e[0m\n"
+fi
 
 # Create SSL Certificate for Load Balancer
 progress "Creating SSL certificate..."
@@ -87,6 +79,7 @@ if ! gcloud compute ssl-certificates describe "$SSL_CERT_NAME" --global > /dev/n
     --description="SSL Certificate for Load Balancer" \
     --domains="$DOMAIN_NAME" \
     --global
+  printf "\e[32mSSL certificate $SSL_CERT_NAME created\e[0m\n"
 else
   printf "\e[31mSSL certificate $SSL_CERT_NAME already exists. Skipping creation.\e[0m\n"
 fi
@@ -135,7 +128,8 @@ progress "Configuring target HTTPS proxy..."
 if ! gcloud compute target-https-proxies describe "${SANITIZED_GCP_BUCKET_APP_NAME}-https-proxy" > /dev/null 2>&1; then
   gcloud compute target-https-proxies create "${SANITIZED_GCP_BUCKET_APP_NAME}-https-proxy" \
     --url-map="${SANITIZED_GCP_BUCKET_APP_NAME}-url-map" \
-    --ssl-certificates="$SSL_CERT_NAME"
+    --ssl-certificates="$SSL_CERT_NAME" \
+    --global
 else
   printf "\e[31mHTTPS proxy ${SANITIZED_GCP_BUCKET_APP_NAME}-https-proxy already exists. Skipping creation.\e[0m\n"
 fi
@@ -191,6 +185,25 @@ if ! gcloud compute forwarding-rules describe "${SANITIZED_GCP_BUCKET_APP_NAME}-
     --ports=80
 else
   printf "\e[31mHTTP forwarding rule ${SANITIZED_GCP_BUCKET_APP_NAME}-http-rule already exists. Skipping creation.\e[0m\n"
+fi
+
+# Final verification
+printf "\n\e[32m=== Setup Complete ===\e[0m\n"
+printf "\e[32mStatic IP: $STATIC_IP\e[0m\n"
+printf "\e[32mDomain: $DOMAIN_NAME\e[0m\n"
+printf "\e[32mSSL Certificate: $SSL_CERT_NAME\e[0m\n"
+printf "\e[32mBucket: gs://$SANITIZED_GCP_BUCKET_APP_NAME\e[0m\n"
+
+# Check SSL certificate status
+progress "Checking SSL certificate status..."
+CERT_STATUS=$(gcloud compute ssl-certificates describe "$SSL_CERT_NAME" --global --format="value(managed.status)" 2>/dev/null || echo "UNKNOWN")
+if [ "$CERT_STATUS" = "ACTIVE" ]; then
+  printf "\e[32mSSL certificate is ACTIVE - Site should be accessible at https://$DOMAIN_NAME\e[0m\n"
+elif [ "$CERT_STATUS" = "PROVISIONING" ]; then
+  printf "\e[33mSSL certificate is PROVISIONING - This may take 5-30 minutes\e[0m\n"
+  printf "\e[33mCheck status with: gcloud compute ssl-certificates describe $SSL_CERT_NAME --global\e[0m\n"
+else
+  printf "\e[31mSSL certificate status: $CERT_STATUS\e[0m\n"
 fi
 
 printf "\nGCP setup script completed.\n"
