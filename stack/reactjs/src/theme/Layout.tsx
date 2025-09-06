@@ -95,7 +95,7 @@ const Layout: React.FC = () => {
                 <NavBarItem
                   to={`/content`}
                   icon={<Logo height={20} />}
-                  name="Your Content"
+                  name="Home"
                 />
               </Box>
 

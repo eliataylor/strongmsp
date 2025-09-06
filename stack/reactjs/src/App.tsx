@@ -1,13 +1,12 @@
-import * as React from "react";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { SnackbarProvider } from "notistack";
+import { AuthContextProvider } from "./allauth/auth";
+import { AssessmentProvider } from "./context/AssessmentContext";
+import { NavDrawerProvider } from "./NavDrawerProvider";
+import { EnvProvider } from "./object-actions/forming/EnvProvider";
 import Router from "./Router";
 import { ThemeProvider } from "./theme/ThemeContext";
-import { NavDrawerProvider } from "./NavDrawerProvider";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { AuthContextProvider } from "./allauth/auth";
-import { SnackbarProvider } from "notistack";
-import { EnvProvider } from "./object-actions/forming/EnvProvider";
-import { AssessmentProvider } from "./screens/AssessmentContext";
 
 export default function App() {
   return (
@@ -24,7 +23,7 @@ export default function App() {
             <NavDrawerProvider>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <AssessmentProvider>
-                <Router />
+                  <Router />
                 </AssessmentProvider>
               </LocalizationProvider>
             </NavDrawerProvider>

@@ -194,10 +194,14 @@ class AssessmentsSerializer(serializers.ModelSerializer):
     }
     """
     questions = serializers.SerializerMethodField()
+    _type = serializers.SerializerMethodField()
 
     class Meta:
         model = Assessments
         exclude = ('author',)
+    
+    def get__type(self, obj):
+        return 'Assessments'
 
     def get_questions(self, obj):
         """Return flattened question data that matches the QuestionData interface"""
@@ -215,6 +219,7 @@ class AssessmentsSerializer(serializers.ModelSerializer):
                         'help_text': assessment_question.question.help_text,
                         'question_category': assessment_question.question.question_category,
                         'scale': assessment_question.question.scale,
+                        'scale_choice_labels': assessment_question.question.scale_choice_labels,
                         'id': assessment_question.question.id,
                         '_type': 'Questions'
                     }
@@ -227,6 +232,7 @@ class AssessmentsSerializer(serializers.ModelSerializer):
             questions_data = []
 
         return questions_data
+        
 class AssessmentQuestionsSerializer(CustomSerializer):
     class Meta:
         model = AssessmentQuestions

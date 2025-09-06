@@ -2,16 +2,16 @@
 export type ModelName = "Users" | "Courses" | "Assessments" | "AssessmentQuestions" | "Questions" | "QuestionResponses" | "Payments" | "PromptTemplates" | "AgentResponses" | "CoachContent" | "Shares";
 
 export type ModelType<T extends ModelName> = T extends 'Users' ? Users :
-T extends 'Courses' ? Courses :
-T extends 'Assessments' ? Assessments :
-T extends 'AssessmentQuestions' ? AssessmentQuestions :
-T extends 'Questions' ? Questions :
-T extends 'QuestionResponses' ? QuestionResponses :
-T extends 'Payments' ? Payments :
-T extends 'PromptTemplates' ? PromptTemplates :
-T extends 'AgentResponses' ? AgentResponses :
-T extends 'CoachContent' ? CoachContent :
-T extends 'Shares' ? Shares : never
+  T extends 'Courses' ? Courses :
+  T extends 'Assessments' ? Assessments :
+  T extends 'AssessmentQuestions' ? AssessmentQuestions :
+  T extends 'Questions' ? Questions :
+  T extends 'QuestionResponses' ? QuestionResponses :
+  T extends 'Payments' ? Payments :
+  T extends 'PromptTemplates' ? PromptTemplates :
+  T extends 'AgentResponses' ? AgentResponses :
+  T extends 'CoachContent' ? CoachContent :
+  T extends 'Shares' ? Shares : never
 
 export interface RelEntity<T extends ModelName = ModelName> {
   id: string | number;
@@ -28,12 +28,12 @@ export type ITypeFieldSchema = {
 }
 
 export interface ApiListResponse<T extends ModelName> {
-    count: number;
-    offset: number;
-    limit: number;
-    meta: any;
-    error: string | null;
-    results: Array<ModelType<T>>
+  count: number;
+  offset: number;
+  limit: number;
+  meta: any;
+  error: string | null;
+  results: Array<ModelType<T>>
 }
 
 export function getProp<T extends ModelName, K extends keyof ModelType<T>>(
@@ -81,17 +81,17 @@ export function restructureAsAllEntities<T extends ModelName>(
 
 //---OBJECT-ACTIONS-TYPE-CONSTANTS-STARTS---//
 export interface FieldTypeDefinition {
-    machine: string;
-    singular: string;
-    plural: string;
-    data_type: 'string' | 'number' | 'boolean' | 'object' | 'RelEntity';
-    field_type: string;
-    cardinality: number | typeof Infinity;
-    relationship?: ModelName;
-    required: boolean;
-    default: string;
-    example: string;
-    options?: Array<{ label: string; id: string; }>;
+  machine: string;
+  singular: string;
+  plural: string;
+  data_type: 'string' | 'number' | 'boolean' | 'object' | 'RelEntity';
+  field_type: string;
+  cardinality: number | typeof Infinity;
+  relationship?: ModelName;
+  required: boolean;
+  default: string;
+  example: string;
+  options?: Array<{ label: string; id: string; }>;
 }
 
 export const TypeFieldSchema: ITypeFieldSchema = {
@@ -143,7 +143,7 @@ export const TypeFieldSchema: ITypeFieldSchema = {
     "user_types": {
       "machine": "user_types",
       "singular": "User Type",
-      "plural": "User Typeses",
+      "plural": "User Types",
       "field_type": "enum",
       "data_type": "string",
       "cardinality": 3,
@@ -273,7 +273,7 @@ export const TypeFieldSchema: ITypeFieldSchema = {
     "questions": {
       "machine": "questions",
       "singular": "Question",
-      "plural": "Questionss",
+      "plural": "Questions",
       "relationship": "AssessmentQuestions",
       "field_type": "type_reference",
       "data_type": "RelEntity",
@@ -310,7 +310,7 @@ export const TypeFieldSchema: ITypeFieldSchema = {
     "conditions": {
       "machine": "conditions",
       "singular": "Condition",
-      "plural": "Conditionss",
+      "plural": "Conditions",
       "field_type": "json",
       "data_type": "object",
       "cardinality": 1,
@@ -345,7 +345,7 @@ export const TypeFieldSchema: ITypeFieldSchema = {
     "question_category": {
       "machine": "question_category",
       "singular": "Question Category",
-      "plural": "Question Categorys",
+      "plural": "Question Categories",
       "field_type": "enum",
       "data_type": "string",
       "cardinality": 1,
@@ -486,7 +486,7 @@ export const TypeFieldSchema: ITypeFieldSchema = {
     "paid": {
       "machine": "paid",
       "singular": "Paid",
-      "plural": "Paids",
+      "plural": "Payments",
       "field_type": "decimal",
       "data_type": "number",
       "cardinality": 1,
@@ -526,7 +526,7 @@ export const TypeFieldSchema: ITypeFieldSchema = {
     "subscription_ends": {
       "machine": "subscription_ends",
       "singular": "Subscription End",
-      "plural": "Subscription Endss",
+      "plural": "Subscription Ends",
       "field_type": "date",
       "data_type": "string",
       "cardinality": 1,
@@ -550,7 +550,7 @@ export const TypeFieldSchema: ITypeFieldSchema = {
     "instructions": {
       "machine": "instructions",
       "singular": "Instruction",
-      "plural": "Instructionss",
+      "plural": "Instructions",
       "field_type": "textarea",
       "data_type": "string",
       "cardinality": 1,
@@ -706,7 +706,7 @@ export const TypeFieldSchema: ITypeFieldSchema = {
     "message_body": {
       "machine": "message_body",
       "singular": "Message Body",
-      "plural": "Message Bodys",
+      "plural": "Message Bodies",
       "field_type": "textarea",
       "data_type": "string",
       "cardinality": 1,
@@ -728,7 +728,7 @@ export const TypeFieldSchema: ITypeFieldSchema = {
     "ai_reasoning": {
       "machine": "ai_reasoning",
       "singular": "AI Reasoning",
-      "plural": "AI Reasonings",
+      "plural": "AI Reasoning",
       "field_type": "textarea",
       "data_type": "string",
       "cardinality": 1,
@@ -764,7 +764,7 @@ export const TypeFieldSchema: ITypeFieldSchema = {
     "body": {
       "machine": "body",
       "singular": "Body",
-      "plural": "Bodys",
+      "plural": "Bodies",
       "field_type": "textarea",
       "data_type": "string",
       "cardinality": 1,
@@ -797,7 +797,7 @@ export const TypeFieldSchema: ITypeFieldSchema = {
     "privacy": {
       "machine": "privacy",
       "singular": "Privacy",
-      "plural": "Privacys",
+      "plural": "Privacy",
       "field_type": "enum",
       "data_type": "string",
       "cardinality": 1,
@@ -847,8 +847,8 @@ export const TypeFieldSchema: ITypeFieldSchema = {
     },
     "expires": {
       "machine": "expires",
-      "singular": "Expire",
-      "plural": "Expireses",
+      "singular": "Expiration",
+      "plural": "Expirations",
       "field_type": "date",
       "data_type": "string",
       "cardinality": 1,
@@ -862,102 +862,105 @@ export const TypeFieldSchema: ITypeFieldSchema = {
 
 //---OBJECT-ACTIONS-TYPE-SCHEMA-STARTS---//
 export interface SuperModel {
-    readonly id: number | string;
-    author: RelEntity<'Users'>;
-    created_at: string;
-    modified_at: string;
-    _type: ModelName;
+  readonly id: number | string;
+  author: RelEntity<'Users'>;
+  created_at: string;
+  modified_at: string;
+  _type: ModelName;
 }
 
 export interface Users {
-	readonly id: number | string
-	_type: string
-	is_active?: boolean
-	is_staff?: boolean
-	last_login?: string
-	date_joined?: string
-	first_name?: string
-	last_name?: string
-	groups?: string[]
-	email: string;
-	username: string;
-	real_name?: string | null;
-	bio?: string | null;
-	user_types?: string[] | null;
-	confidence_score?: number | null;
+  readonly id: number | string
+  _type: string
+  is_active?: boolean
+  is_staff?: boolean
+  last_login?: string
+  date_joined?: string
+  first_name?: string
+  last_name?: string
+  groups?: string[]
+  email: string;
+  username: string;
+  real_name?: string | null;
+  bio?: string | null;
+  user_types?: string[] | null;
+  confidence_score?: number | null;
 }
 export interface Courses extends SuperModel {
-	title: string;
-	description?: string | null;
-	preassessment: RelEntity<"Assessments">;
-	postassessment: RelEntity<"Assessments">;
-	price: number;
-	icon?: string | null;
-	cover_photo?: string | null;
+  title: string;
+  description?: string | null;
+  preassessment: RelEntity<"Assessments">;
+  postassessment: RelEntity<"Assessments">;
+  price: number;
+  icon?: string | null;
+  cover_photo?: string | null;
 }
 export interface Assessments extends SuperModel {
-	title: string;
-	questions: RelEntity<"AssessmentQuestions">[];
+  title: string;
+  questions: RelEntity<"AssessmentQuestions">[];
 }
 
 export interface AssessmentData extends SuperModel {
-	title: string;
-	questions: Questions[];
+  title: string;
+  description?: string;
+  questions: Questions[];
 }
 
 export interface AssessmentQuestions extends SuperModel {
-	question: RelEntity<"Questions">[];
-	order: number;
-	conditions?: object | null;
+  question: RelEntity<"Questions">[];
+  order: number;
+  conditions?: object | null;
 }
 export interface Questions extends SuperModel {
-    assessment_question_id?: number;
-	title: string;
-	help_text?: string | null;
-	question_category?: string | null;
-	scale?: string | null;
+  assessment_question_id?: number;
+  title: string;
+  help_text?: string | null;
+  question_category?: string | null;
+  scale?: string | null;
+  // Optional custom labels for numeric choices, e.g., {"1": "None of the time", ...}
+  scale_choice_labels?: Record<string, string> | null;
 }
 export interface QuestionResponses extends SuperModel {
-	author: RelEntity<"Users">;
-	question: RelEntity<"Questions">;
-	response: number;
+  author: RelEntity<"Users">;
+  question: RelEntity<"Questions">;
+  response: number;
 }
 export interface Payments extends SuperModel {
-	athlete?: RelEntity<"Users"> | null;
-	preferred_coach?: RelEntity<"Users"> | null;
-	course: RelEntity<"Courses">;
-	paid: number;
-	status: string;
-	subscription_ends?: string | null;
+  athlete?: RelEntity<"Users"> | null;
+  preferred_coach?: RelEntity<"Users"> | null;
+  course: RelEntity<"Courses">;
+  paid: number;
+  status: string;
+  subscription_ends?: string | null;
 }
 export interface PromptTemplates extends SuperModel {
-	prompt: string;
-	instructions?: string | null;
-	model?: string | null;
-	status: string;
-	purpose: string;
-	response_format?: string | null;
+  prompt: string;
+  instructions?: string | null;
+  model?: string | null;
+  status: string;
+  purpose: string;
+  response_format?: string | null;
 }
 export interface AgentResponses extends SuperModel {
-	athlete: RelEntity<"Users">;
-	prompt_template: RelEntity<"PromptTemplates">;
-	purpose: string;
-	message_body: string;
-	ai_response: string;
-	ai_reasoning?: string | null;
+  athlete: RelEntity<"Users">;
+  prompt_template: RelEntity<"PromptTemplates">;
+  purpose: string;
+  message_body: string;
+  ai_response: string;
+  ai_reasoning?: string | null;
 }
 export interface CoachContent extends SuperModel {
-	author: RelEntity<"Users">;
-	title: string;
-	body: string;
-	icon?: string | null;
-	cover_photo?: string | null;
-	privacy: string;
+  author: RelEntity<"Users">;
+  title: string;
+  body: string;
+  icon?: string | null;
+  cover_photo?: string | null;
+  privacy: string;
 }
 export interface Shares extends SuperModel {
-	recipient: RelEntity<"Users">;
-	content: RelEntity<"CoachContent">;
-	expires?: string | null;
+  recipient: RelEntity<"Users">;
+  content: RelEntity<"CoachContent">;
+  expires?: string | null;
 }
 //---OBJECT-ACTIONS-TYPE-SCHEMA-ENDS---//
 
@@ -981,6 +984,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "Users",
     "segment": "users",
     "api": "/api/users",
+    "model_type": "vocabulary",
     "search_fields": [
       "first_name",
       "last_name"
@@ -1012,6 +1016,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "AssessmentQuestions",
     "segment": "assessment-questions",
     "api": "/api/assessment-questions",
+    "model_type": "vocabulary",
     "search_fields": [
       "question__title"
     ]
@@ -1022,6 +1027,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "Questions",
     "segment": "questions",
     "api": "/api/questions",
+    "model_type": "vocabulary",
     "search_fields": [
       "title"
     ]
@@ -1032,6 +1038,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "QuestionResponses",
     "segment": "question-responses",
     "api": "/api/question-responses",
+    "model_type": "vocabulary",
     "search_fields": [
       "question__title"
     ]
@@ -1042,6 +1049,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "Payments",
     "segment": "payments",
     "api": "/api/payments",
+    "model_type": "vocabulary",
     "search_fields": [
       "course__title"
     ]
@@ -1052,6 +1060,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "PromptTemplates",
     "segment": "prompt-templates",
     "api": "/api/prompt-templates",
+    "model_type": "vocabulary",
     "search_fields": []
   },
   {
@@ -1060,6 +1069,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "AgentResponses",
     "segment": "agent-responses",
     "api": "/api/agent-responses",
+    "model_type": "vocabulary",
     "search_fields": []
   },
   {
@@ -1068,6 +1078,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "CoachContent",
     "segment": "coach-content",
     "api": "/api/coach-content",
+    "model_type": "vocabulary",
     "search_fields": [
       "title"
     ]
@@ -1078,6 +1089,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "Shares",
     "segment": "shares",
     "api": "/api/shares",
+    "model_type": "vocabulary",
     "search_fields": [
       "content__title"
     ]

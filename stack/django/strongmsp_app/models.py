@@ -120,6 +120,7 @@ class Assessments(SuperModel):
 		verbose_name_plural = "Assessments"
 
 	title = models.CharField(max_length=255, verbose_name='Title')
+	description = models.TextField(blank=True, null=True, verbose_name='Description')
 	questions = models.ManyToManyField('AssessmentQuestions', related_name='questions_to_assessments', verbose_name='Questions')
 
 class AssessmentQuestions(SuperModel):
@@ -173,6 +174,7 @@ class Questions(SuperModel):
 	help_text = models.CharField(max_length=255, blank=True, null=True, verbose_name='Help Text')
 	question_category = models.CharField(max_length=22, choices=Question_categoryChoices.choices, verbose_name='Question Category', blank=True, null=True)
 	scale = models.CharField(max_length=10, choices=ScaleChoices.choices, verbose_name='Scale', blank=True, null=True)
+	scale_choice_labels = models.JSONField(blank=True, null=True, verbose_name='Scale Choice Labels')
 
 class QuestionResponses(SuperModel):
 	class Meta:

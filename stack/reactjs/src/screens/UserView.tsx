@@ -1,19 +1,20 @@
-import React, { useEffect } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Box } from "@mui/material";
-import { ModelType, NAVITEMS } from "../object-actions/types/types";
-import EntityCard from "../object-actions/components/EntityCard";
 import Accordion from "@mui/material/Accordion";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import AccordionSummary from "@mui/material/AccordionSummary";
-import Typography from "@mui/material/Typography";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ApiClient from "../config/ApiClient";
-import EntityList from "./EntityList";
 import Snackbar from "@mui/material/Snackbar";
-import { canDo } from "../object-actions/types/access";
+import Typography from "@mui/material/Typography";
+import React, { useEffect } from "react";
+import { useLocation, useParams } from "react-router-dom";
 import { useAuth } from "../allauth/auth";
 import PermissionError from "../components/PermissionError";
+import SpiderChart from "../components/SpiderChart";
+import ApiClient from "../config/ApiClient";
+import EntityCard from "../object-actions/components/EntityCard";
+import { canDo } from "../object-actions/types/access";
+import { ModelType, NAVITEMS } from "../object-actions/types/types";
+import EntityList from "./EntityList";
 
 const UserView: React.FC = () => {
   const location = useLocation();
@@ -24,6 +25,16 @@ const UserView: React.FC = () => {
     null
   );
   const [stats, updateStats] = React.useState<{ [key: string]: number }>({});
+  const [questionResponseStats, setQuestionResponseStats] = React.useState<{
+    user_id: number;
+    category_stats: Array<{
+      category: string;
+      total_response: number;
+      response_count: number;
+      average_response: number;
+    }>;
+    total_categories: number;
+  } | null>(null);
   const [snack, showSnackBar] = React.useState("");
   const closeSnackbar = (
     event: React.SyntheticEvent | Event,
@@ -82,6 +93,34 @@ const UserView: React.FC = () => {
     console.log("STATS", stats);
   }, [stats, location.search, uid]);
 
+  // Fetch question response category stats
+  useEffect(() => {
+    const fetchQuestionResponseStats = async () => {
+      if (!uid) return;
+
+      const response = await ApiClient.get(
+        `/api/users/${uid}/question-response-category-stats${location.search}`
+      );
+      if (response.error) {
+        return showSnackBar(response.error);
+      }
+      if (response.success && response.data) {
+        setQuestionResponseStats(response.data as {
+          user_id: number;
+          category_stats: Array<{
+            category: string;
+            total_response: number;
+            response_count: number;
+            average_response: number;
+          }>;
+          total_categories: number;
+        });
+      }
+    };
+
+    fetchQuestionResponseStats();
+  }, [uid, location.search]);
+
   if (!userProfile) return null;
 
   const handleChange =
@@ -106,6 +145,15 @@ const UserView: React.FC = () => {
         message={snack}
       />
       <EntityCard entity={userProfile} />
+
+      {/* Question Response Category Stats Spider Chart */}
+      {questionResponseStats && questionResponseStats.category_stats.length > 0 && (
+        <SpiderChart
+          data={questionResponseStats.category_stats}
+          title="Question Response Category Analysis"
+          height={400}
+        />
+      )}
 
       {NAVITEMS.map((item) => {
         if (item.type === "Users") return null;

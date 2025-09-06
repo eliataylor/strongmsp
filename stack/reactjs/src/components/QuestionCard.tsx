@@ -1,22 +1,24 @@
 import {
+  Alert,
   Box,
   Button,
   Card,
   CardContent,
   Chip,
   FormControlLabel,
-  Paper,
   Radio,
   RadioGroup,
   Typography,
   useTheme
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuthStatus } from '../allauth/auth';
 import { Questions } from '../object-actions/types/types';
 
 interface QuestionCardProps {
   question: Questions;
-  onResponseSubmit: (response: number) => void;
+  onResponseSubmit: (response: number, responseText?: string) => Promise<boolean>;
   onNext: () => void;
   onPrevious: () => void;
   isFirst: boolean;
@@ -34,8 +36,11 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   currentResponse
 }) => {
   const theme = useTheme();
+  // @ts-ignore
+  const [, authStatus] = useAuthStatus();
   const [selectedResponse, setSelectedResponse] = useState<number | null>(currentResponse || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authWarning, setAuthWarning] = useState<string | null>(null);
 
   useEffect(() => {
     setSelectedResponse(currentResponse || null);
@@ -46,61 +51,73 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   };
 
   const handleSubmit = async () => {
+    if (!authStatus?.isAuthenticated) {
+      setAuthWarning('Please sign in to submit your responses.');
+      return;
+    }
     if (selectedResponse === null) return;
 
     setIsSubmitting(true);
     try {
-      onResponseSubmit(selectedResponse);
-
-      // Auto-advance to next question after a brief delay
-      setTimeout(() => {
-        if (!isLast) {
-          onNext();
-        }
-      }, 500);
+      const ok = await onResponseSubmit(selectedResponse);
+      if (ok && !isLast) {
+        onNext();
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const getScaleLabels = (scale?: string | null) => {
+  const getDefaultScaleLabels = (scale?: string | null) => {
     switch (scale) {
       case 'onetofive':
         return {
-          1: 'Strongly Disagree',
-          2: 'Disagree',
-          3: 'Neutral',
-          4: 'Agree',
-          5: 'Strongly Agree'
-        };
+          '1': 'Strongly Disagree',
+          '2': 'Disagree',
+          '3': 'Neutral',
+          '4': 'Agree',
+          '5': 'Strongly Agree'
+        } as Record<string, string>;
       case 'onetoten':
         return {
-          1: '1 - Poor',
-          2: '2 - Below Average',
-          3: '3 - Average',
-          4: '4 - Above Average',
-          5: '5 - Excellent'
-        };
+          '1': '1',
+          '2': '2',
+          '3': '3',
+          '4': '4',
+          '5': '5',
+          '6': '6',
+          '7': '7',
+          '8': '8',
+          '9': '9',
+          '10': '10'
+        } as Record<string, string>;
       case 'percentage':
         return {
-          1: '20%',
-          2: '40%',
-          3: '60%',
-          4: '80%',
-          5: '100%'
-        };
+          '1': '20%',
+          '2': '40%',
+          '3': '60%',
+          '4': '80%',
+          '5': '100%'
+        } as Record<string, string>;
       default:
         return {
-          1: '1',
-          2: '2',
-          3: '3',
-          4: '4',
-          5: '5'
-        };
+          '1': '1',
+          '2': '2',
+          '3': '3',
+          '4': '4',
+          '5': '5'
+        } as Record<string, string>;
     }
   };
 
-  const scaleLabels = getScaleLabels(question.scale || 'onetofive');
+  // Prefer server-provided labels if available (e.g., QoR-40 or configured 1–10)
+  const serverScaleLabels = (question as any).scale_choice_labels as Record<string, string> | undefined;
+  const effectiveLabels: Record<string, string> = serverScaleLabels || getDefaultScaleLabels(question.scale || 'onetofive');
+  const optionValues = Object.keys(effectiveLabels)
+    .map((k) => Number(k))
+    .filter((n) => !Number.isNaN(n))
+    .sort((a, b) => a - b);
+  const wrapOptions = optionValues.length > 5;
 
   return (
     <Card
@@ -116,15 +133,17 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     >
       <Box
         sx={{
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+          background: `linear-gradient(180deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.light} 100%)`,
           color: 'white',
           p: 3,
           textAlign: 'center'
         }}
       >
-        <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-          Question {question.assessment_question_id || 'Unknown'}
-        </Typography>
+        {question.help_text &&
+          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+            {question.help_text}
+          </Typography>
+        }
         <Chip
           label={question.question_category?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'General'}
           sx={{
@@ -141,52 +160,39 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           component="h2"
           gutterBottom
           sx={{
-            mb: 3,
             fontWeight: 500,
-            lineHeight: 1.4,
             color: theme.palette.text.primary
           }}
         >
           {question.title}
         </Typography>
 
-        {question.help_text && (
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2,
-              mb: 3,
-              background: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-              borderRadius: 2,
-              border: `1px solid ${theme.palette.divider}`
-            }}
-          >
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ fontStyle: 'italic' }}
-            >
-              💡 {question.help_text}
-            </Typography>
-          </Paper>
+        {authWarning && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            {authWarning} <Link to="/account/login"><b>Log in</b></Link>
+          </Alert>
         )}
 
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" gutterBottom sx={{ mb: 2, fontWeight: 600 }}>
-            Please rate your response:
-          </Typography>
 
           <RadioGroup
             value={selectedResponse || ''}
             onChange={handleResponseChange}
-            sx={{ gap: 1 }}
+            sx={{
+              gap: 1,
+              display: 'flex',
+              flexWrap: wrapOptions ? 'wrap' : 'nowrap',
+              flexDirection: wrapOptions ? 'row' : 'column',
+              alignItems: 'flex-start'
+            }}
           >
-            {[1, 2, 3, 4, 5].map((value) => (
+            {optionValues.map((value) => (
               <FormControlLabel
-                key={value}
+                key={`${value}-${question.id}`}
                 value={value}
                 control={
                   <Radio
+                    key={`radio-${value}-${question.id}`}
                     sx={{
                       '&.Mui-checked': {
                         color: theme.palette.primary.main,
@@ -202,14 +208,17 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     <Typography variant="h6" fontWeight="bold" color="primary">
                       {value}
                     </Typography>
-                    <Typography variant="body1" color="text.secondary">
-                      {scaleLabels[value as keyof typeof scaleLabels]}
-                    </Typography>
+                    {value.toString() !== effectiveLabels[String(value)] &&
+                      <Typography variant="body1" color="text.secondary">
+                        {effectiveLabels[String(value)]}
+                      </Typography>
+                    }
                   </Box>
                 }
                 sx={{
                   margin: 0,
-                  padding: 2,
+                  p: '.3',
+                  paddingRight: 1,
                   borderRadius: 2,
                   border: `2px solid ${selectedResponse === value ? theme.palette.primary.main : theme.palette.divider}`,
                   background: selectedResponse === value
@@ -254,9 +263,9 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               borderRadius: 2,
               textTransform: 'none',
               fontWeight: 600,
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+              background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.light} 100%)`,
               '&:hover': {
-                background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.secondary.dark} 100%)`,
+                background: `linear-gradient(0deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.dark} 100%)`,
               }
             }}
           >

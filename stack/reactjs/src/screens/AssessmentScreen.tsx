@@ -13,8 +13,8 @@ import {
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useAssessment } from './AssessmentContext';
-import QuestionCard from './QuestionCard';
+import QuestionCard from '../components/QuestionCard';
+import { useAssessment } from '../context/AssessmentContext';
 
 interface AssessmentScreenProps {
     onComplete?: () => void;
@@ -27,6 +27,8 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
     const assessmentId = id ? parseInt(id, 10) : 1;
     const theme = useTheme();
     const {
+        title,
+        description,
         questions,
         currentQuestionIndex,
         responses,
@@ -50,13 +52,14 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
         if (assessmentId) {
             loadAssessment(assessmentId);
         }
-    }, [assessmentId, loadAssessment]);
+    }, [assessmentId]);
 
-    const handleResponseSubmit = (response: number) => {
+    const handleResponseSubmit = async (response: number, responseText?: string): Promise<boolean> => {
         const currentQuestion = questions[currentQuestionIndex];
         if (currentQuestion) {
-            submitResponse(Number(currentQuestion.id), response);
+            return await submitResponse(Number(currentQuestion.id), response, responseText);
         }
+        return false;
     };
 
     const handleCompleteAssessment = async () => {
@@ -87,7 +90,7 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
     const getCurrentResponse = () => {
         const currentQuestion = questions[currentQuestionIndex];
         if (currentQuestion) {
-            const response = responses.find(r => r.question === Number(currentQuestion.id));
+            const response = responses.find((r: any) => r.question === Number(currentQuestion.id));
             return response?.response;
         }
         return undefined;
@@ -141,7 +144,7 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
                             p: 6,
                             textAlign: 'center',
                             borderRadius: 3,
-                            background: `linear-gradient(135deg, ${theme.palette.success.main}15 0%, ${theme.palette.primary.main}15 100%)`
+                            background: `linear-gradient(135deg, ${theme.palette.primary.light}15 0%, ${theme.palette.primary.main}15 100%)`
                         }}
                     >
                         <CheckCircle
@@ -210,10 +213,10 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
             {/* Header */}
             <Box sx={{ mb: 4, textAlign: 'center' }}>
                 <Typography variant="h3" gutterBottom fontWeight="bold" color="primary">
-                    Performance Assessment
+                    {title}
                 </Typography>
-                <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
-                    Let's evaluate your mental performance and mindset
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }} >
+                    {description}
                 </Typography>
 
                 {/* Progress Bar */}

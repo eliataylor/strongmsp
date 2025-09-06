@@ -309,6 +309,11 @@ function createRouter() {
 
   allRoutes[0].children.push({ path: `/users/:uid`, element: <UserView /> });
 
+  allRoutes[0].children.push({
+    path: `/assessments/:id`,
+    element: <AssessmentScreen />
+  });
+
   NAVITEMS.forEach((item) => {
     allRoutes[0].children.push({
       path: `/${item.segment}`,
@@ -318,11 +323,6 @@ function createRouter() {
       path: `/${item.segment}/:id`,
       element: <EntityView />
     });
-  });
-
-  allRoutes[0].children.push({
-    path: `/assessment/:id`,
-    element: <AssessmentScreen />
   });
 
   allRoutes[0].children.push({

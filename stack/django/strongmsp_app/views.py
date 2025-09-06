@@ -243,7 +243,7 @@ class QuestionResponseCategoryStatsView(APIView):
         """
         Get aggregated sum of response values in QuestionResponses for each question category by a given author.
         """
-        from django.db.models import Sum
+        from django.db.models import Sum, Count
         from .models import QuestionResponses, Questions
 
         # Get all question responses for the given author
