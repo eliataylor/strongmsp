@@ -21,9 +21,9 @@ class ApiClient {
   }
 
   public async stream<T>(endpoint: string, data: any,
-                         onMessage: (chunk: T) => void,
-                         onError?: (error: string) => void,
-                         onDone?: () => void) {
+    onMessage: (chunk: T) => void,
+    onError?: (error: string) => void,
+    onDone?: () => void) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5 * 60 * 1000); // 5 minutes
 

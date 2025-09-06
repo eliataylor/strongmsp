@@ -1,4 +1,4 @@
-function getCookie (name) {
+function getCookie(name) {
   let cookieValue = null;
 
   if (document.cookie && document.cookie !== "") {
@@ -15,6 +15,6 @@ function getCookie (name) {
   return cookieValue;
 }
 
-export function getCSRFToken () {
-  return getCookie(process.env.REACT_APP_CSRF_COOKIE_NAME);
+export function getCSRFToken() {
+  return getCookie(process.env.REACT_APP_CSRF_COOKIE_NAME || 'csrftoken');
 }

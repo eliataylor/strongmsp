@@ -70,8 +70,8 @@ CSRF_COOKIE_SECURE = APP_HOST_PARTS.scheme == 'https'
 CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read the CSRF cookie
 CSRF_COOKIE_SAMESITE = 'Lax'
 
-# use `none` for both when testing with cypress or databuilder inside docker
-CSRF_COOKIE_DOMAIN = None
+# Set cookie domain to parent domain so both subdomains can access it
+CSRF_COOKIE_DOMAIN = '.strongmindstrongperformance.com'
 # CSRF_COOKIE_SAMESITE = None
 
 logger.debug(f"Allowed Origins: {CSRF_COOKIE_DOMAIN}")
