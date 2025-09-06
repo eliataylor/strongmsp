@@ -91,7 +91,7 @@ const UserView: React.FC = () => {
     updateAllStats();
 
     console.log("STATS", stats);
-  }, [stats, location.search, uid]);
+  }, [uid]);
 
   // Fetch question response category stats
   useEffect(() => {

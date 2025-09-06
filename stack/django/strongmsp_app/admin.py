@@ -154,6 +154,12 @@ class CoursesAdmin(BaseModelAdmin):
     ordering = ('-created_at',)
     list_editable = ('title', 'price')
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "author":
+            # Limit to users in the Agents group
+            kwargs["queryset"] = Users.objects.filter(groups__name='Agents').distinct().order_by('username')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 @admin.register(Assessments)
 class AssessmentsAdmin(BaseModelAdmin):
     readonly_fields = ('id', 'created_at', 'modified_at')
@@ -169,6 +175,12 @@ class AssessmentsAdmin(BaseModelAdmin):
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
     list_editable = ('title',)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "author":
+            # Limit to users in the Agents group
+            kwargs["queryset"] = Users.objects.filter(groups__name='Agents').distinct().order_by('username')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(AssessmentQuestions)
 class AssessmentQuestionsAdmin(BaseModelAdmin):
@@ -213,6 +225,9 @@ class AssessmentQuestionsAdmin(BaseModelAdmin):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "question":
             kwargs["queryset"] = Questions.objects.all().order_by('title')
+        elif db_field.name == "author":
+            # Limit to users in the Agents group
+            kwargs["queryset"] = Users.objects.filter(groups__name='Agents').distinct().order_by('username')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(Questions)
@@ -247,6 +262,12 @@ class QuestionsAdmin(BaseModelAdmin):
     # Make it easier to find questions when selecting
     list_per_page = 100  # Show more questions per page
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "author":
+            # Limit to users in the Agents group
+            kwargs["queryset"] = Users.objects.filter(groups__name='Agents').distinct().order_by('username')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 @admin.register(QuestionResponses)
 class QuestionResponsesAdmin(BaseModelAdmin):
     readonly_fields = ('id', 'created_at', 'modified_at')
@@ -270,6 +291,12 @@ class QuestionResponsesAdmin(BaseModelAdmin):
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
     list_editable = ('response',)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "author":
+            # Limit to users in the Athletes group
+            kwargs["queryset"] = Users.objects.filter(groups__name='Athletes').distinct().order_by('username')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(Payments)
 class PaymentsAdmin(BaseModelAdmin):
@@ -320,6 +347,15 @@ class PaymentsAdmin(BaseModelAdmin):
     ordering = ('-created_at',)
     list_editable = ('status', 'paid')
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "athlete":
+            # Limit to users in the Athletes group
+            kwargs["queryset"] = Users.objects.filter(groups__name='Athletes').distinct().order_by('username')
+        elif db_field.name == "preferred_coach":
+            # Limit to users in the Agents group
+            kwargs["queryset"] = Users.objects.filter(groups__name='Agents').distinct().order_by('username')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 @admin.register(PromptTemplates)
 class PromptTemplatesAdmin(BaseModelAdmin):
     readonly_fields = ('id', 'created_at', 'modified_at')
@@ -354,6 +390,12 @@ class PromptTemplatesAdmin(BaseModelAdmin):
     readonly_fields = ('id', 'created_at', 'modified_at')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "author":
+            # Limit to users in the Agents group
+            kwargs["queryset"] = Users.objects.filter(groups__name='Agents').distinct().order_by('username')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(AgentResponses)
 class AgentResponsesAdmin(BaseModelAdmin):
@@ -395,6 +437,12 @@ class AgentResponsesAdmin(BaseModelAdmin):
     readonly_fields = ('id', 'created_at', 'modified_at')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "athlete":
+            # Limit to users in the Athletes group
+            kwargs["queryset"] = Users.objects.filter(groups__name='Athletes').distinct().order_by('username')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(CoachContent)
 class CoachContentAdmin(BaseModelAdmin):
@@ -444,6 +492,12 @@ class CoachContentAdmin(BaseModelAdmin):
     ordering = ('-created_at',)
     list_editable = ('privacy',)
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "author":
+            # Limit to users in the Agents group
+            kwargs["queryset"] = Users.objects.filter(groups__name='Agents').distinct().order_by('username')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 @admin.register(Shares)
 class SharesAdmin(BaseModelAdmin):
     readonly_fields = ('id', 'created_at', 'modified_at')
@@ -482,4 +536,10 @@ class SharesAdmin(BaseModelAdmin):
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
     list_editable = ('expires',)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "recipient":
+            # Limit to users in the Athletes group
+            kwargs["queryset"] = Users.objects.filter(groups__name='Athletes').distinct().order_by('username')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 ####OBJECT-ACTIONS-ADMIN_MODELS-ENDS####

@@ -210,6 +210,14 @@ class PromptTemplates(SuperModel):
 		verbose_name = "Prompt Template"
 		verbose_name_plural = "Prompt Templates"
 
+	def __str__(self):
+		return self.purpose
+
+	def save(self, *args, **kwargs):
+		if not self.purpose:
+			self.purpose = self.PurposeChoices.lessonpackage
+		super().save(*args, **kwargs)
+
 	class StatusChoices(models.TextChoices):
 		active = ("active", "Active")
 		archived = ("archived", " archived")
@@ -260,12 +268,21 @@ class CoachContent(SuperModel):
 		public = ("public", "Public")
 		authenticated = ("authenticated", " authenticated")
 		mentioned = ("mentioned", " mentioned")
+
+	class PurposeChoices(models.TextChoices):
+		lessonpackage = ("lessonpackage", "Lesson-package")
+		TwelveSessions = ("12sessions", " 12-sessions")
+		talkingpoints = ("talkingpoints", " talking-points")
+		feedbackreport = ("feedbackreport", " feedback-report")
+		parentemail = ("parentemail", " parent-email")
+
 	author = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Coach')
 	title = models.TextField(verbose_name='Title')
 	body = models.TextField(verbose_name='Body')
 	icon = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Icon')
 	cover_photo = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Cover Photo')
 	privacy = models.CharField(max_length=13, choices=PrivacyChoices.choices, verbose_name='Privacy', default="mentioned")
+	purpose = models.CharField(max_length=14, choices=PurposeChoices.choices, verbose_name='Purpose', blank=True, null=True)
 
 class Shares(SuperModel):
 	class Meta:

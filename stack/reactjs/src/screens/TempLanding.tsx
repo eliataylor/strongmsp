@@ -17,7 +17,7 @@ const TempLanding: React.FC<SplashScreenProps> = ({ loading = undefined }) => {
       justifyContent={"center"}
       sx={{
         textAlign: "center",
-        height: "100vh",
+        minHeight: "100vh",
         margin: "0 auto"
       }}
     >
@@ -38,7 +38,7 @@ const TempLanding: React.FC<SplashScreenProps> = ({ loading = undefined }) => {
         coming soon
       </Typography>
 
-      <Grid style={{ margin: '60px auto' }}>
+      <Grid style={{ margin: '2% auto' }}>
         <Logo height={300} />
       </Grid>
 

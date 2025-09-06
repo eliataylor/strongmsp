@@ -61,7 +61,7 @@ login_service_account "$GCP_SA_KEY_PATH" "$GCP_PROJECT_ID"
 
 show_loading "Deploying container to Cloud Run..."
 
-gcloud run deploy $GCP_SERVICE_NAME-cloudrun \
+gcloud run deploy $GCP_SERVICE_NAME-api-cloudrun \
     --region $GCP_BUCKET_API_ZONE \
     --source . \
     --cpu 1 \
