@@ -20,6 +20,7 @@ from django.contrib.admin.views.main import ChangeList
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.db.models import Count, Q
+from django.contrib.admin import SimpleListFilter
 from .admin_mixins import SmartAdminMixin
 
 
@@ -55,6 +56,27 @@ class OptimizedChangeList(ChangeList):
                 required_fields.add('id')
             qs = qs.only(*required_fields)
         return qs
+
+
+# Custom filter for coaches
+class CoachFilter(SimpleListFilter):
+    title = 'coach'
+    parameter_name = 'coach'
+    
+    def lookups(self, request, model_admin):
+        """Return a list of tuples for the filter options"""
+        # Get users who are coaches (either by user_types or by being in a Coaches group)
+        coach_users = Users.objects.filter(
+            Q(user_types='coach') | Q(groups__name='Coaches')
+        ).distinct().order_by('username')
+        
+        return [(user.id, f"{user.get_full_name() or user.username} ({user.email})") for user in coach_users]
+    
+    def queryset(self, request, queryset):
+        """Filter the queryset based on the selected coach"""
+        if self.value():
+            return queryset.filter(author_id=self.value())
+        return queryset
 
 
 ####OBJECT-ACTIONS-ADMIN_MODELS-STARTS####
@@ -180,7 +202,7 @@ class AssessmentQuestionsAdmin(BaseModelAdmin):
         return queryset, use_distinct
 
     list_display = ('id', 'order', 'display_question_text', 'modified_at')
-    list_filter = ('order', 'created_at', 'modified_at', 'author', 'question__question_category')
+    list_filter = ('created_at', 'modified_at', 'author', 'question__question_category')
     search_fields = ('author__username', 'author__email', 'question__title', 'question__help_text')
     readonly_fields = ('id', 'created_at', 'modified_at')
     date_hierarchy = 'created_at'
@@ -415,7 +437,7 @@ class CoachContentAdmin(BaseModelAdmin):
     display_body_preview.short_description = "Content Preview"
 
     list_display = ('id', 'display_title_preview', 'display_coach', 'privacy', 'image_tag', 'cover_photo_tag', 'created_at', 'modified_at')
-    list_filter = ('privacy', 'created_at', 'modified_at', 'author')
+    list_filter = ('privacy', 'created_at', 'modified_at', CoachFilter)
     search_fields = ('title', 'body', 'author__username', 'author__email', 'author__first_name', 'author__last_name')
     readonly_fields = ('id', 'created_at', 'modified_at')
     date_hierarchy = 'created_at'

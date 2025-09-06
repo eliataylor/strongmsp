@@ -66,7 +66,7 @@ gcloud run deploy $GCP_SERVICE_NAME-cloudrun \
     --source . \
     --cpu 1 \
     --platform managed \
-    --service-account $GCP_SERVICE_NAME@$GCP_PROJECT_ID.iam.gserviceaccount.com \
+    --service-account $GCP_SERVICE_NAME-api@$GCP_PROJECT_ID.iam.gserviceaccount.com \
     --port 8088 \
     --add-cloudsql-instances=$GCP_MYSQL_PROJECT_ID:$GCP_MYSQL_ZONE:$GCP_MYSQL_INSTANCE \
     --set-env-vars DJANGO_ENV=production \

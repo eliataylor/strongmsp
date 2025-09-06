@@ -180,6 +180,7 @@ class AssessmentsSerializer(serializers.ModelSerializer):
         "title": "Assessment Title",
         "created_at": "2024-01-01T00:00:00Z",
         "modified_at": "2024-01-01T00:00:00Z",
+        "_type": "Assessments",
         "questions": [
             {
                 "assessment_question_id": 1,
