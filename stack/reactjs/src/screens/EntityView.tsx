@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
-import { ModelName, ModelType, NavItem, NAVITEMS } from "../object-actions/types/types";
-import EntityCard from "../object-actions/components/EntityCard";
 import ApiClient from "../config/ApiClient";
+import EntityCard from "../object-actions/components/EntityCard";
+import { AgentResponses, CoachContent, ModelName, ModelType, NavItem, NAVITEMS } from "../object-actions/types/types";
+import AgentResponseScreen from "./AgentResponseScreen";
+import CoachContentScreen from "./CoachContentScreen";
 
 const EntityView = () => {
   const location = useLocation();
@@ -53,6 +55,26 @@ const EntityView = () => {
 
   if (!modelType) {
     return <div>Invalid entity type</div>;
+  }
+
+  // Check if this is a CoachContent entity and render the specialized screen
+  if (modelType === "CoachContent" && entityData.data) {
+    const coachContent = entityData.data as CoachContent;
+    return (
+      <div id="EntityView">
+        <CoachContentScreen entity={coachContent} />
+      </div>
+    );
+  }
+
+  // Check if this is an AgentResponses entity and render the specialized screen
+  if (modelType === "AgentResponses" && entityData.data) {
+    const agentResponse = entityData.data as AgentResponses;
+    return (
+      <div id="EntityView">
+        <AgentResponseScreen entity={agentResponse} />
+      </div>
+    );
   }
 
   return (
