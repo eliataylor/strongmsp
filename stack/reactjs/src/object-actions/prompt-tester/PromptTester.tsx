@@ -1,7 +1,5 @@
 import {
-    Psychology as AIcon,
     FormatQuote,
-    ListAlt,
     PlayArrow
 } from "@mui/icons-material";
 import {
@@ -22,7 +20,8 @@ import React, { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "../../allauth/auth";
 import ApiClient from "../../config/ApiClient";
-import { AgentResponses, PromptTemplates, StreamChunk } from "../types/types";
+import AutocompleteField from "../forming/AutocompleteField";
+import { AgentResponses, PromptTemplates, RelEntity, StreamChunk } from "../types/types";
 import { AgentResponseViewer, PromptTemplateSelector } from "./index";
 import { getPurposeColor, getPurposeDisplay } from "./PromptTemplateSelector";
 
@@ -31,12 +30,12 @@ const PromptTester: React.FC = () => {
     const me = useAuth()?.data?.user;
     const [selectedTemplate, setSelectedTemplate] = useState<PromptTemplates | null>(null);
     const [messageBody, setMessageBody] = useState<string>("");
-    const [athleteId, setAthleteId] = useState<number | null>(null);
+    const [selectedUser, setSelectedUser] = useState<RelEntity<"Users"> | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [aiResponse, setAiResponse] = useState<string>("");
     const [agentResponseId, setAgentResponseId] = useState<number | null>(null);
-    const [showResponses, setShowResponses] = useState<boolean>(false);
+    const [showResponses, setShowResponses] = useState<boolean>(true);
 
     // Refs for streaming
     const aiResponseRef = useRef("");
@@ -48,8 +47,8 @@ const PromptTester: React.FC = () => {
             return;
         }
 
-        if (!athleteId) {
-            setError("Please select an Athlete");
+        if (!selectedUser) {
+            setError("Please select a User");
             return;
         }
 
@@ -67,8 +66,8 @@ const PromptTester: React.FC = () => {
             message_body: messageBody
         };
 
-        if (athleteId) {
-            testData.athlete_id = athleteId;
+        if (selectedUser) {
+            testData.athlete_id = selectedUser.id;
         }
 
         try {
@@ -120,63 +119,57 @@ const PromptTester: React.FC = () => {
         setAgentResponseId(null);
     };
 
+    const handleUserSelect = (user: RelEntity<"Users"> | null, field_name: string) => {
+        setSelectedUser(user);
+        setError(null);
+    };
+
     return (
         <Box>
-            <Grid container justifyContent={"space-between"} wrap={"nowrap"} alignItems={"center"}>
-                <Grid item>
-                    <Typography variant="h4" component="h1">
-                        Test AI Prompt Templates
-                    </Typography>
-                    <Typography variant="subtitle2" component="h2">
-                        Test and evaluate AI prompt templates with real-time streaming responses
-                    </Typography>
-                </Grid>
-                <Grid item>
-                    <Button
-                        variant="contained"
-                        size="small"
-                        color="secondary"
-                        startIcon={<ListAlt />}
-                        onClick={() => setShowResponses(!showResponses)}
-                    >
-                        {showResponses ? "Hide Responses" : "View Responses"}
-                    </Button>
-                </Grid>
-            </Grid>
 
             <Grid container spacing={3} sx={{ mt: 2 }}>
-                {/* Left Column - Template Selection and Input */}
                 <Grid item xs={12} >
-                    <Paper sx={{ p: 3, mb: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Select Template & Input
-                        </Typography>
+                    <PromptTemplateSelector
+                        onTemplateSelect={handleTemplateSelect}
+                        selectedTemplate={selectedTemplate}
+                    />
+                    {selectedTemplate && (
+                        <Paper sx={{ p: 3, mb: 3 }}>
 
-                        <PromptTemplateSelector
-                            onTemplateSelect={handleTemplateSelect}
-                            selectedTemplate={selectedTemplate}
-                        />
-
-                        {selectedTemplate && (
-                            <Box sx={{ mt: 3 }}>
-                                <Typography variant="subtitle2" gutterBottom>
-                                    Template Details:
-                                </Typography>
-                                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
+                            <Box>
+                                <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <Typography variant="h4" >
+                                        {selectedTemplate.author.str}
+                                    </Typography>
                                     <Chip label={getPurposeDisplay(selectedTemplate.purpose)} size="small"
                                         color={getPurposeColor(selectedTemplate.purpose) as any} />
                                 </Box>
 
                                 {selectedTemplate.instructions && (
-                                    <Alert severity="info" sx={{ mb: 2 }}>
-                                        <Typography variant="body2">
+                                    <Box sx={{ mb: 2 }}>
+                                        <Typography variant="body2" style={{ whiteSpace: "pre-wrap" }}>
                                             <strong>Instructions:</strong> {selectedTemplate.instructions}
                                         </Typography>
-                                        <Typography variant="body2">
+                                    </Box>
+                                )}
+                                {selectedTemplate.prompt && (
+                                    <Box sx={{ mb: 2 }}>
+                                        <Typography variant="body2" style={{ whiteSpace: "pre-wrap" }}>
                                             <strong>Prompt:</strong> {selectedTemplate.prompt}
                                         </Typography>
-                                    </Alert>
+                                    </Box>
                                 )}
+
+                                <AutocompleteField
+                                    type="Users"
+                                    search_fields={["username", "email", "first_name", "last_name"]}
+                                    image_field={undefined}
+                                    field_name="user"
+                                    field_label="Athelete"
+                                    query_filters="group=athletes"
+                                    selected={selectedUser}
+                                    onSelect={handleUserSelect}
+                                />
 
                                 <TextField
                                     fullWidth
@@ -187,19 +180,24 @@ const PromptTester: React.FC = () => {
                                     value={messageBody}
                                     onChange={(e) => setMessageBody(e.target.value)}
                                     disabled={loading}
-                                    sx={{ mb: 2 }}
+                                    sx={{ my: 2 }}
                                 />
 
-                                <TextField
-                                    fullWidth
-                                    type="number"
-                                    label="Athlete ID"
-                                    placeholder="Enter athlete ID for personalized responses"
-                                    value={athleteId || ""}
-                                    onChange={(e) => setAthleteId(e.target.value ? parseInt(e.target.value) : null)}
-                                    disabled={loading}
-                                    sx={{ mb: 2 }}
-                                />
+                                <Alert severity="info" sx={{ mb: 2 }}>
+                                    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                        Available Tokens (use double curly braces):
+                                    </Typography>
+                                    <Typography variant="body2" component="div">
+                                        • <strong>{`{{athlete_name}}`}</strong> - Selected athlete's full name<br />
+                                        • <strong>{`{{assesment_aggregated}}`}</strong> - Aggregated assessment results<br />
+                                        • <strong>{`{{assesment_responses}}`}</strong> - Detailed assessment responses<br />
+                                        • <strong>{`{{lessonpackage}}`}</strong> - Most recent lesson package response<br />
+                                        • <strong>{`{{12sessions}}`}</strong> - Most recent 12-sessions response<br />
+                                        • <strong>{`{{talkingpoints}}`}</strong> - Most recent talking points response<br />
+                                        • <strong>{`{{feedbackreport}}`}</strong> - Most recent feedback report response<br />
+                                        • <strong>{`{{parentemail}}`}</strong> - Most recent parent email response
+                                    </Typography>
+                                </Alert>
 
                                 {error && (
                                     <Alert severity="error" sx={{ mb: 2 }}>
@@ -212,74 +210,44 @@ const PromptTester: React.FC = () => {
                                     color="primary"
                                     startIcon={loading ? <CircularProgress size={24} /> : <PlayArrow />}
                                     onClick={handleTest}
-                                    disabled={loading || !selectedTemplate || !messageBody.trim()}
+                                    disabled={loading || !selectedTemplate || !selectedUser || !messageBody.trim()}
                                     fullWidth
                                 >
                                     {loading ? "Testing..." : "Test Template"}
                                 </Button>
                             </Box>
-                        )}
-                    </Paper>
-                </Grid>
-
-                {/* Right Column - AI Response */}
-                <Grid item xs={12} >
-                    <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                            AI Response
-                        </Typography>
-
-                        {selectedTemplate && (
-                            <Box sx={{ mb: 2 }}>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                    Testing: <strong>{selectedTemplate.purpose}</strong>
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    Model: {selectedTemplate.model || "gpt-4o-mini"} |
-                                    Format: {selectedTemplate.response_format || "text"}
-                                </Typography>
-                            </Box>
-                        )}
-
-                        {loading && (
-                            <Box sx={{ textAlign: "center", py: 4 }}>
-                                <Typography variant="body1" sx={{ mb: 2, fontStyle: "italic" }}>
-                                    <FormatQuote fontSize="small" />
-                                    {messageBody}
-                                    <FormatQuote fontSize="small" />
-                                </Typography>
-                                <CircularProgress />
-                                <Typography variant="body2" sx={{ mt: 2 }}>
-                                    Generating response...
-                                </Typography>
-                            </Box>
-                        )}
-
-                        {aiResponse && (
-                            <Box>
-                                <Divider sx={{ mb: 2 }} />
-                                <ReactMarkdown>{aiResponse}</ReactMarkdown>
-                                {agentResponseId && (
-                                    <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}>
-                                        <Typography variant="caption" color="text.secondary">
-                                            Response ID: {agentResponseId} | Saved to database
-                                        </Typography>
-                                    </Box>
-                                )}
-                            </Box>
-                        )}
-
-                        {!loading && !aiResponse && selectedTemplate && (
-                            <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
-                                <AIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
-                                <Typography variant="body1">
-                                    Click "Test Template" to generate an AI response
-                                </Typography>
-                            </Box>
-                        )}
-                    </Paper>
+                        </Paper>
+                    )}
                 </Grid>
             </Grid>
+
+            {loading && (
+                <Box sx={{ textAlign: "center", py: 4 }}>
+                    <Typography variant="body1" sx={{ mb: 2, fontStyle: "italic" }}>
+                        <FormatQuote fontSize="small" />
+                        {messageBody}
+                        <FormatQuote fontSize="small" />
+                    </Typography>
+                    <CircularProgress />
+                    <Typography variant="body2" sx={{ mt: 2 }}>
+                        Generating response...
+                    </Typography>
+                </Box>
+            )}
+
+            {aiResponse && (
+                <Box>
+                    <Divider sx={{ mb: 2 }} />
+                    <ReactMarkdown>{aiResponse}</ReactMarkdown>
+                    {agentResponseId && (
+                        <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}>
+                            <Typography variant="caption" color="text.secondary">
+                                Response ID: {agentResponseId} | Saved to database
+                            </Typography>
+                        </Box>
+                    )}
+                </Box>
+            )}
 
             {/* Agent Responses Viewer */}
             {showResponses && (
@@ -290,6 +258,7 @@ const PromptTester: React.FC = () => {
                             setMessageBody(response.message_body);
                             setAiResponse(response.ai_response);
                             setAgentResponseId(typeof response.id === 'string' ? parseInt(response.id) : response.id);
+                            // Note: You may want to set selectedUser based on response data if available
                         }}
                     />
                 </Box>

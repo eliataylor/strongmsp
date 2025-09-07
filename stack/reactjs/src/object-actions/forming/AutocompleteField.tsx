@@ -1,24 +1,26 @@
-import React, {useState} from "react";
-import {Autocomplete, TextField} from "@mui/material";
-import {ModelName, ModelType, RelEntity} from "../types/types";
-import {AcOption, Api2Options, BaseAcFieldProps, useAutocomplete} from "./AutoCompleteUtils";
-import {renderInputAdornments, renderOption} from "./AutoCompleteElements";
+import { Autocomplete, TextField } from "@mui/material";
+import React, { useState } from "react";
+import { ModelName, ModelType, RelEntity } from "../types/types";
+import { renderInputAdornments, renderOption } from "./AutoCompleteElements";
+import { AcOption, Api2Options, BaseAcFieldProps, useAutocomplete } from "./AutoCompleteUtils";
 import NewFormDialog from "./NewFormDialog";
 
 interface SingleAcFieldProps<T extends ModelName> extends BaseAcFieldProps<T> {
     selected: RelEntity<T> | null;
     onSelect: (selected: RelEntity<T> | null, field_name: string) => void;
+    query_filters?: string;
 }
 
 export default function AutocompleteField<T extends ModelName>({
-                                                                   type,
-                                                                   search_fields,
-                                                                   image_field,
-                                                                   field_name,
-                                                                   onSelect,
-                                                                   selected,
-                                                                   field_label = "Search"
-                                                               }: SingleAcFieldProps<T>) {
+    type,
+    search_fields,
+    image_field,
+    field_name,
+    onSelect,
+    selected,
+    field_label = "Search",
+    query_filters
+}: SingleAcFieldProps<T>) {
     const {
         options,
         loading,
@@ -26,7 +28,7 @@ export default function AutocompleteField<T extends ModelName>({
         setInputValue,
         setNestedForm,
         setNestedEntity
-    } = useAutocomplete({type, search_fields, image_field, field_name, field_label});
+    } = useAutocomplete({ type, search_fields, image_field, field_name, field_label, query_filters });
 
     const [selectedOption, setSelectedOption] = useState<AcOption | null>(
         selected
@@ -41,7 +43,7 @@ export default function AutocompleteField<T extends ModelName>({
     const onNestedCreated = (entity: ModelType<T>) => {
         const option = Api2Options([entity], search_fields, image_field)[0];
         setSelectedOption(option);
-        onSelect({id: option.value, str: option.label, _type: type}, field_name);
+        onSelect({ id: option.value, str: option.label, _type: type }, field_name);
     };
 
     return (
@@ -68,6 +70,8 @@ export default function AutocompleteField<T extends ModelName>({
                             str: newValue.label,
                             _type: type
                         }, field_name);
+                    } else {
+                        onSelect(null, field_name);
                     }
                 }}
                 onInputChange={(event, newInputValue) => setInputValue(newInputValue)}

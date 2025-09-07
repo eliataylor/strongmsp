@@ -47,8 +47,32 @@ class UsersViewSet(viewsets.ModelViewSet):
     queryset = Users.objects.all().order_by('id')
     serializer_class = UsersSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['first_name', 'last_name']
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ['first_name', 'last_name', 'username', 'email']
+    filterset_fields = ['groups']
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filter by athletes group if requested
+        groups = self.request.query_params.get('groups')
+        if groups:
+            if groups == 'athletes':
+                try:
+                    athletes_group = Group.objects.get(name='athletes')
+                    queryset = queryset.filter(groups=athletes_group)
+                except Group.DoesNotExist:
+                    # Return empty queryset if athletes group doesn't exist
+                    queryset = queryset.none()
+            else:
+                # Handle other group filters if needed
+                group_names = groups.split(',')
+                queryset = queryset.filter(groups__name__in=group_names)
+        
+        return queryset
+    
+
+
 
 
 class CoursesViewSet(viewsets.ModelViewSet):

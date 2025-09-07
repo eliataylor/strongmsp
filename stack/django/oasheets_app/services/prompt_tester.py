@@ -191,20 +191,17 @@ class PromptTester:
 
     def build_prompt(self) -> str:
         """Build the complete prompt from template and user input"""
-        base_prompt = self.prompt_template.prompt
-        
-        # Replace placeholders in the prompt
-        if "{message_body}" in base_prompt:
-            base_prompt = base_prompt.replace("{message_body}", self.message_body)
-        if "{athlete_name}" in base_prompt and self.athlete:
-            base_prompt = base_prompt.replace("{athlete_name}", str(self.athlete))
-        
-        # Add instructions if provided
+        base_prompt = []
+
         if self.prompt_template.instructions:
-            base_prompt = f"{self.prompt_template.instructions}\n\n{base_prompt}"
+            base_prompt.append(self.prompt_template.instructions)
+
+        base_prompt.append(self.prompt_template.prompt)
+        
+        base_prompt.append(self.message_body)
         
         # Handle token replacement for {{token}} patterns using TokenReplacer
-        base_prompt = self.token_replacer.replace_tokens(base_prompt)
+        base_prompt = self.token_replacer.replace_tokens("\n\n".join(base_prompt))
         
         return base_prompt
 
