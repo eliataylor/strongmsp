@@ -5,6 +5,8 @@ from django.urls import include, path
 from .views import UserModelListView
 from .views import UserStatsView
 from .views import QuestionResponseCategoryStatsView
+from .views import AvailableGroupsView
+from .views import GroupStatsView
 from .views import RenderFrontendIndex
 from .views import redirect_to_frontend
 from .oa_testing import OATesterUserViewSet
@@ -47,6 +49,8 @@ urlpatterns += [
     path('api/users/<int:user_id>/<str:model_name>/list', UserModelListView.as_view(), name='user-model-list'),
     path('api/users/<int:user_id>/<str:model_name>/stats', UserStatsView.as_view(), name='user-model-stats'),
     path('api/users/<int:user_id>/question-response-category-stats', QuestionResponseCategoryStatsView.as_view(), name='question-response-category-stats'),
+    path('api/groups/available', AvailableGroupsView.as_view(), name='available-groups'),
+    path('api/groups/stats', GroupStatsView.as_view(), name='group-stats'),
     path('api/', include(OARouter.urls)),
 ]
 ####OBJECT-ACTIONS-URLS-ENDS####

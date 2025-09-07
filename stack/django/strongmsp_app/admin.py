@@ -493,15 +493,13 @@ class PromptTemplatesAdmin(BaseModelAdmin):
         # Add help text to prompt and instructions fields
         if 'prompt' in form.base_fields:
             form.base_fields['prompt'].help_text = (
-                "Enter your prompt template. Use {{token_name}} syntax for dynamic content. "
-                "Available tokens: {{assesment_aggregated}}, {{assesment_responses}}, "
+                "Available tokens: {{athlete_name}}, {{assesment_aggregated}}, {{assesment_responses}}, "
                 "{{lessonpackage}}, {{12sessions}}, {{talkingpoints}}, {{feedbackreport}}, {{parentemail}}"
             )
         
         if 'instructions' in form.base_fields:
             form.base_fields['instructions'].help_text = (
-                "Additional instructions for the AI. Use {{token_name}} syntax for dynamic content. "
-                "Available tokens: {{assesment_aggregated}}, {{assesment_responses}}, "
+                "Available tokens: {{athlete_name}}, {{assesment_aggregated}}, {{assesment_responses}}, "
                 "{{lessonpackage}}, {{12sessions}}, {{talkingpoints}}, {{feedbackreport}}, {{parentemail}}"
             )
         

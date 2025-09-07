@@ -13,6 +13,9 @@ import random
 import re
 import os
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
+from django_filters.rest_framework import DjangoFilterBackend
+from django.contrib.auth.models import Group
+from django.db.models import Q
 from .serializers import UsersSerializer
 from .models import Users
 from .serializers import CoursesSerializer
@@ -192,11 +195,29 @@ class UserStatsView(APIView):
     ],
     responses={200: 'Paginated list of objects owned by the user'},
 )
+@extend_schema(
+    parameters=[
+        OpenApiParameter(
+            name='search', 
+            description='Search term', 
+            required=False, 
+            type=str
+        ),
+        OpenApiParameter(
+            name='group', 
+            description='Filter by author group name (e.g., "Athletes", "Agents", "Coaches")', 
+            required=False, 
+            type=str
+        ),
+    ],
+    responses={200: 'Paginated list of objects owned by the user'},
+)
 class UserModelListView(generics.GenericAPIView):
 
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = CustomLimitOffsetPagination
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    
     def get(self, request, user_id, model_name):
         # Check if the model exists
         try:
@@ -213,6 +234,18 @@ class UserModelListView(generics.GenericAPIView):
         if search_query:
             queryset = self.filter_queryset(queryset)
 
+        # Apply group filtering
+        group_name = request.query_params.get('group')
+        if group_name:
+            # Verify the group exists
+            if not Group.objects.filter(name=group_name).exists():
+                return JsonResponse({
+                    'detail': f'Group "{group_name}" not found. Available groups: {", ".join(Group.objects.values_list("name", flat=True))}'
+                }, status=400)
+            
+            # Filter by group membership
+            queryset = queryset.filter(author__groups__name=group_name)
+
         serializer_class = self.get_serializer_classname(model_class)
 
         if not serializer_class:
@@ -222,7 +255,17 @@ class UserModelListView(generics.GenericAPIView):
         paginator = self.pagination_class()
         paginated_queryset = paginator.paginate_queryset(queryset, request)
         serializer = serializer_class(paginated_queryset, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        
+        # Add metadata about applied filters
+        response_data = paginator.get_paginated_response(serializer.data)
+        if hasattr(response_data, 'data'):
+            response_data.data['filters_applied'] = {
+                'search': search_query,
+                'group': group_name,
+                'total_count': queryset.count()
+            }
+        
+        return response_data
 
     def get_serializer_classname(self, model_class):
         # Dynamically determine the serializer class based on the model
@@ -231,6 +274,89 @@ class UserModelListView(generics.GenericAPIView):
     def filter_queryset(self, queryset):
         search_filter = filters.SearchFilter()
         return search_filter.filter_queryset(self.request, queryset, self)
+
+
+@extend_schema(
+    responses={200: 'List of available groups for filtering'},
+)
+class AvailableGroupsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        """
+        Get list of available groups that can be used for filtering.
+        """
+        groups = Group.objects.all().values('id', 'name')
+        return JsonResponse({
+            'groups': list(groups),
+            'count': groups.count()
+        })
+
+
+@extend_schema(
+    parameters=[
+        OpenApiParameter(
+            name='group', 
+            description='Group name to get statistics for', 
+            required=False, 
+            type=str
+        ),
+    ],
+    responses={200: 'Group statistics and member counts'},
+)
+class GroupStatsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        """
+        Get statistics about groups and their members.
+        """
+        group_name = request.query_params.get('group')
+        
+        if group_name:
+            # Get stats for specific group
+            try:
+                group = Group.objects.get(name=group_name)
+                member_count = group.user_set.count()
+                
+                # Get model counts for this group
+                model_counts = {}
+                for model_name in SEARCH_FIELDS_MAPPING.keys():
+                    try:
+                        model_class = apps.get_model("strongmsp_app", model_name)
+                        if hasattr(model_class, 'author'):
+                            count = model_class.objects.filter(author__groups=group).count()
+                            model_counts[model_name] = count
+                    except LookupError:
+                        continue
+                
+                return JsonResponse({
+                    'group': {
+                        'id': group.id,
+                        'name': group.name,
+                        'member_count': member_count,
+                        'model_counts': model_counts
+                    }
+                })
+            except Group.DoesNotExist:
+                return JsonResponse({
+                    'error': f'Group "{group_name}" not found'
+                }, status=404)
+        else:
+            # Get stats for all groups
+            groups_data = []
+            for group in Group.objects.all():
+                member_count = group.user_set.count()
+                groups_data.append({
+                    'id': group.id,
+                    'name': group.name,
+                    'member_count': member_count
+                })
+            
+            return JsonResponse({
+                'groups': groups_data,
+                'total_groups': len(groups_data)
+            })
 
 
 @extend_schema(

@@ -2,12 +2,11 @@ import { Psychology as AIcon, PlayArrow, Search } from "@mui/icons-material";
 import {
     Alert,
     Box,
-    Button,
     Card,
-    CardActions,
     CardContent,
-    Chip,
+    CardHeader,
     CircularProgress,
+    IconButton,
     InputAdornment,
     TextField,
     Typography
@@ -15,6 +14,30 @@ import {
 import React, { useEffect, useState } from "react";
 import ApiClient from "../../config/ApiClient";
 import { PromptTemplates } from "../types/types";
+
+
+export const getPurposeColor = (purpose: string) => {
+    const colors: { [key: string]: string } = {
+        "lessonpackage": "primary",
+        "12sessions": "secondary",
+        "talkingpoints": "success",
+        "feedbackreport": "warning",
+        "parentemail": "info"
+    };
+    return colors[purpose] || "default";
+};
+
+export const getPurposeDisplay = (purpose: string) => {
+    const colors: { [key: string]: string } = {
+        "lessonpackage": "Lesson Package",
+        "12sessions": "12-Sessions",
+        "talkingpoints": "Talking Points",
+        "feedbackreport": "Feedback Report",
+        "parentemail": "Parent Email"
+    };
+    return colors[purpose] || "Default";
+};
+
 
 interface PromptTemplateSelectorProps {
     onTemplateSelect: (template: PromptTemplates) => void;
@@ -57,17 +80,6 @@ const PromptTemplateSelector: React.FC<PromptTemplateSelectorProps> = ({
         template.prompt.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (template.instructions && template.instructions.toLowerCase().includes(searchTerm.toLowerCase()))
     );
-
-    const getPurposeColor = (purpose: string) => {
-        const colors: { [key: string]: string } = {
-            "lessonpackage": "primary",
-            "12sessions": "secondary",
-            "talkingpoints": "success",
-            "feedbackreport": "warning",
-            "parentemail": "info"
-        };
-        return colors[purpose] || "default";
-    };
 
     const truncateText = (text: string, maxLength = 100) => {
         if (text.length <= maxLength) return text;
@@ -124,31 +136,21 @@ const PromptTemplateSelector: React.FC<PromptTemplateSelectorProps> = ({
                                 boxShadow: 2,
                             }
                         }}
-                        onClick={() => onTemplateSelect(template)}
                     >
+                        <CardHeader
+                            title={getPurposeDisplay(template.purpose)}
+                            subheader={`Created: ${new Date(template.created_at).toLocaleDateString()}`}
+                            color={getPurposeColor(template.purpose) as any}
+                            action={
+                                <IconButton onClick={(e) => {
+                                    e.stopPropagation();
+                                    onTemplateSelect(template);
+                                }}>
+                                    <PlayArrow />
+                                </IconButton>
+                            }
+                        />
                         <CardContent>
-                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1 }}>
-                                <Typography variant="h6" component="div">
-                                    {template.purpose}
-                                </Typography>
-                                <Box sx={{ display: "flex", gap: 0.5 }}>
-                                    <Chip
-                                        label={template.model || "gpt-4o-mini"}
-                                        size="small"
-                                        variant="outlined"
-                                    />
-                                    <Chip
-                                        label={template.response_format || "text"}
-                                        size="small"
-                                        variant="outlined"
-                                        color={getPurposeColor(template.purpose) as any}
-                                    />
-                                </Box>
-                            </Box>
-
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                {truncateText(template.prompt)}
-                            </Typography>
 
                             {template.instructions && (
                                 <Typography variant="body2" sx={{
@@ -159,36 +161,14 @@ const PromptTemplateSelector: React.FC<PromptTemplateSelectorProps> = ({
                                     bgcolor: "action.hover",
                                     borderRadius: 1
                                 }}>
-                                    <strong>Instructions:</strong> {truncateText(template.instructions, 150)}
+                                    <strong>System Instructions:</strong> {truncateText(template.instructions, 150)}
                                 </Typography>
                             )}
 
-                            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                                <Chip
-                                    label={template.status}
-                                    size="small"
-                                    color={template.status === "active" ? "success" : "default"}
-                                />
-                                <Chip
-                                    label={new Date(template.created_at).toLocaleDateString()}
-                                    size="small"
-                                    variant="outlined"
-                                />
-                            </Box>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                {truncateText(template.prompt)}
+                            </Typography>
                         </CardContent>
-
-                        <CardActions>
-                            <Button
-                                size="small"
-                                startIcon={<PlayArrow />}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onTemplateSelect(template);
-                                }}
-                            >
-                                Select & Test
-                            </Button>
-                        </CardActions>
                     </Card>
                 ))}
             </Box>

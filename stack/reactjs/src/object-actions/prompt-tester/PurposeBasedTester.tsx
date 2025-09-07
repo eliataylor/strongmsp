@@ -88,6 +88,11 @@ const PurposeBasedTester: React.FC = () => {
             return;
         }
 
+        if (!athleteId) {
+            setError("Please an Athlete");
+            return;
+        }
+
         if (!messageBody.trim()) {
             setError("Please enter a message body");
             return;
@@ -207,8 +212,6 @@ const PurposeBasedTester: React.FC = () => {
                                 </Typography>
                                 <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
                                     <Chip label={selectedPurposeOption.label} size="small" />
-                                    <Chip label={selectedPurposeOption.responseFormat} size="small" />
-                                    <Chip label={selectedPurposeOption.model} size="small" />
                                 </Box>
                             </Box>
                         )}
@@ -228,7 +231,7 @@ const PurposeBasedTester: React.FC = () => {
                         <TextField
                             fullWidth
                             type="number"
-                            label="Athlete ID (Optional)"
+                            label="Athlete ID"
                             placeholder="Enter athlete ID for personalized responses"
                             value={athleteId || ""}
                             onChange={(e) => setAthleteId(e.target.value ? parseInt(e.target.value) : null)}

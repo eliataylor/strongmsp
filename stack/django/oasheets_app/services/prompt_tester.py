@@ -27,7 +27,8 @@ class TokenReplacer:
             "12sessions": lambda: self._get_agent_response_by_purpose("12sessions"),
             "talkingpoints": lambda: self._get_agent_response_by_purpose("talkingpoints"),
             "feedbackreport": lambda: self._get_agent_response_by_purpose("feedbackreport"),
-            "parentemail": lambda: self._get_agent_response_by_purpose("parentemail")
+            "parentemail": lambda: self._get_agent_response_by_purpose("parentemail"),
+            "athlete_name": lambda: self.athlete.get_full_name() if self.athlete else ""
         }
     
     def add_token_handler(self, token_name: str, handler_func):

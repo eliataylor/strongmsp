@@ -24,6 +24,7 @@ import { useAuth } from "../../allauth/auth";
 import ApiClient from "../../config/ApiClient";
 import { AgentResponses, PromptTemplates, StreamChunk } from "../types/types";
 import { AgentResponseViewer, PromptTemplateSelector } from "./index";
+import { getPurposeColor, getPurposeDisplay } from "./PromptTemplateSelector";
 
 const PromptTester: React.FC = () => {
     const { enqueueSnackbar } = useSnackbar();
@@ -44,6 +45,11 @@ const PromptTester: React.FC = () => {
     const handleTest = () => {
         if (!selectedTemplate) {
             setError("Please select a prompt template");
+            return;
+        }
+
+        if (!athleteId) {
+            setError("Please select an Athlete");
             return;
         }
 
@@ -140,7 +146,7 @@ const PromptTester: React.FC = () => {
 
             <Grid container spacing={3} sx={{ mt: 2 }}>
                 {/* Left Column - Template Selection and Input */}
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} >
                     <Paper sx={{ p: 3, mb: 3 }}>
                         <Typography variant="h6" gutterBottom>
                             Select Template & Input
@@ -157,15 +163,17 @@ const PromptTester: React.FC = () => {
                                     Template Details:
                                 </Typography>
                                 <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
-                                    <Chip label={selectedTemplate.purpose} size="small" />
-                                    <Chip label={selectedTemplate.model || "gpt-4o-mini"} size="small" />
-                                    <Chip label={selectedTemplate.response_format || "text"} size="small" />
+                                    <Chip label={getPurposeDisplay(selectedTemplate.purpose)} size="small"
+                                        color={getPurposeColor(selectedTemplate.purpose) as any} />
                                 </Box>
 
                                 {selectedTemplate.instructions && (
                                     <Alert severity="info" sx={{ mb: 2 }}>
                                         <Typography variant="body2">
                                             <strong>Instructions:</strong> {selectedTemplate.instructions}
+                                        </Typography>
+                                        <Typography variant="body2">
+                                            <strong>Prompt:</strong> {selectedTemplate.prompt}
                                         </Typography>
                                     </Alert>
                                 )}
@@ -185,7 +193,7 @@ const PromptTester: React.FC = () => {
                                 <TextField
                                     fullWidth
                                     type="number"
-                                    label="Athlete ID (Optional)"
+                                    label="Athlete ID"
                                     placeholder="Enter athlete ID for personalized responses"
                                     value={athleteId || ""}
                                     onChange={(e) => setAthleteId(e.target.value ? parseInt(e.target.value) : null)}
@@ -215,7 +223,7 @@ const PromptTester: React.FC = () => {
                 </Grid>
 
                 {/* Right Column - AI Response */}
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} >
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h6" gutterBottom>
                             AI Response
