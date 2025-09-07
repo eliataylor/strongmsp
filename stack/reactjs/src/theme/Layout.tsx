@@ -1,6 +1,6 @@
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import MenuIcon from "@mui/icons-material/Menu";
-import { AppBar, Box, Divider, Grid, List, ListItemButton } from "@mui/material";
+import { AppBar, Box, Divider, Grid, List, ListItemButton, ListItemText } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import Snackbar from "@mui/material/Snackbar";
 import { styled } from "@mui/material/styles";
@@ -111,6 +111,14 @@ const Layout: React.FC = () => {
 
               <List dense={true}>
                 <ContentMenu />
+
+                <ListItemButton
+                  selected={location.pathname === `/prompt-tester`}
+                  component={Link}
+                  to={`/prompt-tester`}
+                >
+                  <ListItemText primary={'Prompt Tester'} />
+                </ListItemButton>
               </List>
 
               <Divider

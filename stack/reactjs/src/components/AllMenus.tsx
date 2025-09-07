@@ -1,6 +1,7 @@
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { Collapse, Divider, List, ListItemButton, ListItemText } from "@mui/material";
 import React from "react";
+import { Link, useLocation } from "react-router-dom";
 import FontSelector from "src/theme/FontSelector";
 import ThemeSwitcher from "src/theme/ThemeSwitcher";
 import AuthMenu from "../components/AuthMenu";
@@ -8,6 +9,7 @@ import ContentMenu from "./ContentMenu";
 
 const AllMenus = () => {
   const [objectsOpen, setObjectsOpen] = React.useState(false);
+  const location = useLocation();
 
   const handleClick = () => {
     setObjectsOpen(!objectsOpen);
@@ -41,6 +43,15 @@ const AllMenus = () => {
 
         <Collapse in={objectsOpen} timeout="auto" unmountOnExit>
           <ContentMenu />
+
+          <ListItemButton
+            component={Link}
+            to={`/prompt-tester`}
+            selected={location.pathname === `/prompt-tester`}
+          >
+            <ListItemText primary={'Prompt Tester'} />
+          </ListItemButton>
+
         </Collapse>
 
       </List>
@@ -52,7 +63,7 @@ const AllMenus = () => {
       <FontSelector />
 
 
-    </React.Fragment>
+    </React.Fragment >
   );
 };
 export default AllMenus;
