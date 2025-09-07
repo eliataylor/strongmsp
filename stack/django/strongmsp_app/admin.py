@@ -399,14 +399,14 @@ class PromptTemplatesAdmin(BaseModelAdmin):
         except ImportError:
             # Fallback if import fails
             available_tokens = [
-                "assesment_aggregated", "assesment_responses", 
+                "assessment_aggregated", "assesment_responses", 
                 "lessonpackage", "12sessions", "talkingpoints", 
                 "feedbackreport", "parentemail"
             ]
         
         # Create token descriptions
         token_descriptions = {
-            "assesment_aggregated": "Aggregated assessment results by category",
+            "assessment_aggregated": "Aggregated assessment results by category",
             "assesment_responses": "Detailed question responses",
             "lessonpackage": "Most recent lesson package response",
             "12sessions": "Most recent 12-sessions response",
@@ -493,13 +493,13 @@ class PromptTemplatesAdmin(BaseModelAdmin):
         # Add help text to prompt and instructions fields
         if 'prompt' in form.base_fields:
             form.base_fields['prompt'].help_text = (
-                "Available tokens: {{athlete_name}}, {{assesment_aggregated}}, {{assesment_responses}}, "
+                "Available tokens: {{athlete_name}}, {{assessment_aggregated}}, {{assesment_responses}}, "
                 "{{lessonpackage}}, {{12sessions}}, {{talkingpoints}}, {{feedbackreport}}, {{parentemail}}"
             )
         
         if 'instructions' in form.base_fields:
             form.base_fields['instructions'].help_text = (
-                "Available tokens: {{athlete_name}}, {{assesment_aggregated}}, {{assesment_responses}}, "
+                "Available tokens: {{athlete_name}}, {{assessment_aggregated}}, {{assesment_responses}}, "
                 "{{lessonpackage}}, {{12sessions}}, {{talkingpoints}}, {{feedbackreport}}, {{parentemail}}"
             )
         

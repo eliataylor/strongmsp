@@ -9,7 +9,6 @@ import {
     Chip,
     CircularProgress,
     Divider,
-    Fab,
     Grid,
     Paper,
     TextField,
@@ -18,16 +17,15 @@ import {
 import { useSnackbar } from "notistack";
 import React, { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { useAuth } from "../../allauth/auth";
 import ApiClient from "../../config/ApiClient";
+import AgentResponseScreen from "../../screens/AgentResponseScreen";
 import AutocompleteField from "../forming/AutocompleteField";
 import { AgentResponses, PromptTemplates, RelEntity, StreamChunk } from "../types/types";
-import { AgentResponseViewer, PromptTemplateSelector } from "./index";
+import { PromptTemplateSelector } from "./index";
 import { getPurposeColor, getPurposeDisplay } from "./PromptTemplateSelector";
 
 const PromptTester: React.FC = () => {
     const { enqueueSnackbar } = useSnackbar();
-    const me = useAuth()?.data?.user;
     const [selectedTemplate, setSelectedTemplate] = useState<PromptTemplates | null>(null);
     const [messageBody, setMessageBody] = useState<string>("");
     const [selectedUser, setSelectedUser] = useState<RelEntity<"Users"> | null>(null);
@@ -35,11 +33,23 @@ const PromptTester: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [aiResponse, setAiResponse] = useState<string>("");
     const [agentResponseId, setAgentResponseId] = useState<number | null>(null);
-    const [showResponses, setShowResponses] = useState<boolean>(true);
+    const [agentResponse, setAgentResponse] = useState<AgentResponses | null>(null);
 
     // Refs for streaming
     const aiResponseRef = useRef("");
     const agentResponseIdRef = useRef<number | null>(null);
+
+    // Function to fetch complete AgentResponses object
+    const fetchAgentResponse = async (id: number) => {
+        try {
+            const response = await ApiClient.get(`/api/agent-responses/${id}/`);
+            if (response.success && response.data) {
+                setAgentResponse(response.data as AgentResponses);
+            }
+        } catch (error) {
+            console.error("Failed to fetch agent response:", error);
+        }
+    };
 
     const handleTest = () => {
         if (!selectedTemplate) {
@@ -61,6 +71,7 @@ const PromptTester: React.FC = () => {
         setError(null);
         setAiResponse("");
         setAgentResponseId(null);
+        setAgentResponse(null);
 
         const testData: any = {
             message_body: messageBody
@@ -90,6 +101,8 @@ const PromptTester: React.FC = () => {
                         if (chunk.agent_response_id) {
                             setAgentResponseId(chunk.agent_response_id);
                             agentResponseIdRef.current = chunk.agent_response_id;
+                            // Fetch the complete AgentResponses object
+                            fetchAgentResponse(chunk.agent_response_id);
                         }
                         if (chunk.ai_response) {
                             setAiResponse(chunk.ai_response);
@@ -117,6 +130,7 @@ const PromptTester: React.FC = () => {
         setError(null);
         setAiResponse("");
         setAgentResponseId(null);
+        setAgentResponse(null);
     };
 
     const handleUserSelect = (user: RelEntity<"Users"> | null, field_name: string) => {
@@ -189,8 +203,8 @@ const PromptTester: React.FC = () => {
                                     </Typography>
                                     <Typography variant="body2" component="div">
                                         • <strong>{`{{athlete_name}}`}</strong> - Selected athlete's full name<br />
-                                        • <strong>{`{{assesment_aggregated}}`}</strong> - Aggregated assessment results<br />
-                                        • <strong>{`{{assesment_responses}}`}</strong> - Detailed assessment responses<br />
+                                        • <strong>{`{{assessment_aggregated}}`}</strong> - Aggregated assessment results<br />
+                                        • <strong>{`{{assessment_responses}}`}</strong> - Detailed assessment responses<br />
                                         • <strong>{`{{lessonpackage}}`}</strong> - Most recent lesson package response<br />
                                         • <strong>{`{{12sessions}}`}</strong> - Most recent 12-sessions response<br />
                                         • <strong>{`{{talkingpoints}}`}</strong> - Most recent talking points response<br />
@@ -236,49 +250,25 @@ const PromptTester: React.FC = () => {
             )}
 
             {aiResponse && (
-                <Box>
+                <>
                     <Divider sx={{ mb: 2 }} />
-                    <ReactMarkdown>{aiResponse}</ReactMarkdown>
-                    {agentResponseId && (
-                        <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}>
-                            <Typography variant="caption" color="text.secondary">
-                                Response ID: {agentResponseId} | Saved to database
-                            </Typography>
-                        </Box>
+                    {agentResponse ? (
+                        <AgentResponseScreen entity={agentResponse} />
+                    ) : (
+                        <>
+                            <ReactMarkdown>{aiResponse}</ReactMarkdown>
+                            {agentResponseId && (
+                                <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Response ID: {agentResponseId} | Saved to database
+                                    </Typography>
+                                </Box>
+                            )}
+                        </>
                     )}
-                </Box>
+                </>
             )}
 
-            {/* Agent Responses Viewer */}
-            {showResponses && (
-                <Box sx={{ mt: 3 }}>
-                    <AgentResponseViewer
-                        templateId={selectedTemplate?.id ? (typeof selectedTemplate.id === 'string' ? parseInt(selectedTemplate.id) : selectedTemplate.id) : undefined}
-                        onResponseSelect={(response: AgentResponses) => {
-                            setMessageBody(response.message_body);
-                            setAiResponse(response.ai_response);
-                            setAgentResponseId(typeof response.id === 'string' ? parseInt(response.id) : response.id);
-                            // Note: You may want to set selectedUser based on response data if available
-                        }}
-                    />
-                </Box>
-            )}
-
-            {/* Floating Action Button for loading indicator */}
-            {loading && (
-                <Fab
-                    color="primary"
-                    size="small"
-                    sx={{
-                        position: "fixed",
-                        backgroundColor: "transparent",
-                        right: 20,
-                        bottom: 20
-                    }}
-                >
-                    <CircularProgress color="primary" />
-                </Fab>
-            )}
         </Box>
     );
 };

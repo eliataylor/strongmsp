@@ -1,14 +1,15 @@
-import React, { useEffect, useCallback } from "react";
-import { AppBar, Box, Fab, Grid } from "@mui/material";
-import { ApiListResponse, ModelName, ModelType, NavItem, NAVITEMS } from "../object-actions/types/types";
-import EntityCard from "../object-actions/components/EntityCard";
-import TablePaginator from "../components/TablePaginator";
-import ApiClient from "../config/ApiClient";
-import { useLocation, useNavigate } from "react-router-dom";
 import { Add } from "@mui/icons-material";
-import { canDo } from "../object-actions/types/access";
+import { AppBar, Box, Fab, Grid } from "@mui/material";
+import React, { useCallback, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../allauth/auth";
 import PermissionError from "../components/PermissionError";
+import TablePaginator from "../components/TablePaginator";
+import ApiClient from "../config/ApiClient";
+import EntityCard from "../object-actions/components/EntityCard";
+import { canDo } from "../object-actions/types/access";
+import { AgentResponses, ApiListResponse, ModelName, ModelType, NavItem, NAVITEMS } from "../object-actions/types/types";
+import AgentResponseScreen from "./AgentResponseScreen";
 
 interface EntityListProps<T extends ModelName = ModelName> {
   model?: T;
@@ -17,10 +18,10 @@ interface EntityListProps<T extends ModelName = ModelName> {
 }
 
 const EntityList = <T extends ModelName>({
-                                           model,
-                                           author,
-                                           showFab = false
-                                         }: EntityListProps<T>) => {
+  model,
+  author,
+  showFab = false
+}: EntityListProps<T>) => {
   const location = useLocation();
   const navigate = useNavigate();
   const me = useAuth()?.data?.user;
@@ -136,6 +137,17 @@ const EntityList = <T extends ModelName>({
                 return <Typography>Not Authorized: {allowAdd}</Typography>
               }
                */
+
+              // Check if this is an AgentResponses entity and render the specialized screen
+              if (obj._type === "AgentResponses") {
+                const agentResponse = obj as AgentResponses;
+                return (
+                  <Grid xs={12} item key={`agentresponse-${i}`}>
+                    <AgentResponseScreen entity={agentResponse} />
+                  </Grid>
+                );
+              }
+
               return <Grid xs={12} item key={`entitycard-${i}`}>
                 <EntityCard entity={obj} />
               </Grid>;

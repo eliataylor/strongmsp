@@ -21,8 +21,8 @@ class TokenReplacer:
     def __init__(self, athlete=None):
         self.athlete = athlete
         self._token_map = {
-            "assesment_aggregated": self._get_assessment_aggregated,
-            "assesment_responses": self._get_assessment_responses,
+            "assessment_aggregated": self._get_assessment_aggregated,
+            "assessment_responses": self._get_assessment_responses,
             "lessonpackage": lambda: self._get_agent_response_by_purpose("lessonpackage"),
             "12sessions": lambda: self._get_agent_response_by_purpose("12sessions"),
             "talkingpoints": lambda: self._get_agent_response_by_purpose("talkingpoints"),
