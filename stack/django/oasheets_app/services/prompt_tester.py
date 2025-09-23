@@ -189,21 +189,25 @@ class PromptTester:
         
         self.doSave = False
 
-    def build_prompt(self) -> str:
-        """Build the complete prompt from template and user input"""
-        base_prompt = []
+    def build_prompt(self) -> list[dict[str, str]]:
+        """Build the complete prompt messages from template and user input"""
+        messages = []
 
+        # Add system instructions if available
         if self.prompt_template.instructions:
-            base_prompt.append(self.prompt_template.instructions)
+            system_content = self.token_replacer.replace_tokens(self.prompt_template.instructions)
+            messages.append({"role": "system", "content": system_content})
 
-        base_prompt.append(self.prompt_template.prompt)
+        # Add the main prompt
+        prompt_content = self.token_replacer.replace_tokens(self.prompt_template.prompt)
+        messages.append({"role": "user", "content": prompt_content})
         
-        base_prompt.append(self.message_body)
+        # Add the message body as user content
+        if self.message_body:
+            message_content = self.token_replacer.replace_tokens(self.message_body)
+            messages.append({"role": "user", "content": message_content})
         
-        # Handle token replacement for {{token}} patterns using TokenReplacer
-        base_prompt = self.token_replacer.replace_tokens("\n\n".join(base_prompt))
-        
-        return base_prompt
+        return messages
 
     def get_model(self) -> str:
         """Get the AI model to use, defaulting to gpt-4o-mini if not specified"""
@@ -213,15 +217,13 @@ class PromptTester:
         """Get the response format, defaulting to text if not specified"""
         return self.prompt_template.response_format or "text"
 
-    def stream(self, prompt: str):
+    def stream(self, messages: list[dict[str, str]]):
         """Stream AI response using OpenAI's chat completions API"""
+
         try:
             response_stream = self.client.chat.completions.create(
                 model=self.get_model(),
-                messages=[
-                    {"role": "system", "content": "You are a helpful AI assistant."},
-                    {"role": "user", "content": prompt}
-                ],
+                messages=messages,
                 stream=True,
                 temperature=0.7
             )

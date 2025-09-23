@@ -39,6 +39,7 @@ import WorksheetList from "./object-actions/generator/WorksheetList";
 import WorksheetLoader from "./object-actions/generator/WorksheetLoader";
 import { NAVITEMS } from "./object-actions/types/types";
 import AssessmentScreen from "./screens/AssessmentScreen";
+import BuyConfidenceAssessment from "./screens/BuyConfidenceAssessment";
 import ContentTypesHome from "./screens/ContentTypesHome";
 import EntityForm from "./screens/EntityForm";
 import EntityList from "./screens/EntityList";
@@ -59,11 +60,11 @@ function createRouter() {
       children: [
         {
           path: "/",
-          element: <TempLanding />
+          element: <Home />
         },
         {
-          path: "/home",
-          element: <Home />
+          path: "/temp-landing",
+          element: <TempLanding />
         },
         {
           path: "/content",
@@ -313,6 +314,11 @@ function createRouter() {
   allRoutes[0].children.push({
     path: `/assessments/:id`,
     element: <AssessmentScreen />
+  });
+
+  allRoutes[0].children.push({
+    path: `/buy-assessment`,
+    element: <BuyConfidenceAssessment />
   });
 
   NAVITEMS.forEach((item) => {

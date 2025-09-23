@@ -43,7 +43,9 @@ DEV_PORT = '3008' if not APP_HOST_PARTS.port else APP_HOST_PARTS.port
 CORS_ALLOWED_ORIGINS += [f"{APP_HOST_PARTS.scheme}://localhost:{DEV_PORT}",
                          f"{APP_HOST_PARTS.scheme}://127.0.0.1:{DEV_PORT}",
                          f"{APP_HOST_PARTS.scheme}://reactjs-service:{DEV_PORT}",
-                         f"{API_HOST_PARTS.scheme}://django-service:8088"]
+                         f"{API_HOST_PARTS.scheme}://django-service:8088",
+                         f"https://webapp.strongmindstrongperformance.com",
+                         f"http://webapp.strongmindstrongperformance.com"]
 
 if DJANGO_ENV != 'production':
     # for docker networking

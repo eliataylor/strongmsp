@@ -251,11 +251,11 @@ class PromptTemplatesViewSet(viewsets.ModelViewSet):
             message_body=test_data['message_body']
         )
         
-        # Build the prompt
-        prompt = tester.build_prompt()
+        # Build the prompt messages
+        messages = tester.build_prompt()
         
         # Stream the response
-        response_generator = tester.stream(prompt)
+        response_generator = tester.stream(messages)
         response = StreamingHttpResponse(response_generator, content_type="application/json")
         response["Cache-Control"] = "no-cache"
         response["X-Accel-Buffering"] = "no"  # Important for Nginx (disable buffering)
@@ -291,11 +291,11 @@ class PromptTemplatesViewSet(viewsets.ModelViewSet):
             return Response({"error": f"No active template found for purpose: {purpose}"}, 
                           status=status.HTTP_404_NOT_FOUND)
         
-        # Build the prompt
-        prompt = tester.build_prompt()
+        # Build the prompt messages
+        messages = tester.build_prompt()
         
         # Stream the response
-        response_generator = tester.stream(prompt)
+        response_generator = tester.stream(messages)
         response = StreamingHttpResponse(response_generator, content_type="application/json")
         response["Cache-Control"] = "no-cache"
         response["X-Accel-Buffering"] = "no"  # Important for Nginx (disable buffering)

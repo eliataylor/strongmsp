@@ -17,7 +17,8 @@ import {
   Typography
 } from "@mui/material";
 import React from "react";
-import Logo from "../theme/Logo";
+import { Link } from "react-router-dom";
+import HeroImage from "../components/HeroImage";
 
 interface HomeProps {
   loading?: boolean;
@@ -28,62 +29,89 @@ const Home: React.FC<HomeProps> = ({ loading = false }) => {
   return (
     <Box>
       {/* Hero Section */}
-      <Container maxWidth="lg" sx={{ py: 8 }}>
-        <Grid container direction="column" alignItems="center" spacing={4}>
+      <HeroImage height={700} showStats={true} />
+
+      {/* Call to Action Buttons */}
+      <Container maxWidth="lg" sx={{ py: 6 }}>
+        <Grid container spacing={2} justifyContent="center">
           <Grid item>
-            <Typography variant="h1" component="h1" sx={{
-              fontSize: { xs: '2.5rem', md: '3.5rem' },
-              fontWeight: 'bold',
-              textAlign: 'center',
-              mb: 2
-            }}>
-              Confidence Isn't a Trait. It's a System.
-            </Typography>
-            <Typography variant="h5" component="h2" sx={{
-              textAlign: 'center',
-              color: 'text.secondary',
-              maxWidth: 600,
-              mx: 'auto'
-            }}>
-              A mental strengthening program for youth athletes aged 13–18.
-              <br />
-              Built for parents and coaches ready to support their athletes with tools that work.
-            </Typography>
+            <Button
+              component={Link}
+              to="/buy-assessment"
+              variant="contained"
+              size="large"
+              sx={{
+                px: 4,
+                py: 1.5,
+                fontSize: '1.1rem',
+                fontWeight: 'bold'
+              }}
+            >
+              Buy the Confidence Assessment
+            </Button>
           </Grid>
-
-          <Grid item sx={{ width: 300, margin: "auto", my: 3 }}>
-            <Logo height={500} />
+          <Grid item>
+            <Button
+              variant="outlined"
+              size="large"
+              sx={{
+                px: 4,
+                py: 1.5,
+                fontSize: '1.1rem',
+                fontWeight: 'bold'
+              }}
+            >
+              Contact Us for More Info
+            </Button>
           </Grid>
+        </Grid>
+      </Container>
 
-          <Grid item container spacing={2} justifyContent="center">
-            <Grid item>
-              <Button
-                variant="contained"
-                size="large"
-                sx={{
-                  px: 4,
-                  py: 1.5,
-                  fontSize: '1.1rem',
-                  fontWeight: 'bold'
-                }}
-              >
-                Buy the Confidence Assessment
-              </Button>
-            </Grid>
-            <Grid item>
-              <Button
-                variant="outlined"
-                size="large"
-                sx={{
-                  px: 4,
-                  py: 1.5,
-                  fontSize: '1.1rem',
-                  fontWeight: 'bold'
-                }}
-              >
-                Contact Us for More Info
-              </Button>
-            </Grid>
+      <Divider />
+
+      {/* Start Assessment Card */}
+      <Container maxWidth="lg" sx={{ py: 8 }}>
+        <Grid container justifyContent="center">
+          <Grid item xs={12} md={8} lg={6}>
+            <Card
+              elevation={4}
+              sx={{
+                textAlign: 'center',
+                p: 4,
+                background: 'linear-gradient(135deg, rgba(135, 112, 16, 0.1) 0%, rgba(42, 116, 183, 0.1) 100%)',
+                border: '2px solid',
+                borderColor: 'primary.main',
+                borderRadius: 3
+              }}
+            >
+              <CardContent>
+                <Typography variant="h4" component="h2" sx={{
+                  mb: 2,
+                  fontWeight: 'bold',
+                  color: 'primary.main'
+                }}>
+                  Ready to Get Started?
+                </Typography>
+                <Typography variant="h6" sx={{ mb: 3, color: 'text.secondary' }}>
+                  Take our confidence assessment to discover your athlete's mental strengths and areas for growth.
+                </Typography>
+                <Button
+                  component={Link}
+                  to="/assessments/1"
+                  variant="contained"
+                  size="large"
+                  sx={{
+                    px: 6,
+                    py: 2,
+                    fontSize: '1.2rem',
+                    fontWeight: 'bold',
+                    borderRadius: 2
+                  }}
+                >
+                  Start Assessment
+                </Button>
+              </CardContent>
+            </Card>
           </Grid>
         </Grid>
       </Container>
@@ -166,6 +194,8 @@ const Home: React.FC<HomeProps> = ({ loading = false }) => {
                   <strong>Ideal for families who want full support and accountability</strong>
                 </Typography>
                 <Button
+                  component={Link}
+                  to="/buy-assessment"
                   variant="contained"
                   fullWidth
                   size="large"
@@ -200,6 +230,8 @@ const Home: React.FC<HomeProps> = ({ loading = false }) => {
                   <strong>Best for families and coaches who want to guide the process themselves</strong>
                 </Typography>
                 <Button
+                  component={Link}
+                  to="/buy-assessment"
                   variant="contained"
                   fullWidth
                   size="large"
@@ -274,6 +306,8 @@ const Home: React.FC<HomeProps> = ({ loading = false }) => {
         <Grid container spacing={2} justifyContent="center">
           <Grid item>
             <Button
+              component={Link}
+              to="/buy-assessment"
               variant="contained"
               size="large"
               sx={{
