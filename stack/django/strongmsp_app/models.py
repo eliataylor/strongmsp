@@ -155,7 +155,7 @@ class Questions(SuperModel):
 
 	def get_admin_display(self):
 		"""Returns truncated title for admin interface display"""
-		return self.title[:15] + "..." if len(self.title) > 15 else self.title
+		return self.title[:50] + "..." if len(self.title) > 50 else self.title
 
 	class Question_categoryChoices(models.TextChoices):
 		performance_mindset = ("performance_mindset", "Performance Mindset")
