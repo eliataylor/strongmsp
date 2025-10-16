@@ -1,20 +1,18 @@
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Box } from "@mui/material";
-import Accordion from "@mui/material/Accordion";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import AccordionSummary from "@mui/material/AccordionSummary";
 import Snackbar from "@mui/material/Snackbar";
 import Typography from "@mui/material/Typography";
 import React, { useEffect } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { useAuth } from "../allauth/auth";
 import PermissionError from "../components/PermissionError";
-import SpiderChart from "../components/SpiderChart";
 import ApiClient from "../config/ApiClient";
-import EntityCard from "../object-actions/components/EntityCard";
 import { canDo } from "../object-actions/types/access";
-import { ModelType, NAVITEMS } from "../object-actions/types/types";
-import EntityList from "./EntityList";
+import { ModelType, NAVITEMS, USER_TYPE } from "../object-actions/types/types";
+import AdminView from "./user-views/AdminView";
+import AgentView from "./user-views/AgentView";
+import AthleteView from "./user-views/AthleteView";
+import CoachView from "./user-views/CoachView";
+import ParentView from "./user-views/ParentView";
 
 const UserView: React.FC = () => {
   const location = useLocation();
@@ -136,6 +134,56 @@ const UserView: React.FC = () => {
     return <PermissionError error={canView} />;
   }
 
+  // Determine user type and render appropriate component
+  const getUserType = (): USER_TYPE => {
+    // Check if user has user_types field and it's not empty
+    if (userProfile.user_types && userProfile.user_types.length > 0) {
+      // Return the first user type if multiple are selected
+      return userProfile.user_types[0] as USER_TYPE;
+    }
+
+    // Fallback to checking groups if user_types is not available
+    if (me?.groups && Array.isArray(me.groups)) {
+      const validGroups = me.groups.filter((group: string) =>
+        ['athlete', 'parent', 'coach', 'admin', 'agent'].includes(group)
+      ) as USER_TYPE[];
+      if (validGroups.length > 0) {
+        return validGroups[0];
+      }
+    }
+
+    // Default fallback
+    return 'athlete';
+  };
+
+  const userType = getUserType();
+
+  // Render the appropriate component based on user type
+  const renderUserTypeComponent = () => {
+    const commonProps = {
+      userProfile,
+      stats,
+      questionResponseStats,
+      expanded,
+      handleChange
+    };
+
+    switch (userType) {
+      case 'athlete':
+        return <AthleteView {...commonProps} />;
+      case 'parent':
+        return <ParentView {...commonProps} />;
+      case 'coach':
+        return <CoachView {...commonProps} />;
+      case 'admin':
+        return <AdminView {...commonProps} />;
+      case 'agent':
+        return <AgentView {...commonProps} />;
+      default:
+        return <AthleteView {...commonProps} />;
+    }
+  };
+
   return (
     <Box>
       <Snackbar
@@ -144,54 +192,7 @@ const UserView: React.FC = () => {
         onClose={closeSnackbar}
         message={snack}
       />
-      <EntityCard entity={userProfile} />
-
-      {/* Question Response Category Stats Spider Chart */}
-      {questionResponseStats && questionResponseStats.category_stats.length > 0 && (
-        <SpiderChart
-          data={questionResponseStats.category_stats}
-          title="Question Response Category Analysis"
-          height={400}
-        />
-      )}
-
-      {NAVITEMS.map((item) => {
-        if (item.type === "Users") return null;
-        return (
-          <Accordion
-            expanded={expanded === item.type}
-            key={`byusers-${item.type}`}
-            onChange={handleChange(item.type)}
-          >
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              aria-controls={`byusers-${item.type}-content`}
-              id={`byusers-${item.type}-header`}
-              sx={{
-                justifyContent: "space-between",
-                alignContent: "center",
-                alignItems: "center",
-                display: "flex"
-              }}
-            >
-              {typeof stats[item.type] !== "undefined" && (
-                <Typography variant={"subtitle2"} mr={2}>
-                  {stats[item.type]}
-                </Typography>
-              )}
-
-              <Typography variant={"subtitle2"}>{item.plural}</Typography>
-            </AccordionSummary>
-            <AccordionDetails id={`byusers-${item.type}-content`}>
-              <Typography>
-                {expanded === item.type && (
-                  <EntityList author={uid} model={item.type} />
-                )}
-              </Typography>
-            </AccordionDetails>
-          </Accordion>
-        );
-      })}
+      {renderUserTypeComponent()}
     </Box>
   );
 };

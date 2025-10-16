@@ -1,0 +1,165 @@
+# Agentic Flow System Services
+
+This directory contains the services that implement the agentic flow system for generating AI-powered content based on athlete assessments.
+
+## Overview
+
+The agentic flow system processes athlete assessment data through 5 different AI agents, each generating specific types of content. The system supports both automatic triggering (first 3 agents) and manual regeneration (last 2 agents).
+
+## Services
+
+### 1. ConfidenceAnalyzer (`confidence_analyzer.py`)
+
+Generic utility for analyzing question responses across categories.
+
+**Key Methods:**
+- `get_category_stats(athlete_id, assessment_id=None)` - Returns category aggregations
+- `get_spider_chart_data(athlete_id, assessment_id=None)` - Returns data formatted for spider charts
+- `get_question_responses_data(athlete_id, assessment_id=None)` - Returns detailed question response data
+
+**Usage:**
+```python
+from .confidence_analyzer import ConfidenceAnalyzer
+
+analyzer = ConfidenceAnalyzer()
+stats = analyzer.get_category_stats(athlete_id=1, assessment_id=1)
+spider_data = analyzer.get_spider_chart_data(athlete_id=1, assessment_id=1)
+```
+
+### 2. AgentCompletionService (`agent_completion_service.py`)
+
+Handles OpenAI completions for agent responses using the Completions API (non-streaming).
+
+**Key Classes:**
+- `TokenReplacer` - Handles variable substitution in prompts
+- `AgentCompletionService` - Main service for running completions
+
+**Key Methods:**
+- `run_completion(prompt_template, athlete, assessment, input_data)` - Runs OpenAI completion
+- `prepare_input_data(athlete, assessment, purpose, previous_response=None)` - Prepares input data
+
+**Usage:**
+```python
+from .agent_completion_service import AgentCompletionService
+
+service = AgentCompletionService()
+agent_response = service.run_completion(template, athlete, assessment, input_data)
+```
+
+### 3. AgentOrchestrator (`agent_orchestrator.py`)
+
+Manages agent execution flow with async/sync patterns and notifications.
+
+**Key Methods:**
+- `trigger_assessment_agents(athlete_id, assessment_id)` - Triggers first 3 agents asynchronously
+- `trigger_sequential_agent(agent_purpose, athlete_id, assessment_id)` - Triggers sequential agents
+- `get_athlete_coach(athlete_id)` - Finds coach via Payment records
+- `notify_coach(agent_response, coach)` - Creates coach notifications
+- `notify_assessment_complete(athlete)` - Notifies athlete and parents
+
+**Usage:**
+```python
+from .agent_orchestrator import AgentOrchestrator
+
+orchestrator = AgentOrchestrator()
+agent_responses = orchestrator.trigger_assessment_agents(athlete_id=1, assessment_id=1)
+```
+
+## Agent Flow
+
+### Automatic Triggers (First 3 Agents)
+
+1. **Mr. Dwayne** (`feedbackreport`) - Generates < 600 word report
+2. **Ms. Sherly** (`talkingpoints`) - Generates talking points for family conversation
+3. **Mr. Bobby** (`parentemail`) - Generates < 120 word email to parents
+
+These agents run in parallel when an assessment reaches 90% completion (45+ questions answered).
+
+### Manual Triggers (Last 2 Agents)
+
+4. **Mr. Sam** (`12sessions`) - Generates 12-session curriculum (depends on Dwayne's report)
+5. **Mr. Patrick** (`lessonpackage`) - Generates lesson plan package (depends on Sam's output)
+
+These agents are triggered manually via API and run sequentially.
+
+## Data Flow
+
+### Input A: Question Responses
+- Raw question response data from `QuestionResponses` model
+- Includes question text, category, response value, scale information
+
+### Input B: Spider Chart Data
+- Aggregated category statistics from `ConfidenceAnalyzer`
+- Includes totals, averages, and response counts per category
+
+### Sequential Agent Inputs
+- Mr. Sam: Uses Dwayne's `ai_response` as Input A
+- Mr. Patrick: Uses Sam's `ai_response` as Input A
+
+## Notifications
+
+### Coach Notifications
+- **Channels:** Email + Dashboard
+- **Content:** Full AI response text with formatting
+- **Type:** `agent-response`
+- **Trigger:** After each agent completes
+
+### Athlete/Parent Notifications
+- **Channels:** Email only
+- **Content:** Generic completion message
+- **Type:** `assessment-submitted`
+- **Trigger:** After first 3 agents complete
+
+## API Endpoints
+
+### Trigger Agents
+```
+POST /api/question-responses/trigger-agents/
+Body: {"athlete_id": int, "assessment_id": int}
+```
+
+### Regenerate Agent Response
+```
+POST /api/agent-responses/{id}/regenerate/
+```
+
+## Configuration
+
+### Required Settings
+- `OPENAI_API_KEY` - OpenAI API key for completions
+
+### Required Models
+- `PromptTemplates` - Must have active templates for each purpose
+- `AgentResponses` - Stores generated responses
+- `Payments` - Used for coach assignment
+- `Notifications` - Stores notification data
+
+## Error Handling
+
+- OpenAI API errors are caught and stored in `ai_reasoning` field
+- Missing templates are logged and skipped
+- Coach/parent lookup failures are logged but don't stop execution
+- All errors are logged with appropriate detail levels
+
+## Testing
+
+Use the test script to verify the implementation:
+
+```python
+from strongmsp_app.test_agentic_flow import test_agentic_flow, create_sample_prompt_templates
+
+# Create sample templates
+create_sample_prompt_templates()
+
+# Run tests
+test_agentic_flow()
+```
+
+## Migration
+
+The system requires a database migration for the new `assessment` field in `AgentResponses`:
+
+```bash
+python manage.py makemigrations strongmsp_app --name add_assessment_to_agent_responses
+python manage.py migrate
+```

@@ -2,7 +2,7 @@
 import CssBaseline from "@mui/material/CssBaseline";
 import { green, orange } from "@mui/material/colors";
 import { createTheme, ThemeProvider as MuiThemeProvider, responsiveFontSizes } from "@mui/material/styles";
-import { createContext, useMemo, useState } from "react";
+import { createContext, useEffect, useMemo, useState } from "react";
 
 import GlobalStyles from "./GlobalStyles";
 
@@ -17,7 +17,141 @@ const ThemeProvider = ({ children }) => {
     localStorage.getItem("themeFont") ? localStorage.getItem("themeFont") :
       "Montserrat");
 
+  // Branding settings state
+  const [brandingSettings, setBrandingSettings] = useState({
+    customLogoBase64: null,
+    palette: {
+      light: {
+        primary: { main: "#877010" },
+        secondary: { main: "#2a74b7" }
+      },
+      dark: {
+        primary: { main: "#f4ab2a" },
+        secondary: { main: "#2ab1f4" }
+      }
+    },
+    typography: {
+      fontFamily: "Montserrat"
+    }
+  });
+
+  // Load branding settings from localStorage on mount
+  useEffect(() => {
+    try {
+      const logoBase64 = localStorage.getItem('logo_base64');
+      const brandStyles = localStorage.getItem('brandstyles');
+
+      let settings = {
+        customLogoBase64: null,
+        palette: {
+          light: {
+            primary: { main: "#877010" },
+            secondary: { main: "#2a74b7" }
+          },
+          dark: {
+            primary: { main: "#f4ab2a" },
+            secondary: { main: "#2ab1f4" }
+          }
+        },
+        typography: {
+          fontFamily: "Montserrat"
+        }
+      };
+
+      if (logoBase64) {
+        settings.customLogoBase64 = logoBase64;
+      }
+
+      if (brandStyles) {
+        const parsedStyles = JSON.parse(brandStyles);
+        settings = {
+          ...settings,
+          ...parsedStyles,
+          customLogoBase64: logoBase64 // Ensure logo is always from its own key
+        };
+      }
+
+      setBrandingSettings(settings);
+    } catch (error) {
+      console.error('Error loading branding settings from localStorage:', error);
+    }
+  }, []);
+
+  // Branding functions
+  const updateBrandingSettings = (partial) => {
+    const newSettings = { ...brandingSettings, ...partial };
+    setBrandingSettings(newSettings);
+
+    // Save to localStorage
+    try {
+      const { customLogoBase64, ...settingsWithoutLogo } = newSettings;
+
+      if (customLogoBase64) {
+        localStorage.setItem('logo_base64', customLogoBase64);
+      } else {
+        localStorage.removeItem('logo_base64');
+      }
+
+      localStorage.setItem('brandstyles', JSON.stringify(settingsWithoutLogo));
+    } catch (error) {
+      console.error('Error saving branding settings to localStorage:', error);
+    }
+  };
+
+  const updateLogo = (base64) => {
+    updateBrandingSettings({ customLogoBase64: base64 });
+  };
+
+  const resetBrandingSettings = () => {
+    const defaultSettings = {
+      customLogoBase64: null,
+      palette: {
+        light: {
+          primary: { main: "#877010" },
+          secondary: { main: "#2a74b7" }
+        },
+        dark: {
+          primary: { main: "#f4ab2a" },
+          secondary: { main: "#2ab1f4" }
+        }
+      },
+      typography: {
+        fontFamily: "Montserrat"
+      }
+    };
+    setBrandingSettings(defaultSettings);
+    localStorage.removeItem('logo_base64');
+    localStorage.removeItem('brandstyles');
+  };
+
   const theme = useMemo(() => {
+    // Get colors from branding settings or use defaults
+    const getPrimaryColor = () => {
+      if (brandingSettings?.palette) {
+        return darkMode
+          ? brandingSettings.palette.dark.primary.main
+          : brandingSettings.palette.light.primary.main;
+      }
+      return darkMode ? "#f4ab2a" : "#877010";
+    };
+
+    const getSecondaryColor = () => {
+      if (brandingSettings?.palette) {
+        return darkMode
+          ? brandingSettings.palette.dark.secondary.main
+          : brandingSettings.palette.light.secondary.main;
+      }
+      return darkMode ? "#2ab1f4" : "#2a74b7";
+    };
+
+    // Get font family from branding settings or use current
+    const getFontFamily = () => {
+      if (brandingSettings?.typography?.fontFamily) {
+        return brandingSettings.typography.fontFamily;
+      }
+      return fontFamily;
+    };
+
     const plt = {
       mode: darkMode ? "dark" : "light",
       background: {
@@ -38,10 +172,10 @@ const ThemeProvider = ({ children }) => {
                 color: theme.palette.getContrastText(theme.palette.primary.main),
                  */
       primary: {
-        main: darkMode ? "#f4ab2a" : "#877010"
+        main: getPrimaryColor()
       },
       secondary: {
-        main: darkMode ? "#2ab1f4" : "#2a74b7"
+        main: getSecondaryColor()
       },
       warning: {
         main: orange[500]
@@ -57,7 +191,7 @@ const ThemeProvider = ({ children }) => {
     return responsiveFontSizes(
       createTheme({
         typography: {
-          fontFamily: fontFamily,
+          fontFamily: getFontFamily(),
           fontSize: 15,
           h1: { fontSize: "3.5rem", fontWeight: 200 },
           h2: { fontSize: "3.0rem", fontWeight: 200 },
@@ -114,12 +248,21 @@ const ThemeProvider = ({ children }) => {
         palette: plt
       })
     );
-  }, [darkMode, fontFamily]);
+  }, [darkMode, fontFamily, brandingSettings]);
 
   console.log("THEME UPDATE", theme);
 
   return (
-    <ThemeContext.Provider value={{ darkMode, setDarkMode, setFamily, fontFamily }}>
+    <ThemeContext.Provider value={{
+      darkMode,
+      setDarkMode,
+      setFamily,
+      fontFamily,
+      brandingSettings,
+      updateBrandingSettings,
+      updateLogo,
+      resetBrandingSettings
+    }}>
       <MuiThemeProvider theme={theme}>
         <CssBaseline />
         <GlobalStyles />

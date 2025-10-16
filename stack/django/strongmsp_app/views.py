@@ -1,6 +1,8 @@
 ####OBJECT-ACTIONS-VIEWSET-IMPORTS-STARTS####
-from rest_framework import viewsets, permissions, filters, generics
+from rest_framework import viewsets, permissions, filters, generics, status
 from rest_framework.views import APIView
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from .pagination import CustomLimitOffsetPagination
 from django.http import JsonResponse
 from django.core.management import call_command
@@ -8,7 +10,7 @@ from django.apps import apps
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.utils import timezone
-from .services import send_sms
+from . import services
 import random
 import re
 import os
@@ -22,14 +24,14 @@ from .serializers import CoursesSerializer
 from .models import Courses
 from .serializers import AssessmentsSerializer
 from .models import Assessments
-from .serializers import AssessmentQuestionsSerializer
-from .models import AssessmentQuestions
-from .serializers import QuestionsSerializer
-from .models import Questions
-from .serializers import QuestionResponsesSerializer
-from .models import QuestionResponses
+from .serializers import ProductsSerializer
+from .models import Products
 from .serializers import PaymentsSerializer
 from .models import Payments
+from .serializers import PaymentAssignmentsSerializer
+from .models import PaymentAssignments
+from .serializers import QuestionResponsesSerializer
+from .models import QuestionResponses
 from .serializers import PromptTemplatesSerializer
 from .models import PromptTemplates
 from .serializers import AgentResponsesSerializer
@@ -38,7 +40,10 @@ from .serializers import CoachContentSerializer
 from .models import CoachContent
 from .serializers import SharesSerializer
 from .models import Shares
+from .serializers import NotificationsSerializer
+from .models import Notifications
 from django.db.models import Count
+from .services.agent_orchestrator import AgentOrchestrator
 ####OBJECT-ACTIONS-VIEWSET-IMPORTS-ENDS####
 
 
@@ -93,20 +98,7 @@ class AssessmentsViewSet(viewsets.ModelViewSet):
     search_fields = ['title']
 
 
-class AssessmentQuestionsViewSet(viewsets.ModelViewSet):
-    queryset = AssessmentQuestions.objects.all().order_by('id')
-    serializer_class = AssessmentQuestionsSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['question__title']
-    filterset_fields = ['assessment']
 
-class QuestionsViewSet(viewsets.ModelViewSet):
-    queryset = Questions.objects.all().order_by('id')
-    serializer_class = QuestionsSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['title']
 
 
 class QuestionResponsesViewSet(viewsets.ModelViewSet):
@@ -114,15 +106,54 @@ class QuestionResponsesViewSet(viewsets.ModelViewSet):
     serializer_class = QuestionResponsesSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [filters.SearchFilter]
-    search_fields = ['question__title']
+    search_fields = ['question__title', 'assessment__title']
+    
+    @action(detail=False, methods=['post'])
+    def trigger_agents(self, request):
+        """
+        Trigger agent responses for an athlete's assessment.
+        POST /api/question-responses/trigger-agents/
+        Body: {"athlete_id": int, "assessment_id": int}
+        """
+        try:
+            athlete_id = request.data.get('athlete_id')
+            assessment_id = request.data.get('assessment_id')
+            
+            if not athlete_id or not assessment_id:
+                return Response(
+                    {'error': 'athlete_id and assessment_id are required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check 90% completion threshold
+            total_questions = QuestionResponses.objects.filter(
+                author_id=athlete_id, 
+                assessment_id=assessment_id
+            ).count()
+            
+            if total_questions < 45:  # 90% of 50 questions
+                return Response(
+                    {'error': 'Assessment must be at least 90% complete (45+ questions)'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Trigger agents
+            orchestrator = AgentOrchestrator()
+            agent_responses = orchestrator.trigger_assessment_agents(athlete_id, assessment_id)
+            
+            return Response({
+                'status': 'triggered',
+                'agent_count': len(agent_responses),
+                'message': f'Triggered {len(agent_responses)} agents for athlete {athlete_id}'
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to trigger agents: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
-class PaymentsViewSet(viewsets.ModelViewSet):
-    queryset = Payments.objects.all().order_by('id')
-    serializer_class = PaymentsSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['course__title']
 
 
 class PromptTemplatesViewSet(viewsets.ModelViewSet):
@@ -135,6 +166,48 @@ class AgentResponsesViewSet(viewsets.ModelViewSet):
     queryset = AgentResponses.objects.all().order_by('id')
     serializer_class = AgentResponsesSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    
+    @action(detail=True, methods=['post'])
+    def regenerate(self, request, pk=None):
+        """
+        Regenerate an agent response.
+        POST /api/agent-responses/{id}/regenerate/
+        Only for purposes: "12sessions", "lessonpackage"
+        """
+        try:
+            agent_response = self.get_object()
+            
+            # Check if regeneration is allowed for this purpose
+            allowed_purposes = ['12sessions', 'lessonpackage']
+            if agent_response.purpose not in allowed_purposes:
+                return Response(
+                    {'error': f'Regeneration not allowed for purpose: {agent_response.purpose}'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Trigger sequential agent
+            orchestrator = AgentOrchestrator()
+            new_response = orchestrator.trigger_sequential_agent(
+                agent_response.purpose,
+                agent_response.athlete.id,
+                agent_response.assessment.id if agent_response.assessment else None
+            )
+            
+            if not new_response:
+                return Response(
+                    {'error': 'Failed to regenerate agent response'}, 
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            # Serialize and return new response
+            serializer = AgentResponsesSerializer(new_response)
+            return Response(serializer.data)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to regenerate: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class CoachContentViewSet(viewsets.ModelViewSet):
@@ -153,6 +226,109 @@ class SharesViewSet(viewsets.ModelViewSet):
     search_fields = ['content__title']
 
 
+class NotificationsViewSet(viewsets.ModelViewSet):
+    queryset = Notifications.objects.all().order_by('-created_at')
+    serializer_class = NotificationsSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ['message', 'recipient__username', 'recipient__first_name', 'recipient__last_name']
+    filterset_fields = ['channel', 'delivery_status', 'notification_type', 'priority', 'seen']
+    
+    def get_queryset(self):
+        """
+        Filter notifications to only show those for the current user
+        and restrict access to Admin, Agent, and Coach groups only.
+        """
+        user = self.request.user
+        if not user.is_authenticated:
+            return Notifications.objects.none()
+        
+        # Check if user is in allowed groups
+        allowed_groups = ['Admin', 'Agent', 'Coach']
+        user_groups = user.groups.values_list('name', flat=True)
+        if not any(group in user_groups for group in allowed_groups):
+            return Notifications.objects.none()
+        
+        # If user is not Admin, only show their own notifications
+        if 'Admin' not in user_groups:
+            return Notifications.objects.filter(recipient=user)
+        
+        # Admin can see all notifications
+        return Notifications.objects.all()
+    
+    @action(detail=True, methods=['post'])
+    def mark_seen(self, request, pk=None):
+        """Mark a dashboard notification as seen"""
+        notification = self.get_object()
+        
+        if notification.channel != 'dashboard':
+            return Response(
+                {'error': 'Only dashboard notifications can be marked as seen'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        notification.seen = True
+        notification.save()
+        
+        return Response({'status': 'marked as seen'})
+    
+    @action(detail=True, methods=['post'])
+    def send_email(self, request, pk=None):
+        """Manually trigger email sending for a notification"""
+        notification = self.get_object()
+        
+        if notification.channel != 'email':
+            return Response(
+                {'error': 'Only email notifications can be sent via email'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Update status to sent (in real implementation, this would trigger actual email)
+        from django.utils import timezone
+        notification.delivery_status = 'sent'
+        notification.sent_at = timezone.now()
+        notification.save()
+        
+        return Response({'status': 'email sent'})
+    
+    @action(detail=True, methods=['post'])
+    def send_sms(self, request, pk=None):
+        """Manually trigger SMS sending for a notification"""
+        notification = self.get_object()
+        
+        if notification.channel != 'sms':
+            return Response(
+                {'error': 'Only SMS notifications can be sent via SMS'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Update status to sent (in real implementation, this would trigger actual SMS)
+        from django.utils import timezone
+        notification.delivery_status = 'sent'
+        notification.sent_at = timezone.now()
+        notification.save()
+        
+        return Response({'status': 'sms sent'})
+    
+    @action(detail=False, methods=['get'])
+    def dashboard(self, request):
+        """Get only dashboard notifications for the current user"""
+        queryset = self.get_queryset().filter(
+            channel='dashboard',
+            recipient=request.user
+        )
+        
+        # Filter out expired notifications
+        from django.utils import timezone
+        now = timezone.now()
+        queryset = queryset.filter(
+            models.Q(expires__isnull=True) | models.Q(expires__gt=now)
+        )
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
 ####OBJECT-ACTIONS-VIEWSETS-ENDS####
 
 
@@ -168,17 +344,8 @@ SEARCH_FIELDS_MAPPING = {
   "Assessments": [
     "title"
   ],
-  "AssessmentQuestions": [
-    "question__title"
-  ],
-  "Questions": [
-    "title"
-  ],
   "QuestionResponses": [
     "question__title"
-  ],
-  "Payments": [
-    "course__title"
   ],
   "PromptTemplates": [],
   "AgentResponses": [],
@@ -190,7 +357,7 @@ SEARCH_FIELDS_MAPPING = {
   ]
 }
 
-SERIALZE_MODEL_MAP = { "Users": UsersSerializer,"Courses": CoursesSerializer,"Assessments": AssessmentsSerializer,"AssessmentQuestions": AssessmentQuestionsSerializer,"Questions": QuestionsSerializer,"QuestionResponses": QuestionResponsesSerializer,"Payments": PaymentsSerializer,"PromptTemplates": PromptTemplatesSerializer,"AgentResponses": AgentResponsesSerializer,"CoachContent": CoachContentSerializer,"Shares": SharesSerializer }
+SERIALZE_MODEL_MAP = { "Users": UsersSerializer,"Courses": CoursesSerializer,"Assessments": AssessmentsSerializer,"QuestionResponses": QuestionResponsesSerializer,"PromptTemplates": PromptTemplatesSerializer,"AgentResponses": AgentResponsesSerializer,"CoachContent": CoachContentSerializer,"Shares": SharesSerializer }
 
 class UserStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -503,7 +670,7 @@ class SendCodeView(APIView):
             if phone_number == '+14159999999':
                 return JsonResponse({"detail": "Enter your Demo Account code"}, status=status.HTTP_200_OK)
             message = f"Your localhost.strongmindstrongperformance.com verification code is {code}"
-            send_sms(phone_number, message)
+            services.send_sms(phone_number, message)
             request.session['code'] = code
             return JsonResponse({"detail": "SMS sent successfully"}, status=status.HTTP_200_OK)
         return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -568,3 +735,27 @@ class VerifyCodeView(APIView):
             return JsonResponse({"error": "Invalid code"}, status=status.HTTP_400_BAD_REQUEST)
 
         return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ProductsViewSet(viewsets.ModelViewSet):
+    queryset = Products.objects.filter(is_active=True).order_by('id')
+    serializer_class = ProductsSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ['title', 'description']
+    filterset_fields = ['is_active', 'price']
+
+class PaymentsViewSet(viewsets.ModelViewSet):
+    queryset = Payments.objects.all().order_by('-created_at')
+    serializer_class = PaymentsSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ['author__username', 'author__email', 'product__title']
+    filterset_fields = ['status', 'product', 'author']
+
+class PaymentAssignmentsViewSet(viewsets.ModelViewSet):
+    queryset = PaymentAssignments.objects.all().order_by('-created_at')
+    serializer_class = PaymentAssignmentsSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ['athlete__username', 'athlete__email', 'payment__id']
+    filterset_fields = ['athlete', 'coaches', 'parents']

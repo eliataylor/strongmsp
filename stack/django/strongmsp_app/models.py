@@ -113,6 +113,22 @@ class Courses(SuperModel):
 	icon = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Icon')
 	cover_photo = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Cover Photo')
 
+class Products(SuperModel):
+	class Meta:
+		abstract = False
+		verbose_name = "Product"
+		verbose_name_plural = "Products"
+
+	title = models.CharField(max_length=255, verbose_name='Title')
+	description = models.TextField(blank=True, null=True, verbose_name='Description')
+	price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Price')
+	stripe_product_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='Stripe Product ID')
+	stripe_price_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='Stripe Price ID')
+	is_active = models.BooleanField(default=True, verbose_name='Is Active')
+	features = models.JSONField(blank=True, null=True, verbose_name='Features', help_text='JSON containing agents, content_variations, and assessment counts')
+	icon = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Icon')
+	cover_photo = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Cover Photo')
+
 class Assessments(SuperModel):
 	class Meta:
 		abstract = False
@@ -184,6 +200,7 @@ class QuestionResponses(SuperModel):
 
 	author = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Athlete')
 	question = models.ForeignKey('Questions', on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Question')
+	assessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Assessment')
 	response = models.IntegerField(verbose_name='Response')
 
 class Payments(SuperModel):
@@ -193,16 +210,32 @@ class Payments(SuperModel):
 		verbose_name_plural = "Payments"
 
 	class StatusChoices(models.TextChoices):
-		paid = ("paid", "Paid")
-		order = ("order", " order")
-		request = ("request", " request")
-		declined = ("declined", " declined")
-	athlete = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Athlete')
-	preferred_coach = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Preferred Coach')
-	course = models.ForeignKey('Courses', on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Course')
+		pending = ("pending", "Pending")
+		succeeded = ("succeeded", "Succeeded")
+		failed = ("failed", "Failed")
+		refunded = ("refunded", "Refunded")
+	
+	product = models.ForeignKey('Products', on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Product')
+	pre_assessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Pre-Assessment')
+	post_assessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Post-Assessment')
 	paid = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Paid')
-	status = models.CharField(max_length=8, choices=StatusChoices.choices, verbose_name='Status')
+	status = models.CharField(max_length=10, choices=StatusChoices.choices, verbose_name='Status')
 	subscription_ends = models.DateField(blank=True, null=True, verbose_name='Subscription Ends')
+	features_snapshot = models.JSONField(blank=True, null=True, verbose_name='Features Snapshot', help_text='Copy of product features at purchase time')
+	stripe_payment_intent_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='Stripe Payment Intent ID')
+	stripe_customer_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='Stripe Customer ID')
+	stripe_subscription_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='Stripe Subscription ID')
+
+class PaymentAssignments(SuperModel):
+	class Meta:
+		abstract = False
+		verbose_name = "Payment Assignment"
+		verbose_name_plural = "Payment Assignments"
+
+	payment = models.ForeignKey('Payments', on_delete=models.CASCADE, related_name='assignments', verbose_name='Payment')
+	athlete = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Athlete')
+	coaches = models.ManyToManyField(get_user_model(), related_name='+', blank=True, verbose_name='Coaches')
+	parents = models.ManyToManyField(get_user_model(), related_name='+', blank=True, verbose_name='Parents')
 
 class PromptTemplates(SuperModel):
 	class Meta:
@@ -252,6 +285,7 @@ class AgentResponses(SuperModel):
 		feedbackreport = ("feedbackreport", " feedback-report")
 		parentemail = ("parentemail", " parent-email")
 	athlete = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Athlete')
+	assessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Assessment')
 	prompt_template = models.ForeignKey('PromptTemplates', on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Prompt Template')
 	purpose = models.CharField(max_length=14, choices=PurposeChoices.choices, verbose_name='Purpose')
 	message_body = models.TextField(verbose_name='Message Body')
@@ -293,4 +327,52 @@ class Shares(SuperModel):
 	recipient = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Recipient')
 	content = models.ForeignKey('CoachContent', on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Content')
 	expires = models.DateField(blank=True, null=True, verbose_name='Expires')
+
+class Notifications(SuperModel):
+	class Meta:
+		abstract = False
+		verbose_name = "Notification"
+		verbose_name_plural = "Notifications"
+		ordering = ['-created_at']
+		indexes = [
+			models.Index(fields=['channel', 'delivery_status']),
+			models.Index(fields=['notification_group']),
+			models.Index(fields=['recipient', 'seen']),
+		]
+
+	recipient = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='notifications', verbose_name='Recipient')
+	message = models.TextField(verbose_name='Message')
+	message_text = models.TextField(blank=True, null=True, verbose_name='Text Message', help_text='Plain text version for SMS and plain email')
+	message_html = models.TextField(blank=True, null=True, verbose_name='HTML Message', help_text='HTML version for email')
+	
+	channel = models.CharField(max_length=20, choices=[
+		('dashboard', 'Dashboard'), ('email', 'Email'), ('sms', 'SMS')
+	], default='dashboard', verbose_name='Channel')
+	
+	delivery_status = models.CharField(max_length=20, choices=[
+		('pending', 'Pending'), ('sent', 'Sent'), ('delivered', 'Delivered'),
+		('failed', 'Failed'), ('bounced', 'Bounced')
+	], default='pending', verbose_name='Delivery Status')
+	
+	sent_at = models.DateTimeField(null=True, blank=True, verbose_name='Sent At')
+	delivery_error = models.TextField(blank=True, null=True, verbose_name='Delivery Error')
+	seen = models.BooleanField(default=False, verbose_name='Seen')
+	
+	notification_type = models.CharField(max_length=30, choices=[
+		('agent-response', 'Agent Response'),
+		('coach-content', 'Coach Content'),
+		('payment', 'Payment'),
+		('invoice', 'Invoice'),
+		('assessment-submitted', 'Assessment Submitted'),
+	], null=True, blank=True, verbose_name='Notification Type')
+	
+	notification_group = models.UUIDField(null=True, blank=True, verbose_name='Notification Group', help_text='Groups related notifications across channels')
+	priority = models.CharField(max_length=10, choices=[
+		('low', 'Low'), ('normal', 'Normal'), ('high', 'High'), ('urgent', 'Urgent')
+	], default='normal', verbose_name='Priority')
+	
+	remind_time = models.DateTimeField(blank=True, null=True, verbose_name='Remind Time')
+	link = models.URLField(max_length=500, blank=True, null=True, verbose_name='Link')
+	expires = models.DateTimeField(blank=True, null=True, verbose_name='Expires')
+	auto_send = models.BooleanField(default=False, verbose_name='Auto Send', help_text='Automatically send via this channel')
 ####OBJECT-ACTIONS-MODELS-ENDS####

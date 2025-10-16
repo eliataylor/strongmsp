@@ -9,11 +9,14 @@ from .models import Assessments
 from .models import AssessmentQuestions
 from .models import Questions
 from .models import QuestionResponses
+from .models import Products
 from .models import Payments
+from .models import PaymentAssignments
 from .models import PromptTemplates
 from .models import AgentResponses
 from .models import CoachContent
 from .models import Shares
+from .models import Notifications
 ####OBJECT-ACTIONS-ADMIN_IMPORTS-ENDS####
 
 from django.contrib.admin.views.main import ChangeList
@@ -289,9 +292,15 @@ class QuestionResponsesAdmin(BaseModelAdmin):
         return "Unknown question"
     display_question.short_description = "Question"
 
-    list_display = ('id', 'display_athlete', 'display_question', 'response', 'modified_at')
-    list_filter = ('response', 'created_at', 'modified_at', 'author', 'question__question_category')
-    search_fields = ('author__username', 'author__email', 'author__first_name', 'author__last_name', 'question__title')
+    def display_assessment(self, obj):
+        if obj.assessment:
+            return obj.assessment.title
+        return "No assessment"
+    display_assessment.short_description = "Assessment"
+
+    list_display = ('id', 'display_athlete', 'display_question', 'display_assessment', 'response', 'modified_at')
+    list_filter = ('response', 'created_at', 'modified_at', 'author', 'question__question_category', 'assessment')
+    search_fields = ('author__username', 'author__email', 'author__first_name', 'author__last_name', 'question__title', 'assessment__title')
     readonly_fields = ('id', 'created_at', 'modified_at')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
@@ -303,27 +312,30 @@ class QuestionResponsesAdmin(BaseModelAdmin):
             kwargs["queryset"] = Users.objects.filter(groups__name='Athletes').distinct().order_by('username')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+@admin.register(Products)
+class ProductsAdmin(BaseModelAdmin):
+    readonly_fields = ('id', 'created_at', 'modified_at')
+    list_display = ('id', 'title', 'price', 'is_active', 'created_at', 'modified_at')
+    list_filter = ('is_active', 'price', 'created_at', 'modified_at')
+    search_fields = ('title', 'description', 'stripe_product_id', 'stripe_price_id')
+    list_editable = ('is_active', 'price')
+    ordering = ('-created_at',)
+
 @admin.register(Payments)
 class PaymentsAdmin(BaseModelAdmin):
     readonly_fields = ('id', 'created_at', 'modified_at')
 
-    def display_athlete(self, obj):
-        if obj.athlete:
-            return obj.athlete.get_full_name() or obj.athlete.username
+    def display_purchaser(self, obj):
+        if obj.author:
+            return obj.author.get_full_name() or obj.author.username
         return "Unknown"
-    display_athlete.short_description = "Athlete"
+    display_purchaser.short_description = "Purchaser"
 
-    def display_coach(self, obj):
-        if obj.preferred_coach:
-            return obj.preferred_coach.get_full_name() or obj.preferred_coach.username
-        return "Not specified"
-    display_coach.short_description = "Coach"
-
-    def display_course(self, obj):
-        if obj.course:
-            return obj.course.title
-        return "No course"
-    display_course.short_description = "Course"
+    def display_product(self, obj):
+        if obj.product:
+            return obj.product.title
+        return "No product"
+    display_product.short_description = "Product"
 
     def display_amount(self, obj):
         if obj.paid:
@@ -343,23 +355,48 @@ class PaymentsAdmin(BaseModelAdmin):
         return "No end date"
     display_subscription.short_description = "Subscription Ends"
 
-    list_display = ('id', 'display_athlete', 'display_coach', 'display_course', 'paid', 'status', 'display_subscription', 'created_at', 'modified_at')
-    list_filter = ('status', 'paid', 'subscription_ends', 'created_at', 'modified_at', 'athlete', 'preferred_coach', 'course')
-    search_fields = ('athlete__username', 'athlete__email', 'athlete__first_name', 'athlete__last_name',
-                    'preferred_coach__username', 'preferred_coach__email', 'course__title')
+    list_display = ('id', 'display_purchaser', 'display_product', 'paid', 'status', 'display_subscription', 'created_at', 'modified_at')
+    list_filter = ('status', 'paid', 'subscription_ends', 'created_at', 'modified_at', 'product', 'pre_assessment', 'post_assessment')
+    search_fields = ('author__username', 'author__email', 'author__first_name', 'author__last_name',
+                    'product__title', 'stripe_payment_intent_id', 'stripe_customer_id')
     readonly_fields = ('id', 'created_at', 'modified_at')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
     list_editable = ('status', 'paid')
 
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "athlete":
-            # Limit to users in the Athletes group
-            kwargs["queryset"] = Users.objects.filter(groups__name='Athletes').distinct().order_by('username')
-        elif db_field.name == "preferred_coach":
-            # Limit to users in the Agents group
-            kwargs["queryset"] = Users.objects.filter(groups__name='Agents').distinct().order_by('username')
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+@admin.register(PaymentAssignments)
+class PaymentAssignmentsAdmin(BaseModelAdmin):
+    readonly_fields = ('id', 'created_at', 'modified_at')
+    
+    def display_payment(self, obj):
+        return f"Payment #{obj.payment.id} - {obj.payment.product.title if obj.payment.product else 'No Product'}"
+    display_payment.short_description = "Payment"
+    
+    def display_athlete(self, obj):
+        if obj.athlete:
+            return obj.athlete.get_full_name() or obj.athlete.username
+        return "No athlete assigned"
+    display_athlete.short_description = "Athlete"
+    
+    def display_coaches(self, obj):
+        coaches = obj.coaches.all()
+        if coaches:
+            return ", ".join([coach.get_full_name() or coach.username for coach in coaches])
+        return "No coaches assigned"
+    display_coaches.short_description = "Coaches"
+    
+    def display_parents(self, obj):
+        parents = obj.parents.all()
+        if parents:
+            return ", ".join([parent.get_full_name() or parent.username for parent in parents])
+        return "No parents assigned"
+    display_parents.short_description = "Parents"
+    
+    list_display = ('id', 'display_payment', 'display_athlete', 'display_coaches', 'display_parents', 'created_at', 'modified_at')
+    list_filter = ('created_at', 'modified_at', 'athlete', 'coaches', 'parents')
+    search_fields = ('payment__id', 'athlete__username', 'athlete__email', 'coaches__username', 'parents__username')
+    filter_horizontal = ('coaches', 'parents')
+    ordering = ('-created_at',)
 
 @admin.register(PromptTemplates)
 class PromptTemplatesAdmin(BaseModelAdmin):
@@ -700,4 +737,85 @@ class SharesAdmin(BaseModelAdmin):
             # Limit to users in the Athletes group
             kwargs["queryset"] = Users.objects.filter(groups__name='Athletes').distinct().order_by('username')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+class NotificationsAdmin(BaseModelAdmin):
+    readonly_fields = ('id', 'created_at', 'modified_at', 'notification_group')
+
+    def display_recipient(self, obj):
+        if obj.recipient:
+            return obj.recipient.get_full_name() or obj.recipient.username
+        return "Unknown"
+    display_recipient.short_description = "Recipient"
+
+    def display_message(self, obj):
+        return obj.message[:50] + "..." if len(obj.message) > 50 else obj.message
+    display_message.short_description = "Message"
+
+    def display_delivery_status(self, obj):
+        if obj.channel == 'dashboard':
+            return "Seen" if obj.seen else "Unseen"
+        return obj.get_delivery_status_display()
+    display_delivery_status.short_description = "Status"
+
+    def display_sent_at(self, obj):
+        if obj.sent_at:
+            return obj.sent_at.strftime("%Y-%m-%d %H:%M")
+        return "Not sent"
+    display_sent_at.short_description = "Sent At"
+
+    def display_expires(self, obj):
+        if obj.expires:
+            return obj.expires.strftime("%Y-%m-%d %H:%M")
+        return "No expiration"
+    display_expires.short_description = "Expires"
+
+    def is_expired(self, obj):
+        if obj.expires:
+            from django.utils import timezone
+            return obj.expires < timezone.now()
+        return False
+    is_expired.boolean = True
+    is_expired.short_description = "Expired"
+
+    def mark_as_seen(self, request, queryset):
+        """Mark selected notifications as seen"""
+        updated = queryset.filter(channel='dashboard').update(seen=True)
+        self.message_user(request, f"{updated} dashboard notifications marked as seen.")
+    mark_as_seen.short_description = "Mark as seen"
+
+    def send_notifications(self, request, queryset):
+        """Manually trigger sending of selected notifications"""
+        # This would integrate with your email/SMS service
+        from django.utils import timezone
+        updated = queryset.filter(delivery_status='pending').update(delivery_status='sent', sent_at=timezone.now())
+        self.message_user(request, f"{updated} notifications marked as sent.")
+    send_notifications.short_description = "Send notifications"
+
+    list_display = ('id', 'display_recipient', 'channel', 'notification_type', 'priority', 'display_message', 'display_delivery_status', 'display_sent_at', 'display_expires', 'is_expired', 'seen', 'created_at')
+    list_filter = ('channel', 'delivery_status', 'notification_type', 'priority', 'seen', 'auto_send', 'expires', 'created_at', 'modified_at', 'recipient')
+    search_fields = ('recipient__username', 'recipient__email', 'recipient__first_name', 'recipient__last_name', 'message', 'notification_group')
+    readonly_fields = ('id', 'created_at', 'modified_at', 'notification_group')
+    date_hierarchy = 'created_at'
+    ordering = ('-created_at',)
+    list_editable = ('seen', 'priority')
+    actions = ['mark_as_seen', 'send_notifications']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('recipient', 'message', 'message_text', 'message_html', 'notification_type', 'priority')
+        }),
+        ('Delivery', {
+            'fields': ('channel', 'delivery_status', 'sent_at', 'delivery_error', 'seen', 'auto_send')
+        }),
+        ('Scheduling', {
+            'fields': ('remind_time', 'expires', 'link')
+        }),
+        ('Metadata', {
+            'fields': ('notification_group', 'id', 'created_at', 'modified_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+# Register the admin classes
+admin.site.register(Notifications, NotificationsAdmin)
 ####OBJECT-ACTIONS-ADMIN_MODELS-ENDS####

@@ -11,14 +11,15 @@ from django.db.models import ManyToManyField
 from .models import Users
 from .models import Courses
 from .models import Assessments
-from .models import AssessmentQuestions
-from .models import Questions
-from .models import QuestionResponses
+from .models import Products
 from .models import Payments
+from .models import PaymentAssignments
+from .models import QuestionResponses
 from .models import PromptTemplates
 from .models import AgentResponses
 from .models import CoachContent
 from .models import Shares
+from .models import Notifications
 ####OBJECT-ACTIONS-SERIALIZER-IMPORTS-ENDS####
 
 logger = logging.getLogger(__name__)
@@ -234,21 +235,9 @@ class AssessmentsSerializer(serializers.ModelSerializer):
 
         return questions_data
         
-class AssessmentQuestionsSerializer(CustomSerializer):
-    class Meta:
-        model = AssessmentQuestions
-        fields = '__all__'
-class QuestionsSerializer(CustomSerializer):
-    class Meta:
-        model = Questions
-        fields = '__all__'
 class QuestionResponsesSerializer(CustomSerializer):
     class Meta:
         model = QuestionResponses
-        fields = '__all__'
-class PaymentsSerializer(CustomSerializer):
-    class Meta:
-        model = Payments
         fields = '__all__'
 class PromptTemplatesSerializer(CustomSerializer):
     class Meta:
@@ -265,6 +254,25 @@ class CoachContentSerializer(CustomSerializer):
 class SharesSerializer(CustomSerializer):
     class Meta:
         model = Shares
+        fields = '__all__'
+class NotificationsSerializer(CustomSerializer):
+    class Meta:
+        model = Notifications
+        fields = '__all__'
+
+class ProductsSerializer(CustomSerializer):
+    class Meta:
+        model = Products
+        fields = '__all__'
+
+class PaymentsSerializer(CustomSerializer):
+    class Meta:
+        model = Payments
+        fields = '__all__'
+
+class PaymentAssignmentsSerializer(CustomSerializer):
+    class Meta:
+        model = PaymentAssignments
         fields = '__all__'
 ####OBJECT-ACTIONS-SERIALIZERS-ENDS####
 

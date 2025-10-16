@@ -1,10 +1,10 @@
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import MenuIcon from "@mui/icons-material/Menu";
-import { AppBar, Box, Divider, Grid, List, ListItemButton, ListItemText } from "@mui/material";
+import { AppBar, Box, Divider, Grid, List, ListItemButton, ListItemText, Typography } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import Snackbar from "@mui/material/Snackbar";
 import { styled } from "@mui/material/styles";
-import React, { useEffect } from "react";
+import React, { useContext, useEffect } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useNavDrawer } from "../NavDrawerProvider";
 import Logo from "./Logo";
@@ -12,9 +12,8 @@ import Logo from "./Logo";
 import AllMenus from "../components/AllMenus";
 import AuthMenu from "../components/AuthMenu";
 import ContentMenu from "../components/ContentMenu";
-import FontSelector from "./FontSelector";
 import { FadedPaper, StyledDrawer } from "./StyledFields";
-import ThemeSwitcher from "./ThemeSwitcher";
+import { ThemeContext } from "./ThemeContext";
 
 const DrawerHeader = styled("div")(({ theme }) => ({
   display: "flex",
@@ -26,6 +25,7 @@ const DrawerHeader = styled("div")(({ theme }) => ({
 const Layout: React.FC = () => {
   const location = useLocation();
   const { navDrawerWidth, setNavDrawerWidth, isMobile } = useNavDrawer();
+  const { brandingSettings } = useContext(ThemeContext);
   const [snack, showSnackBar] = React.useState("");
 
   const closeSnackbar = (
@@ -128,13 +128,24 @@ const Layout: React.FC = () => {
                 }}
               />
 
-              <Box sx={{ my: 2, px: 1 }}>
-                <ThemeSwitcher />
-              </Box>
-
-              <Box sx={{ mt: 3, px: 1 }}>
-                <FontSelector />
-              </Box>
+              {/* Powered By Footer - Only show if custom logo is active */}
+              {brandingSettings?.customLogoBase64 && (
+                <Box sx={{
+                  mt: 'auto',
+                  px: 1,
+                  py: 2,
+                  textAlign: 'center',
+                  borderTop: '1px solid',
+                  borderColor: 'divider'
+                }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                    Powered By
+                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <Logo useCustom={false} height={24} />
+                  </Box>
+                </Box>
+              )}
 
             </Grid>
             <FadedPaper style={{ position: 'absolute', top: 0, left: 0, minHeight: '100vh', maxHeight: '100vh', width: '100%', padding: 0, margin: 0, zIndex: 0 }} />

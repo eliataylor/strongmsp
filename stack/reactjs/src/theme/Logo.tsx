@@ -5,11 +5,32 @@ import { ThemeContext } from "./ThemeContext";
 
 interface LogoProps {
   height?: number;
+  useCustom?: boolean;
 }
 
 const Logo: React.FC<LogoProps> = (props) => {
-  const { darkMode } = useContext(ThemeContext);
+  const { darkMode, brandingSettings } = useContext(ThemeContext);
+  const { useCustom = true } = props;
 
+  // Get custom logo from branding settings
+  const customLogoBase64 = brandingSettings?.customLogoBase64;
+
+  // If custom logo is requested and available, render image
+  if (useCustom && customLogoBase64) {
+    return (
+      <img
+        src={customLogoBase64}
+        alt="Custom Logo"
+        style={{
+          height: props.height ? `${props.height}px` : '100%',
+          maxWidth: '100%',
+          objectFit: 'contain'
+        }}
+      />
+    );
+  }
+
+  // Otherwise render original SVG
   const toPass = {
     sx: {
       height: '100%',
@@ -22,7 +43,6 @@ const Logo: React.FC<LogoProps> = (props) => {
     // @ts-ignore
     toPass.sx.fontSize = props.height;
   }
-
 
   return <SvgIcon
     {...toPass}

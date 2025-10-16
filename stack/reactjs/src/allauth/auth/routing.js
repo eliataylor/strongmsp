@@ -1,7 +1,7 @@
-import { Navigate, useLocation } from "react-router-dom";
-import { AuthChangeEvent, useAuthChange, useAuthStatus } from "./hooks";
-import { AuthenticatorType, Flows } from "../lib/allauth";
 import { Box } from "@mui/material";
+import { Navigate, useLocation } from "react-router-dom";
+import { AuthenticatorType, Flows } from "../lib/allauth";
+import { AuthChangeEvent, useAuthChange, useAuthStatus } from "./hooks";
 
 export const URLs = Object.freeze({
   LOGIN_URL: "/account/login",
@@ -30,7 +30,7 @@ flow2path[`${Flows.MFA_REAUTHENTICATE}:${AuthenticatorType.RECOVERY_CODES}`] =
 flow2path[`${Flows.MFA_REAUTHENTICATE}:${AuthenticatorType.WEBAUTHN}`] =
   "/account/reauthenticate/webauthn";
 
-export function pathForFlow (flow, typ) {
+export function pathForFlow(flow, typ) {
   let key = flow.id;
   if (typeof flow.types !== "undefined") {
     typ = typ ?? flow.types[0];
@@ -43,7 +43,7 @@ export function pathForFlow (flow, typ) {
   return path;
 }
 
-export function pathForPendingFlow (auth) {
+export function pathForPendingFlow(auth) {
   const flow = auth.data.flows.find((flow) => flow.is_pending);
   if (flow) {
     return pathForFlow(flow);
@@ -51,7 +51,7 @@ export function pathForPendingFlow (auth) {
   return null;
 }
 
-function navigateToPendingFlow (auth) {
+function navigateToPendingFlow(auth) {
   const path = pathForPendingFlow(auth);
   if (path) {
     return <Navigate to={path} />;
@@ -59,7 +59,7 @@ function navigateToPendingFlow (auth) {
   return null;
 }
 
-export function AuthenticatedRoute ({ children }) {
+export function AuthenticatedRoute({ children }) {
   const location = useLocation();
   const [, status] = useAuthStatus();
   const next = `next=${encodeURIComponent(location.pathname + location.search)}`;
@@ -70,7 +70,7 @@ export function AuthenticatedRoute ({ children }) {
   }
 }
 
-export function AnonymousRoute ({ children }) {
+export function AnonymousRoute({ children }) {
   const [, status] = useAuthStatus();
   if (!status.isAuthenticated) {
     return <Box p={2}> {children}</Box>;
@@ -79,14 +79,22 @@ export function AnonymousRoute ({ children }) {
   }
 }
 
-export function AuthChangeRedirector ({ children }) {
+export function AuthChangeRedirector({ children }) {
   const [auth, event] = useAuthChange();
   const location = useLocation();
   switch (event) {
     case AuthChangeEvent.LOGGED_OUT:
       return <Navigate to={URLs.LOGOUT_REDIRECT_URL} />;
-    case AuthChangeEvent.LOGGED_IN:
+    case AuthChangeEvent.LOGGED_IN: {
+      console.log("[USERTYPE] User logged in, checking groups:", auth?.data?.user?.groups);
+      // Check if user has groups assigned, redirect to role selection if not
+      if (auth?.data?.user && (!auth.data.user.groups || auth.data.user.groups.length === 0)) {
+        console.log("[USERTYPE] No groups found, redirecting to role selection");
+        return <Navigate to="/onboarding/role-selection" />;
+      }
+      console.log("[USERTYPE] User has groups, redirecting to home");
       return <Navigate to={URLs.LOGIN_REDIRECT_URL} />;
+    }
     case AuthChangeEvent.REAUTHENTICATED: {
       const next = new URLSearchParams(location.search).get("next") || "/";
       return <Navigate to={next} />;

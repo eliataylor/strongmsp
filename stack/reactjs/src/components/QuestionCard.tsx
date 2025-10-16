@@ -72,11 +72,11 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     switch (scale) {
       case 'onetofive':
         return {
-          '1': 'Strongly Disagree',
-          '2': 'Disagree',
-          '3': 'Neutral',
-          '4': 'Agree',
-          '5': 'Strongly Agree'
+          '1': 'Least Confident',
+          '2': '',
+          '3': '',
+          '4': '',
+          '5': 'Most Confident'
         } as Record<string, string>;
       case 'onetoten':
         return {
@@ -117,7 +117,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     .map((k) => Number(k))
     .filter((n) => !Number.isNaN(n))
     .sort((a, b) => a - b);
-  const wrapOptions = optionValues.length > 5;
+  const wrapOptions = optionValues.length >= 5;
 
   return (
     <Card

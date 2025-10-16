@@ -34,17 +34,22 @@ import ManageProviders from "./allauth/socialaccount/ManageProviders";
 import ProviderCallback from "./allauth/socialaccount/ProviderCallback";
 import ProviderSignup from "./allauth/socialaccount/ProviderSignup";
 import Sessions from "./allauth/usersessions/Sessions";
+import { RoleProtectedRoute } from "./context/RoleProtectedRoute";
 import NewSchemaForm from "./object-actions/generator/NewSchemaForm";
 import WorksheetList from "./object-actions/generator/WorksheetList";
 import WorksheetLoader from "./object-actions/generator/WorksheetLoader";
 import { NAVITEMS } from "./object-actions/types/types";
 import AssessmentScreen from "./screens/AssessmentScreen";
+import BrandingSettings from "./screens/BrandingSettings";
 import BuyConfidenceAssessment from "./screens/BuyConfidenceAssessment";
 import ContentTypesHome from "./screens/ContentTypesHome";
 import EntityForm from "./screens/EntityForm";
 import EntityList from "./screens/EntityList";
 import EntityView from "./screens/EntityView";
+import MyAccount from "./screens/MyAccount";
 import PromptTesterScreen from "./screens/PromptTesterScreen";
+import RoleSelection from "./screens/RoleSelection";
+import RoleSwitchPrompt from "./screens/RoleSwitchPrompt";
 import TempLanding from "./screens/TempLanding";
 import UserView from "./screens/UserView";
 
@@ -304,6 +309,30 @@ function createRouter() {
               <Sessions />
             </AuthenticatedRoute>
           )
+        },
+        {
+          path: "/my-profile",
+          element: (
+            <AuthenticatedRoute>
+              <MyAccount />
+            </AuthenticatedRoute>
+          )
+        },
+        {
+          path: "/onboarding/role-selection",
+          element: (
+            <AuthenticatedRoute>
+              <RoleSelection />
+            </AuthenticatedRoute>
+          )
+        },
+        {
+          path: "/switch-role",
+          element: (
+            <AuthenticatedRoute>
+              <RoleSwitchPrompt />
+            </AuthenticatedRoute>
+          )
         }
       ]
     }
@@ -322,13 +351,26 @@ function createRouter() {
   });
 
   NAVITEMS.forEach((item) => {
+    // Create route with role protection if roles are defined
+    const listElement = item.roles ?
+      <RoleProtectedRoute requiredRoles={item.roles}>
+        <EntityList showFab={true} />
+      </RoleProtectedRoute> :
+      <EntityList showFab={true} />;
+
+    const viewElement = item.roles ?
+      <RoleProtectedRoute requiredRoles={item.roles}>
+        <EntityView />
+      </RoleProtectedRoute> :
+      <EntityView />;
+
     allRoutes[0].children.push({
       path: `/${item.segment}`,
-      element: <EntityList showFab={true} />
+      element: listElement
     });
     allRoutes[0].children.push({
       path: `/${item.segment}/:id`,
-      element: <EntityView />
+      element: viewElement
     });
   });
 
@@ -341,7 +383,23 @@ function createRouter() {
     element: <EntityForm />
   });
 
-  allRoutes[0].children.push({ path: `/prompt-tester`, element: <PromptTesterScreen /> });
+  allRoutes[0].children.push({
+    path: `/prompt-tester`,
+    element: (
+      <RoleProtectedRoute requiredRoles={['coach', 'admin']}>
+        <PromptTesterScreen />
+      </RoleProtectedRoute>
+    )
+  });
+
+  allRoutes[0].children.push({
+    path: `/admin/branding`,
+    element: (
+      <RoleProtectedRoute requiredRoles={['admin']}>
+        <BrandingSettings />
+      </RoleProtectedRoute>
+    )
+  });
 
 
   allRoutes[0].children.push({ path: `/oa/schemas`, element: <WorksheetList /> });

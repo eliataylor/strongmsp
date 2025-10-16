@@ -13,14 +13,15 @@ from .oa_testing import OATesterUserViewSet
 from .views import UsersViewSet
 from .views import CoursesViewSet
 from .views import AssessmentsViewSet
-from .views import AssessmentQuestionsViewSet
-from .views import QuestionsViewSet
-from .views import QuestionResponsesViewSet
+from .views import ProductsViewSet
 from .views import PaymentsViewSet
+from .views import PaymentAssignmentsViewSet
+from .views import QuestionResponsesViewSet
 from .views import PromptTemplatesViewSet
 from .views import AgentResponsesViewSet
 from .views import CoachContentViewSet
 from .views import SharesViewSet
+from .views import NotificationsViewSet
 ####OBJECT-ACTIONS-URL-IMPORTS-ENDS####
 urlpatterns = [path('', RenderFrontendIndex.as_view(), name='index')]
 
@@ -31,14 +32,15 @@ OARouter.register(r'oa-testers', OATesterUserViewSet, basename='oa-tester')
 OARouter.register('users', UsersViewSet, basename='users')
 OARouter.register('courses', CoursesViewSet, basename='courses')
 OARouter.register('assessments', AssessmentsViewSet, basename='assessments')
-OARouter.register('assessment-questions', AssessmentQuestionsViewSet, basename='assessment-questions')
-OARouter.register('questions', QuestionsViewSet, basename='questions')
-OARouter.register('question-responses', QuestionResponsesViewSet, basename='question-responses')
+OARouter.register('products', ProductsViewSet, basename='products')
 OARouter.register('payments', PaymentsViewSet, basename='payments')
+OARouter.register('payment-assignments', PaymentAssignmentsViewSet, basename='payment-assignments')
+OARouter.register('question-responses', QuestionResponsesViewSet, basename='question-responses')
 OARouter.register('prompt-templates', PromptTemplatesViewSet, basename='prompt-templates')
 OARouter.register('agent-responses', AgentResponsesViewSet, basename='agent-responses')
 OARouter.register('coach-content', CoachContentViewSet, basename='coach-content')
 OARouter.register('shares', SharesViewSet, basename='shares')
+OARouter.register('notifications', NotificationsViewSet, basename='notifications')
 
 if urlpatterns is None:
     urlpatterns = []

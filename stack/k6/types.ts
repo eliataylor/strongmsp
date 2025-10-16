@@ -1,17 +1,18 @@
 //---OBJECT-ACTIONS-API-RESP-STARTS---//
-export type ModelName = "Users" | "Courses" | "Assessments" | "AssessmentQuestions" | "Questions" | "QuestionResponses" | "Payments" | "PromptTemplates" | "AgentResponses" | "CoachContent" | "Shares";
+export type ModelName = "Users" | "Courses" | "Assessments" | "AssessmentQuestions" | "Questions" | "QuestionResponses" | "Payments" | "Products" | "PromptTemplates" | "AgentResponses" | "CoachContent" | "Shares";
 
-export type ModelType<T extends ModelName> = T extends 'Users' ? Users : 
-T extends 'Courses' ? Courses :
-T extends 'Assessments' ? Assessments :
-T extends 'AssessmentQuestions' ? AssessmentQuestions :
-T extends 'Questions' ? Questions :
-T extends 'QuestionResponses' ? QuestionResponses :
-T extends 'Payments' ? Payments :
-T extends 'PromptTemplates' ? PromptTemplates :
-T extends 'AgentResponses' ? AgentResponses :
-T extends 'CoachContent' ? CoachContent :
-T extends 'Shares' ? Shares : never
+export type ModelType<T extends ModelName> = T extends 'Users' ? Users :
+  T extends 'Courses' ? Courses :
+  T extends 'Assessments' ? Assessments :
+  T extends 'AssessmentQuestions' ? AssessmentQuestions :
+  T extends 'Questions' ? Questions :
+  T extends 'QuestionResponses' ? QuestionResponses :
+  T extends 'Payments' ? Payments :
+  T extends 'Products' ? Products :
+  T extends 'PromptTemplates' ? PromptTemplates :
+  T extends 'AgentResponses' ? AgentResponses :
+  T extends 'CoachContent' ? CoachContent :
+  T extends 'Shares' ? Shares : never
 
 export interface RelEntity<T extends ModelName = ModelName> {
   id: string | number;
@@ -28,12 +29,12 @@ export type ITypeFieldSchema = {
 }
 
 export interface ApiListResponse<T extends ModelName> {
-    count: number;
-    offset: number;
-    limit: number;
-    meta: any;
-    error: string | null;
-    results: Array<ModelType<T>>
+  count: number;
+  offset: number;
+  limit: number;
+  meta: any;
+  error: string | null;
+  results: Array<ModelType<T>>
 }
 
 export function getProp<T extends ModelName, K extends keyof ModelType<T>>(
@@ -203,17 +204,17 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
 
 //---OBJECT-ACTIONS-TYPE-CONSTANTS-STARTS---//
 export interface FieldTypeDefinition {
-    machine: string;
-    singular: string;
-    plural: string;
-    data_type: 'string' | 'number' | 'boolean' | 'object' | 'RelEntity';
-    field_type: string;
-    cardinality: number | typeof Infinity;
-    relationship?: ModelName;
-    required: boolean;
-    default: string;
-    example: string;
-    options?: Array<{ label: string; id: string; }>;
+  machine: string;
+  singular: string;
+  plural: string;
+  data_type: 'string' | 'number' | 'boolean' | 'object' | 'RelEntity';
+  field_type: string;
+  cardinality: number | typeof Infinity;
+  relationship?: ModelName;
+  required: boolean;
+  default: string;
+  example: string;
+  options?: Array<{ label: string; id: string; }>;
 }
 
 export const TypeFieldSchema: ITypeFieldSchema = {
@@ -567,6 +568,63 @@ export const TypeFieldSchema: ITypeFieldSchema = {
       "required": true,
       "example": ""
     }
+  },
+  "Products": {
+    "title": {
+      "machine": "title",
+      "singular": "Title",
+      "plural": "Titles",
+      "field_type": "text",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "",
+      "required": true,
+      "example": ""
+    },
+    "description": {
+      "machine": "description",
+      "singular": "Description",
+      "plural": "Descriptions",
+      "field_type": "textarea",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": ""
+    },
+    "price": {
+      "machine": "price",
+      "singular": "Price",
+      "plural": "Prices",
+      "field_type": "decimal",
+      "data_type": "number",
+      "cardinality": 1,
+      "default": "",
+      "required": true,
+      "example": ""
+    },
+    "stripe_product_id": {
+      "machine": "stripe_product_id",
+      "singular": "Stripe Product ID",
+      "plural": "Stripe Product IDs",
+      "field_type": "text",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": ""
+    },
+    "stripe_price_id": {
+      "machine": "stripe_price_id",
+      "singular": "Stripe Price ID",
+      "plural": "Stripe Price IDs",
+      "field_type": "text",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": ""
+    },
   },
   "Payments": {
     "athlete": {
@@ -984,94 +1042,116 @@ export const TypeFieldSchema: ITypeFieldSchema = {
 
 //---OBJECT-ACTIONS-TYPE-SCHEMA-STARTS---//
 export interface SuperModel {
-    readonly id: number | string; 
-    author: RelEntity<'Users'>;
-    created_at: string;
-    modified_at: string;
-    _type: ModelName;
+  readonly id: number | string;
+  author: RelEntity<'Users'>;
+  created_at: string;
+  modified_at: string;
+  _type: ModelName;
 }
 
 export interface Users {
-	readonly id: number | string
-	_type: string
-	is_active?: boolean
-	is_staff?: boolean
-	last_login?: string
-	date_joined?: string
-	first_name?: string
-	last_name?: string
-	groups?: string[]
-	email: string;
-	username: string;
-	real_name?: string | null;
-	bio?: string | null;
-	user_types?: string[] | null;
-	confidence_score?: number | null;
+  readonly id: number | string
+  _type: string
+  is_active?: boolean
+  is_staff?: boolean
+  last_login?: string
+  date_joined?: string
+  first_name?: string
+  last_name?: string
+  groups?: string[]
+  email: string;
+  username: string;
+  real_name?: string | null;
+  bio?: string | null;
+  user_types?: string[] | null;
+  confidence_score?: number | null;
 }
 export interface Courses extends SuperModel {
-	title: string;
-	description?: string | null;
-	preassessment: RelEntity<"Assessments">;
-	postassessment: RelEntity<"Assessments">;
-	price: number;
-	icon?: string | null;
-	cover_photo?: string | null;
+  title: string;
+  description?: string | null;
+  preassessment: RelEntity<"Assessments">;
+  postassessment: RelEntity<"Assessments">;
+  price: number;
+  icon?: string | null;
+  cover_photo?: string | null;
 }
 export interface Assessments extends SuperModel {
-	title: string;
-	questions: RelEntity<"AssessmentQuestions">[];
+  title: string;
+  questions: RelEntity<"AssessmentQuestions">[];
 }
 export interface AssessmentQuestions extends SuperModel {
-	question: RelEntity<"Questions">[];
-	order: number;
-	conditions?: object | null;
+  question: RelEntity<"Questions">[];
+  order: number;
+  conditions?: object | null;
 }
 export interface Questions extends SuperModel {
-	title: string;
-	help_text?: string | null;
-	question_category?: string | null;
-	scale?: string | null;
+  title: string;
+  help_text?: string | null;
+  question_category?: string | null;
+  scale?: string | null;
 }
 export interface QuestionResponses extends SuperModel {
-	author: RelEntity<"Users">;
-	question: RelEntity<"Questions">;
-	response: number;
+  author: RelEntity<"Users">;
+  question: RelEntity<"Questions">;
+  response: number;
 }
+export interface Products extends SuperModel {
+  title: string;
+  description?: string | null;
+  price: number;
+  stripe_product_id?: string | null;
+  stripe_price_id?: string | null;
+  is_active: boolean;
+  features?: Record<string, any> | null;
+  icon?: string | null;
+  cover_photo?: string | null;
+}
+
 export interface Payments extends SuperModel {
-	athlete?: RelEntity<"Users"> | null;
-	preferred_coach?: RelEntity<"Users"> | null;
-	course: RelEntity<"Courses">;
-	paid: number;
-	status: string;
-	subscription_ends?: string | null;
+  product?: RelEntity<"Products"> | null;
+  pre_assessment?: RelEntity<"Assessments"> | null;
+  post_assessment?: RelEntity<"Assessments"> | null;
+  paid: number;
+  status: string;
+  subscription_ends?: string | null;
+  features_snapshot?: Record<string, any> | null;
+  stripe_payment_intent_id?: string | null;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+}
+
+export interface PaymentAssignments extends SuperModel {
+  payment: RelEntity<"Payments">;
+  athlete?: RelEntity<"Users"> | null;
+  coaches: RelEntity<"Users">[];
+  parents: RelEntity<"Users">[];
 }
 export interface PromptTemplates extends SuperModel {
-	prompt: string;
-	instructions?: string | null;
-	model?: string | null;
-	status: string;
-	purpose: string;
-	response_format?: string | null;
+  prompt: string;
+  instructions?: string | null;
+  model?: string | null;
+  status: string;
+  purpose: string;
+  response_format?: string | null;
 }
 export interface AgentResponses extends SuperModel {
-	athlete: RelEntity<"Users">;
-	prompt_template: RelEntity<"PromptTemplates">;
-	purpose: string;
-	message_body: string;
-	ai_response: string;
-	ai_reasoning?: string | null;
+  athlete: RelEntity<"Users">;
+  prompt_template: RelEntity<"PromptTemplates">;
+  purpose: string;
+  message_body: string;
+  ai_response: string;
+  ai_reasoning?: string | null;
 }
 export interface CoachContent extends SuperModel {
-	author?: RelEntity<"Users"> | null;
-	title: string;
-	body: string;
-	icon?: string | null;
-	cover_photo?: string | null;
-	privacy: string;
+  title: string;
+  body: string;
+  icon?: string | null;
+  cover_photo?: string | null;
+  privacy: string;
 }
 export interface Shares extends SuperModel {
-	recipient: RelEntity<"Users">;
-	content: RelEntity<"CoachContent">;
-	expires?: string | null;
+  recipient: RelEntity<"Users">;
+  content: RelEntity<"CoachContent">;
+  expires?: string | null;
 }
 //---OBJECT-ACTIONS-TYPE-SCHEMA-ENDS---//

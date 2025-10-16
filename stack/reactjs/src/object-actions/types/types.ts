@@ -1,5 +1,5 @@
 //---OBJECT-ACTIONS-API-RESP-STARTS---//
-export type ModelName = "Users" | "Courses" | "Assessments" | "AssessmentQuestions" | "Questions" | "QuestionResponses" | "Payments" | "PromptTemplates" | "AgentResponses" | "CoachContent" | "Shares";
+export type ModelName = "Users" | "Courses" | "Assessments" | "AssessmentQuestions" | "Questions" | "QuestionResponses" | "Payments" | "Products" | "PromptTemplates" | "AgentResponses" | "CoachContent" | "Shares";
 
 export type ModelType<T extends ModelName> = T extends 'Users' ? Users :
   T extends 'Courses' ? Courses :
@@ -820,6 +820,107 @@ export const TypeFieldSchema: ITypeFieldSchema = {
       ]
     }
   },
+  "Products": {
+    "title": {
+      "machine": "title",
+      "singular": "Title",
+      "plural": "Titles",
+      "field_type": "text",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "",
+      "required": true,
+      "example": ""
+    },
+    "description": {
+      "machine": "description",
+      "singular": "Description",
+      "plural": "Descriptions",
+      "field_type": "textarea",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": ""
+    },
+    "price": {
+      "machine": "price",
+      "singular": "Price",
+      "plural": "Prices",
+      "field_type": "decimal",
+      "data_type": "number",
+      "cardinality": 1,
+      "default": "",
+      "required": true,
+      "example": ""
+    },
+    "stripe_product_id": {
+      "machine": "stripe_product_id",
+      "singular": "Stripe Product ID",
+      "plural": "Stripe Product IDs",
+      "field_type": "text",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": ""
+    },
+    "stripe_price_id": {
+      "machine": "stripe_price_id",
+      "singular": "Stripe Price ID",
+      "plural": "Stripe Price IDs",
+      "field_type": "text",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": ""
+    },
+    "is_active": {
+      "machine": "is_active",
+      "singular": "Is Active",
+      "plural": "Is Active",
+      "field_type": "boolean",
+      "data_type": "boolean",
+      "cardinality": 1,
+      "default": "true",
+      "required": true,
+      "example": ""
+    },
+    "features": {
+      "machine": "features",
+      "singular": "Features",
+      "plural": "Features",
+      "field_type": "json",
+      "data_type": "object",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": ""
+    },
+    "icon": {
+      "machine": "icon",
+      "singular": "Icon",
+      "plural": "Icons",
+      "field_type": "image",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": ""
+    },
+    "cover_photo": {
+      "machine": "cover_photo",
+      "singular": "Cover Photo",
+      "plural": "Cover Photos",
+      "field_type": "image",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": ""
+    }
+  },
   "Shares": {
     "recipient": {
       "machine": "recipient",
@@ -925,13 +1026,36 @@ export interface QuestionResponses extends SuperModel {
   question: RelEntity<"Questions">;
   response: number;
 }
+export interface Products extends SuperModel {
+  title: string;
+  description?: string | null;
+  price: number;
+  stripe_product_id?: string | null;
+  stripe_price_id?: string | null;
+  is_active: boolean;
+  features?: Record<string, any> | null;
+  icon?: string | null;
+  cover_photo?: string | null;
+}
+
 export interface Payments extends SuperModel {
-  athlete?: RelEntity<"Users"> | null;
-  preferred_coach?: RelEntity<"Users"> | null;
-  course: RelEntity<"Courses">;
+  product?: RelEntity<"Products"> | null;
+  pre_assessment?: RelEntity<"Assessments"> | null;
+  post_assessment?: RelEntity<"Assessments"> | null;
   paid: number;
   status: string;
   subscription_ends?: string | null;
+  features_snapshot?: Record<string, any> | null;
+  stripe_payment_intent_id?: string | null;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+}
+
+export interface PaymentAssignments extends SuperModel {
+  payment: RelEntity<"Payments">;
+  athlete?: RelEntity<"Users"> | null;
+  coaches: RelEntity<"Users">[];
+  parents: RelEntity<"Users">[];
 }
 export interface PromptTemplates extends SuperModel {
   prompt: string;
@@ -982,6 +1106,71 @@ export interface PurposeOption {
 
 //---OBJECT-ACTIONS-TYPE-SCHEMA-ENDS---//
 
+export type USER_TYPE = 'athlete' | 'parent' | 'coach' | 'admin' | 'agent';
+
+// Role configuration with icons, labels, and colors
+export const ROLE_CONFIG = {
+  athlete: {
+    icon: 'Sports',
+    label: "Athlete",
+    color: "primary" as const,
+    description: "Take assessments, manage your profile, and view coach content shared with you",
+    features: [
+      "Complete confidence assessments",
+      "Track your performance over time",
+      "View personalized coach content",
+      "Manage your athlete profile"
+    ]
+  },
+  parent: {
+    icon: 'Diversity3',
+    label: "Parent",
+    color: "secondary" as const,
+    description: "View your child athlete's profile, assessment results, and manage your subscription",
+    features: [
+      "Monitor your child's progress",
+      "View assessment results and insights",
+      "Manage subscription and payments",
+      "Access shared coach content"
+    ]
+  },
+  coach: {
+    icon: 'SportsEsports',
+    label: "Coach",
+    color: "success" as const,
+    description: "Review all athletes assigned to you, trigger agent responses, and create shared content",
+    features: [
+      "Review athlete data and progress",
+      "Trigger AI agent responses",
+      "Create and customize coach content",
+      "Share content with athletes and parents"
+    ]
+  },
+  admin: {
+    icon: 'AdminPanelSettings',
+    label: "Admin",
+    color: "error" as const,
+    description: "Full system access to manage users, content, and platform settings",
+    features: [
+      "Manage all users and roles",
+      "Access all platform data",
+      "Configure system settings",
+      "Monitor platform analytics"
+    ]
+  },
+  agent: {
+    icon: 'SmartToy',
+    label: "Agent",
+    color: "info" as const,
+    description: "AI agent with specialized access to system functions and data processing",
+    features: [
+      "Process automated tasks",
+      "Access system data for analysis",
+      "Execute predefined workflows",
+      "Generate automated responses"
+    ]
+  }
+} as const;
 
 //---OBJECT-ACTIONS-NAV-ITEMS-STARTS---//
 export interface NavItem<T extends ModelName = ModelName> {
@@ -993,6 +1182,7 @@ export interface NavItem<T extends ModelName = ModelName> {
   type: T;
   model_type?: 'vocabulary' | string;
   search_fields: string[];
+  roles?: USER_TYPE[];
 }
 
 export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
@@ -1005,7 +1195,8 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "search_fields": [
       "first_name",
       "last_name"
-    ]
+    ],
+    "roles": ["admin", "coach", "parent"]
   },
   {
     "singular": "Course",
@@ -1015,17 +1206,19 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "api": "/api/courses",
     "search_fields": [
       "title"
-    ]
+    ],
+    "roles": ["admin", "parent"]
   },
   {
-    "singular": "Assessment",
+    "singular": "My Assessment",
     "plural": "Assessments",
     "type": "Assessments",
     "segment": "assessments",
     "api": "/api/assessments",
     "search_fields": [
       "title"
-    ]
+    ],
+    "roles": ["athlete"]
   },
   {
     "singular": "Assessment Question",
@@ -1036,7 +1229,8 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "model_type": "vocabulary",
     "search_fields": [
       "question__title"
-    ]
+    ],
+    "roles": ["coach", "admin"]
   },
   {
     "singular": "Question",
@@ -1047,7 +1241,8 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "model_type": "vocabulary",
     "search_fields": [
       "title"
-    ]
+    ],
+    "roles": ["coach", "admin"]
   },
   {
     "singular": "Question Response",
@@ -1058,7 +1253,8 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "model_type": "vocabulary",
     "search_fields": [
       "question__title"
-    ]
+    ],
+    "roles": ["athlete", "coach", "admin"]
   },
   {
     "singular": "Payment",
@@ -1069,7 +1265,19 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "model_type": "vocabulary",
     "search_fields": [
       "course__title"
-    ]
+    ],
+    "roles": ["parent", "admin"]
+  },
+  {
+    "singular": "Product",
+    "plural": "Products",
+    "type": "Products",
+    "segment": "products",
+    "api": "/api/products",
+    "search_fields": [
+      "title"
+    ],
+    "roles": ["admin"]
   },
   {
     "singular": "Prompt Template",
@@ -1077,7 +1285,8 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "PromptTemplates",
     "segment": "prompt-templates",
     "api": "/api/prompt-templates",
-    "search_fields": []
+    "search_fields": [],
+    "roles": ["coach", "admin"]
   },
   {
     "singular": "Agent Response",
@@ -1085,7 +1294,8 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "AgentResponses",
     "segment": "agent-responses",
     "api": "/api/agent-responses",
-    "search_fields": []
+    "search_fields": [],
+    "roles": ["coach", "admin"]
   },
   {
     "singular": "Coach Content",
@@ -1095,7 +1305,8 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "api": "/api/coach-content",
     "search_fields": [
       "title"
-    ]
+    ],
+    "roles": ["athlete", "parent", "coach", "admin"]
   },
   {
     "singular": "Share",
@@ -1106,7 +1317,8 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "model_type": "vocabulary",
     "search_fields": [
       "content__title"
-    ]
+    ],
+    "roles": ["coach", "admin"]
   }
 ]
 //---OBJECT-ACTIONS-NAV-ITEMS-ENDS---//
