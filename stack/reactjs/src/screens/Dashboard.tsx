@@ -96,19 +96,9 @@ const Dashboard: React.FC = () => {
     }
 
     return (
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4 }}>
-                Dashboard
-            </Typography>
-
+        <React.Fragment>
             {/* Payment Assignments Section */}
-            <Box sx={{ mb: 6 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                    <Typography variant="h5" component="h2">
-                        Payment Assignments
-                    </Typography>
-                </Box>
-
+            <Box sx={{ mb: 3 }}>
                 {paymentAssignments.length === 0 ? (
                     <Card>
                         <CardContent>
@@ -184,7 +174,7 @@ const Dashboard: React.FC = () => {
                     </>
                 )}
             </Box>
-        </Container>
+        </React.Fragment>
     );
 };
 

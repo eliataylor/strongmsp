@@ -1,4 +1,5 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { useAuth } from "../allauth/auth/hooks";
 import ApiClient, { HttpResponse } from "../config/ApiClient";
 import { ContextApiResponse, OrganizationPublicData, UserOrganizationMembership, UserPaymentAssignment } from "../object-actions/types/types";
 
@@ -31,6 +32,7 @@ export function AppContextProvider({ children }: Props) {
     const [paymentAssignments, setPaymentAssignments] = useState<UserPaymentAssignment[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const auth = useAuth();
 
     const fetchContext = async () => {
         setLoading(true);
@@ -52,9 +54,36 @@ export function AppContextProvider({ children }: Props) {
         }
     };
 
+    // Fetch context on mount
     useEffect(() => {
         fetchContext();
     }, []);
+
+    // Refresh context when user logs in, clear when user logs out
+    useEffect(() => {
+        if (auth?.meta?.is_authenticated) {
+            console.log("[CONTEXT] User authenticated, refreshing context");
+            fetchContext();
+        } else if (auth && !auth.meta?.is_authenticated) {
+            console.log("[CONTEXT] User logged out, clearing context");
+            setOrganization(null);
+            setMembership(null);
+            setPaymentAssignments([]);
+            setError(null);
+            setLoading(false);
+        }
+    }, [auth?.meta?.is_authenticated]);
+
+    // Debug logging for context changes
+    useEffect(() => {
+        console.log("[CONTEXT] Context state updated:", {
+            organization: organization?.name || "None",
+            membership: membership?.groups?.join(", ") || "None",
+            paymentAssignments: paymentAssignments.length,
+            loading,
+            error
+        });
+    }, [organization, membership, paymentAssignments, loading, error]);
 
     const value: AppContextType = {
         organization,

@@ -1,9 +1,9 @@
-import React from "react";
-import { NAVITEMS, RelEntity } from "../types/types";
-import CardHeader, { CardHeaderProps } from "@mui/material/CardHeader";
-import { Link } from "react-router-dom";
-import Avatar from "@mui/material/Avatar";
 import { Typography } from "@mui/material";
+import Avatar from "@mui/material/Avatar";
+import CardHeader, { CardHeaderProps } from "@mui/material/CardHeader";
+import React from "react";
+import { Link } from "react-router-dom";
+import { NAVITEMS, RelEntity } from "../types/types";
 
 interface RelEntityHeadProps {
   rel: RelEntity;
@@ -20,13 +20,13 @@ const RelEntityHead: React.FC<RelEntityHeadProps> = ({ rel, label }) => {
 
   const hasUrl = NAVITEMS.find((nav) => nav.type === rel["_type"]);
 
-  headerProps.title = (
-    <Typography variant={"body1"}>
+  headerProps.subheader = (
+    <Typography variant={"body2"}>
       {label ? label : !hasUrl ? rel["_type"] : hasUrl.singular}{" "}
     </Typography>
   );
-  headerProps.subheader = (
-    <Typography variant={"body2"}>
+  headerProps.title = (
+    <Typography variant={"body1"}>
       {!hasUrl ? (
         rel.str
       ) : (

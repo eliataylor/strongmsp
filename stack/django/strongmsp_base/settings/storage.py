@@ -35,6 +35,7 @@ if OA_ENV_STORAGE == 'gcp':
     GS_CREDENTIALS_PATH = myEnv('GCP_SA_KEY_PATH', False)
     if os.path.isfile(GS_CREDENTIALS_PATH):
         GOOGLE_APPLICATION_CREDENTIALS = GS_CREDENTIALS_PATH
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GS_CREDENTIALS_PATH      # pyright: ignore[reportArgumentType]
         logger.debug(f'loading Google Service credentials from {GS_CREDENTIALS_PATH}')
     elif myEnv('GS_CREDENTIALS') is not None:
         import json
