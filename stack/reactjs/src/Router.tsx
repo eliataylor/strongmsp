@@ -42,15 +42,15 @@ import { NAVITEMS } from "./object-actions/types/types";
 import AssessmentScreen from "./screens/AssessmentScreen";
 import BrandingSettings from "./screens/BrandingSettings";
 import BuyConfidenceAssessment from "./screens/BuyConfidenceAssessment";
-import ContentTypesHome from "./screens/ContentTypesHome";
+import Dashboard from "./screens/Dashboard";
 import EntityForm from "./screens/EntityForm";
 import EntityList from "./screens/EntityList";
 import EntityView from "./screens/EntityView";
 import MyAccount from "./screens/MyAccount";
+import NotificationsScreen from "./screens/Notifications";
 import PromptTesterScreen from "./screens/PromptTesterScreen";
 import RoleSelection from "./screens/RoleSelection";
 import RoleSwitchPrompt from "./screens/RoleSwitchPrompt";
-import TempLanding from "./screens/TempLanding";
 import UserView from "./screens/UserView";
 
 function createRouter() {
@@ -66,14 +66,6 @@ function createRouter() {
         {
           path: "/",
           element: <Home />
-        },
-        {
-          path: "/temp-landing",
-          element: <TempLanding />
-        },
-        {
-          path: "/content",
-          element: <ContentTypesHome />
         },
         {
           path: "/account/sms",
@@ -331,6 +323,22 @@ function createRouter() {
           element: (
             <AuthenticatedRoute>
               <RoleSwitchPrompt />
+            </AuthenticatedRoute>
+          )
+        },
+        {
+          path: "/dashboard",
+          element: (
+            <AuthenticatedRoute>
+              <Dashboard />
+            </AuthenticatedRoute>
+          )
+        },
+        {
+          path: "/notifications",
+          element: (
+            <AuthenticatedRoute>
+              <NotificationsScreen />
             </AuthenticatedRoute>
           )
         }

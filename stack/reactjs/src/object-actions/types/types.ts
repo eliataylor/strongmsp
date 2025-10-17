@@ -1,5 +1,5 @@
 //---OBJECT-ACTIONS-API-RESP-STARTS---//
-export type ModelName = "Users" | "Courses" | "Assessments" | "AssessmentQuestions" | "Questions" | "QuestionResponses" | "Payments" | "Products" | "PromptTemplates" | "AgentResponses" | "CoachContent" | "Shares";
+export type ModelName = "Users" | "Courses" | "Assessments" | "AssessmentQuestions" | "Questions" | "QuestionResponses" | "Payments" | "Products" | "PromptTemplates" | "AgentResponses" | "CoachContent" | "Shares" | "Notifications";
 
 export type ModelType<T extends ModelName> = T extends 'Users' ? Users :
   T extends 'Courses' ? Courses :
@@ -11,7 +11,8 @@ export type ModelType<T extends ModelName> = T extends 'Users' ? Users :
   T extends 'PromptTemplates' ? PromptTemplates :
   T extends 'AgentResponses' ? AgentResponses :
   T extends 'CoachContent' ? CoachContent :
-  T extends 'Shares' ? Shares : never
+  T extends 'Shares' ? Shares :
+  T extends 'Notifications' ? Notifications : never
 
 export interface RelEntity<T extends ModelName = ModelName> {
   id: string | number;
@@ -957,6 +958,93 @@ export const TypeFieldSchema: ITypeFieldSchema = {
       "required": false,
       "example": ""
     }
+  },
+  "Notifications": {
+    "recipient": {
+      "machine": "recipient",
+      "singular": "Recipient",
+      "plural": "Recipients",
+      "relationship": "Users",
+      "field_type": "user_account",
+      "data_type": "RelEntity",
+      "cardinality": 1,
+      "default": "",
+      "required": true,
+      "example": ""
+    },
+    "message": {
+      "machine": "message",
+      "singular": "Message",
+      "plural": "Messages",
+      "field_type": "textarea",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "",
+      "required": true,
+      "example": ""
+    },
+    "channel": {
+      "machine": "channel",
+      "singular": "Channel",
+      "plural": "Channels",
+      "field_type": "enum",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "dashboard",
+      "required": true,
+      "example": "dashboard",
+      "options": [
+        { "label": "Dashboard", "id": "dashboard" },
+        { "label": "Email", "id": "email" },
+        { "label": "SMS", "id": "sms" }
+      ]
+    },
+    "delivery_status": {
+      "machine": "delivery_status",
+      "singular": "Delivery Status",
+      "plural": "Delivery Statuses",
+      "field_type": "enum",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "pending",
+      "required": true,
+      "example": "pending",
+      "options": [
+        { "label": "Pending", "id": "pending" },
+        { "label": "Sent", "id": "sent" },
+        { "label": "Delivered", "id": "delivered" },
+        { "label": "Failed", "id": "failed" },
+        { "label": "Bounced", "id": "bounced" }
+      ]
+    },
+    "seen": {
+      "machine": "seen",
+      "singular": "Seen",
+      "plural": "Seen",
+      "field_type": "checkbox",
+      "data_type": "boolean",
+      "cardinality": 1,
+      "default": "false",
+      "required": true,
+      "example": "false"
+    },
+    "priority": {
+      "machine": "priority",
+      "singular": "Priority",
+      "plural": "Priorities",
+      "field_type": "enum",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "normal",
+      "required": true,
+      "example": "normal",
+      "options": [
+        { "label": "Low", "id": "low" },
+        { "label": "Normal", "id": "normal" },
+        { "label": "High", "id": "high" },
+        { "label": "Urgent", "id": "urgent" }
+      ]
+    }
   }
 }
 //---OBJECT-ACTIONS-TYPE-CONSTANTS-ENDS---//
@@ -986,6 +1074,49 @@ export interface Users {
   bio?: string | null;
   user_types?: string[] | null;
   confidence_score?: number | null;
+}
+
+// Context API types
+export interface OrganizationPublicData {
+  id: number;
+  name: string;
+  slug: string;
+  is_active: boolean;
+  custom_logo_base64?: string | null;
+  branding_palette?: any;
+  branding_typography?: any;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+}
+
+export interface UserOrganizationMembership {
+  id: number;  // UserOrganizations ID
+  groups: string[];  // user's groups within this organization
+  joined_at: string;
+  is_active: boolean;
+}
+
+export interface UserPaymentAssignment {
+  id: number;
+  user_role: 'athlete' | 'coach' | 'parent' | null;
+  athlete?: RelEntity<'Users'> | null;
+  coaches: RelEntity<'Users'>[];
+  parents: RelEntity<'Users'>[];
+  pre_assessment?: RelEntity<'Assessments'> | null;
+  post_assessment?: RelEntity<'Assessments'> | null;
+  payment: {
+    id: number;
+    status: string;
+    subscription_ends?: string | null;
+    product?: RelEntity<'Products'> | null;
+  };
+}
+
+// Context API response type
+export interface ContextApiResponse {
+  organization: OrganizationPublicData | null;
+  membership: UserOrganizationMembership | null;
+  payment_assignments: UserPaymentAssignment[];
 }
 export interface Courses extends SuperModel {
   title: string;
@@ -1087,6 +1218,21 @@ export interface Shares extends SuperModel {
   expires?: string | null;
 }
 
+export interface Notifications extends SuperModel {
+  recipient: RelEntity<"Users">;
+  message: string;
+  message_text?: string | null;
+  message_html?: string | null;
+  channel: 'dashboard' | 'email' | 'sms';
+  delivery_status: 'pending' | 'sent' | 'delivered' | 'failed' | 'bounced';
+  sent_at?: string | null;
+  seen: boolean;
+  notification_type?: string | null;
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  link?: string | null;
+  expires?: string | null;
+}
+
 // Prompt Testing Interfaces
 export interface StreamChunk {
   type: "message" | "done" | "keep_alive" | "error";
@@ -1178,7 +1324,7 @@ export interface NavItem<T extends ModelName = ModelName> {
   plural: string;
   segment: string;
   api: string;
-  icon?: string;
+  icon: string;
   type: T;
   model_type?: 'vocabulary' | string;
   search_fields: string[];
@@ -1192,6 +1338,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "Users",
     "segment": "users",
     "api": "/api/users",
+    "icon": "Person",
     "search_fields": [
       "first_name",
       "last_name"
@@ -1204,6 +1351,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "Courses",
     "segment": "courses",
     "api": "/api/courses",
+    "icon": "School",
     "search_fields": [
       "title"
     ],
@@ -1215,6 +1363,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "Assessments",
     "segment": "assessments",
     "api": "/api/assessments",
+    "icon": "Quiz",
     "search_fields": [
       "title"
     ],
@@ -1226,6 +1375,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "AssessmentQuestions",
     "segment": "assessment-questions",
     "api": "/api/assessment-questions",
+    "icon": "HelpOutline",
     "model_type": "vocabulary",
     "search_fields": [
       "question__title"
@@ -1238,6 +1388,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "Questions",
     "segment": "questions",
     "api": "/api/questions",
+    "icon": "QuestionMark",
     "model_type": "vocabulary",
     "search_fields": [
       "title"
@@ -1250,6 +1401,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "QuestionResponses",
     "segment": "question-responses",
     "api": "/api/question-responses",
+    "icon": "AssignmentTurnedIn",
     "model_type": "vocabulary",
     "search_fields": [
       "question__title"
@@ -1262,6 +1414,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "Payments",
     "segment": "payments",
     "api": "/api/payments",
+    "icon": "Payment",
     "model_type": "vocabulary",
     "search_fields": [
       "course__title"
@@ -1274,6 +1427,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "Products",
     "segment": "products",
     "api": "/api/products",
+    "icon": "Inventory",
     "search_fields": [
       "title"
     ],
@@ -1285,6 +1439,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "PromptTemplates",
     "segment": "prompt-templates",
     "api": "/api/prompt-templates",
+    "icon": "Description",
     "search_fields": [],
     "roles": ["coach", "admin"]
   },
@@ -1294,6 +1449,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "AgentResponses",
     "segment": "agent-responses",
     "api": "/api/agent-responses",
+    "icon": "SmartToy",
     "search_fields": [],
     "roles": ["coach", "admin"]
   },
@@ -1303,6 +1459,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "CoachContent",
     "segment": "coach-content",
     "api": "/api/coach-content",
+    "icon": "Sports",
     "search_fields": [
       "title"
     ],
@@ -1314,11 +1471,24 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "type": "Shares",
     "segment": "shares",
     "api": "/api/shares",
+    "icon": "Share",
     "model_type": "vocabulary",
     "search_fields": [
       "content__title"
     ],
     "roles": ["coach", "admin"]
+  },
+  {
+    "singular": "Notification",
+    "plural": "Notifications",
+    "type": "Notifications",
+    "segment": "notifications",
+    "api": "/api/notifications",
+    "icon": "Notifications",
+    "search_fields": [
+      "message"
+    ],
+    "roles": ["athlete", "parent", "coach", "admin"]
   }
 ]
 //---OBJECT-ACTIONS-NAV-ITEMS-ENDS---//

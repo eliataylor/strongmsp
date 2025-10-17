@@ -26,16 +26,35 @@ stats = analyzer.get_category_stats(athlete_id=1, assessment_id=1)
 spider_data = analyzer.get_spider_chart_data(athlete_id=1, assessment_id=1)
 ```
 
-### 2. AgentCompletionService (`agent_completion_service.py`)
+### 2. AgenticContextBuilder (`agentic_context_builder.py`)
+
+Structured context builder for OpenAI completions using MessageBuilder pattern.
+
+**Key Methods:**
+- `add_athlete_context(athlete)` - Add athlete profile information
+- `add_assessment_context(assessment)` - Add assessment metadata
+- `add_question_responses(responses)` - Add question response data
+- `add_spider_chart_data(spider_data)` - Add category aggregations
+- `add_previous_agent_output(agent_response)` - Add previous agent output
+- `build_messages()` - Compile all context into OpenAI messages format
+- `replace_template_tokens(template_text)` - Replace tokens in prompt text
+
+**Usage:**
+```python
+from .agentic_context_builder import AgenticContextBuilder
+
+builder = AgenticContextBuilder()
+builder.add_athlete_context(athlete)
+builder.add_question_responses(responses)
+messages = builder.build_messages()
+```
+
+### 3. AgentCompletionService (`agent_completion_service.py`)
 
 Handles OpenAI completions for agent responses using the Completions API (non-streaming).
 
-**Key Classes:**
-- `TokenReplacer` - Handles variable substitution in prompts
-- `AgentCompletionService` - Main service for running completions
-
 **Key Methods:**
-- `run_completion(prompt_template, athlete, assessment, input_data)` - Runs OpenAI completion
+- `run_completion(prompt_template, athlete, assessment, input_data)` - Runs OpenAI completion using context builder
 - `prepare_input_data(athlete, assessment, purpose, previous_response=None)` - Prepares input data
 
 **Usage:**
@@ -46,7 +65,7 @@ service = AgentCompletionService()
 agent_response = service.run_completion(template, athlete, assessment, input_data)
 ```
 
-### 3. AgentOrchestrator (`agent_orchestrator.py`)
+### 4. AgentOrchestrator (`agent_orchestrator.py`)
 
 Manages agent execution flow with async/sync patterns and notifications.
 
@@ -140,6 +159,49 @@ POST /api/agent-responses/{id}/regenerate/
 - Missing templates are logged and skipped
 - Coach/parent lookup failures are logged but don't stop execution
 - All errors are logged with appropriate detail levels
+
+## Context Builder Pattern
+
+The system uses a structured context builder pattern (similar to MessageBuilder.ts) for constructing OpenAI completion context:
+
+### Message Structure
+
+The context builder creates multiple system messages with clear prefixes:
+
+```python
+[
+    {
+        'role': 'system',
+        'content': 'SYSTEM_INSTRUCTIONS:\n\nYou are an expert sports psychologist...'
+    },
+    {
+        'role': 'system', 
+        'content': 'ATHLETE_PROFILE:\n\n**Name:** John Smith\n**Age:** 16\n...'
+    },
+    {
+        'role': 'system',
+        'content': 'QUESTION_RESPONSES:\n\n### Category: Confidence\n- Q1: ...'
+    },
+    {
+        'role': 'user',
+        'content': 'TEMPLATE_PROMPT:\n\nGenerate a comprehensive feedback report...'
+    }
+]
+```
+
+### Token Support
+
+Templates still support `{tokens}` for backward compatibility:
+
+```
+Generate a report for {athlete_name} based on {input_a} and {input_b}.
+```
+
+Tokens are resolved using context data:
+- `{athlete_name}` → Athlete's full name
+- `{input_a}` → Question responses or previous agent output
+- `{input_b}` → Spider chart data
+- `{assessment_title}` → Assessment title
 
 ## Testing
 

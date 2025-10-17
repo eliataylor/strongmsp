@@ -41,6 +41,8 @@ class Users(AbstractUser, BumpParentsModelMixin):
 	bio = models.TextField(blank=True, null=True, verbose_name='Bio')
 	user_types = models.CharField(max_length=7, choices=User_typesChoices.choices, verbose_name='User Types', blank=True, null=True)
 	confidence_score = models.IntegerField(blank=True, null=True, verbose_name='Confidence Score')
+	avatar = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Avatar')
+	photo = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Photo')
 
 	def __str__(self):
 		if self.get_full_name().strip():
@@ -126,6 +128,8 @@ class Products(SuperModel):
 	stripe_price_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='Stripe Price ID')
 	is_active = models.BooleanField(default=True, verbose_name='Is Active')
 	features = models.JSONField(blank=True, null=True, verbose_name='Features', help_text='JSON containing agents, content_variations, and assessment counts')
+	pre_assessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Pre-Assessment')
+	post_assessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Post-Assessment')
 	icon = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Icon')
 	cover_photo = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Cover Photo')
 
@@ -216,8 +220,6 @@ class Payments(SuperModel):
 		refunded = ("refunded", "Refunded")
 	
 	product = models.ForeignKey('Products', on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Product')
-	pre_assessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Pre-Assessment')
-	post_assessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Post-Assessment')
 	paid = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Paid')
 	status = models.CharField(max_length=10, choices=StatusChoices.choices, verbose_name='Status')
 	subscription_ends = models.DateField(blank=True, null=True, verbose_name='Subscription Ends')
@@ -225,6 +227,13 @@ class Payments(SuperModel):
 	stripe_payment_intent_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='Stripe Payment Intent ID')
 	stripe_customer_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='Stripe Customer ID')
 	stripe_subscription_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='Stripe Subscription ID')
+	
+	# Organization and sign-up code fields
+	organization = models.ForeignKey('Organizations', on_delete=models.SET_NULL, related_name='payments', 
+		null=True, blank=True, verbose_name='Organization')
+	signup_code = models.ForeignKey('SignUpCodes', on_delete=models.SET_NULL, related_name='payments',
+		null=True, blank=True, verbose_name='Sign-up Code Used')
+	discount_applied = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Discount Applied')
 
 class PaymentAssignments(SuperModel):
 	class Meta:
@@ -375,4 +384,85 @@ class Notifications(SuperModel):
 	link = models.URLField(max_length=500, blank=True, null=True, verbose_name='Link')
 	expires = models.DateTimeField(blank=True, null=True, verbose_name='Expires')
 	auto_send = models.BooleanField(default=False, verbose_name='Auto Send', help_text='Automatically send via this channel')
+
+class Organizations(SuperModel):
+	class Meta:
+		abstract = False
+		verbose_name = "Organization"
+		verbose_name_plural = "Organizations"
+
+	name = models.CharField(max_length=255, verbose_name='Organization Name')
+	slug = models.SlugField(unique=True, verbose_name='Subdomain Slug')
+	
+	# Branding Settings (JSON matching BrandingSettings.tsx structure)
+	custom_logo_base64 = models.TextField(blank=True, null=True, verbose_name='Custom Logo (Base64)')
+	branding_palette = models.JSONField(blank=True, null=True, verbose_name='Color Palette', 
+		help_text='{"light": {"primary": {"main": "#877010"}, "secondary": {"main": "#2a74b7"}}, "dark": {...}}')
+	branding_typography = models.JSONField(blank=True, null=True, verbose_name='Typography Settings',
+		help_text='{"fontFamily": "Montserrat"}')
+	
+	# Organization metadata
+	is_active = models.BooleanField(default=True, verbose_name='Is Active')
+	contact_email = models.EmailField(blank=True, null=True, verbose_name='Contact Email')
+	contact_phone = models.CharField(max_length=50, blank=True, null=True, verbose_name='Contact Phone')
+
+class OrganizationProducts(SuperModel):
+	class Meta:
+		abstract = False
+		verbose_name = "Organization Product"
+		verbose_name_plural = "Organization Products"
+
+	organization = models.ForeignKey('Organizations', on_delete=models.CASCADE, related_name='organization_products')
+	product = models.ForeignKey('Products', on_delete=models.CASCADE, related_name='product_organizations')
+	is_featured = models.BooleanField(default=False, verbose_name='Is Featured')
+	display_order = models.IntegerField(default=0, verbose_name='Display Order')
+
+class SignUpCodes(SuperModel):
+	class Meta:
+		abstract = False
+		verbose_name = "Sign-up Code"
+		verbose_name_plural = "Sign-up Codes"
+
+	organization = models.ForeignKey('Organizations', on_delete=models.CASCADE, related_name='signup_codes')
+	code = models.CharField(max_length=50, unique=True, verbose_name='Sign-up Code')
+	
+	# Discount configuration
+	class DiscountTypeChoices(models.TextChoices):
+		percentage = ("percentage", "Percentage")
+		fixed = ("fixed", "Fixed Amount")
+		free = ("free", "Free Access")
+	
+	discount_type = models.CharField(max_length=10, choices=DiscountTypeChoices.choices, default='percentage', verbose_name='Discount Type')
+	discount_value = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Discount Value')
+	
+	# Usage limits
+	max_uses = models.IntegerField(blank=True, null=True, verbose_name='Max Uses', 
+		help_text='Leave blank for unlimited')
+	current_uses = models.IntegerField(default=0, verbose_name='Current Uses')
+	
+	# Validity
+	valid_from = models.DateTimeField(blank=True, null=True, verbose_name='Valid From')
+	valid_until = models.DateTimeField(blank=True, null=True, verbose_name='Valid Until')
+	is_active = models.BooleanField(default=True, verbose_name='Is Active')
+	
+	# Product restrictions (optional - applies to specific products only)
+	applicable_products = models.ManyToManyField('Products', blank=True, related_name='signup_codes')
+
+class UserOrganizations(SuperModel):
+	class Meta:
+		abstract = False
+		verbose_name = "User Organization"
+		verbose_name_plural = "User Organizations"
+		unique_together = [['user', 'organization']]
+
+	user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='user_organizations')
+	organization = models.ForeignKey('Organizations', on_delete=models.CASCADE, related_name='organization_users')
+	
+	# Support multiple Groups per user per organization (e.g., both 'admin' and 'coach')
+	groups = models.ManyToManyField('auth.Group', related_name='user_org_memberships', 
+		verbose_name='Groups', blank=True,
+		help_text='Django Groups defining roles/permissions within this organization')
+	
+	joined_at = models.DateTimeField(auto_now_add=True, verbose_name='Joined At')
+	is_active = models.BooleanField(default=True, verbose_name='Is Active')
 ####OBJECT-ACTIONS-MODELS-ENDS####

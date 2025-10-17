@@ -9,8 +9,105 @@ from django.contrib.auth import get_user_model
 from strongmsp_app.models import Assessments, PromptTemplates, QuestionResponses
 from strongmsp_app.services.agent_orchestrator import AgentOrchestrator
 from strongmsp_app.services.confidence_analyzer import ConfidenceAnalyzer
+from strongmsp_app.services.agentic_context_builder import AgenticContextBuilder
 
 User = get_user_model()
+
+
+def test_context_builder():
+    """
+    Test the AgenticContextBuilder functionality.
+    """
+    print("Testing AgenticContextBuilder...")
+    
+    try:
+        # Initialize context builder
+        builder = AgenticContextBuilder()
+        print("✓ Context builder initialized")
+        
+        # Test athlete context
+        mock_athlete = type('MockUser', (), {
+            'get_full_name': lambda: 'John Smith',
+            'username': 'john.smith',
+            'email': 'john@example.com',
+            'user_types': 'athlete',
+            'confidence_score': 85,
+            'real_name': 'John Smith',
+            'bio': 'Elite athlete'
+        })()
+        
+        builder.add_athlete_context(mock_athlete)
+        athlete_profile = builder.get_context_value('athlete_profile')
+        print(f"✓ Athlete profile: {len(athlete_profile)} characters")
+        
+        # Test assessment context
+        mock_assessment = type('MockAssessment', (), {
+            'title': 'Pre-Season Assessment',
+            'description': 'Comprehensive performance evaluation',
+            'created_at': type('MockDateTime', (), {'strftime': lambda fmt: '2024-01-15 10:30'})()
+        })()
+        
+        builder.add_assessment_context(mock_assessment)
+        assessment_info = builder.get_context_value('assessment_info')
+        print(f"✓ Assessment info: {len(assessment_info)} characters")
+        
+        # Test question responses
+        mock_responses = [
+            {'question': 'How confident do you feel?', 'category': 'confidence', 'response': 4, 'scale': 'onetofive'},
+            {'question': 'Rate your focus', 'category': 'concentration', 'response': 3, 'scale': 'onetofive'},
+            {'question': 'How motivated are you?', 'category': 'resilience__motivation', 'response': 5, 'scale': 'onetofive'}
+        ]
+        
+        builder.add_question_responses(mock_responses)
+        question_data = builder.get_context_value('question_responses')
+        print(f"✓ Question responses: {len(question_data)} characters")
+        
+        # Test spider chart data
+        mock_spider_data = {
+            'confidence': {'avg': 4.2, 'total': 25, 'count': 6},
+            'concentration': {'avg': 3.8, 'total': 19, 'count': 5},
+            'resilience__motivation': {'avg': 4.5, 'total': 27, 'count': 6}
+        }
+        
+        builder.add_spider_chart_data(mock_spider_data)
+        spider_data = builder.get_context_value('spider_chart')
+        print(f"✓ Spider chart data: {len(spider_data)} characters")
+        
+        # Test previous agent output
+        mock_previous_output = "This is a sample report from a previous agent..."
+        builder.add_previous_agent_output(mock_previous_output)
+        previous_output = builder.get_context_value('previous_agent_output')
+        print(f"✓ Previous agent output: {len(previous_output)} characters")
+        
+        # Test template instructions
+        mock_template = type('MockTemplate', (), {
+            'instructions': 'You are an expert sports psychologist analyzing athlete performance data.',
+            'prompt': 'Generate a report for {athlete_name} based on {input_a} and {input_b}.'
+        })()
+        
+        builder.add_template_instructions(mock_template)
+        system_instructions = builder.get_context_value('system_instructions')
+        print(f"✓ System instructions: {len(system_instructions)} characters")
+        
+        # Test token replacement
+        template_text = "Generate a report for {athlete_name} based on {input_a} and {input_b}."
+        replaced_text = builder.replace_template_tokens(template_text)
+        print(f"✓ Token replacement: {replaced_text[:50]}...")
+        
+        # Test message building
+        messages = builder.build_messages()
+        print(f"✓ Built {len(messages)} messages for OpenAI")
+        
+        # Test debug info
+        debug_info = builder.get_debug_info()
+        print(f"✓ Debug info: {debug_info}")
+        
+        print("✓ All context builder tests passed!")
+        return True
+        
+    except Exception as e:
+        print(f"✗ Context builder test failed: {e}")
+        return False
 
 
 def test_agentic_flow():
@@ -19,8 +116,12 @@ def test_agentic_flow():
     """
     print("Testing Agentic Flow System...")
     
-    # 1. Test ConfidenceAnalyzer
-    print("\n1. Testing ConfidenceAnalyzer...")
+    # 1. Test ContextBuilder
+    print("\n1. Testing AgenticContextBuilder...")
+    context_success = test_context_builder()
+    
+    # 2. Test ConfidenceAnalyzer
+    print("\n2. Testing ConfidenceAnalyzer...")
     analyzer = ConfidenceAnalyzer()
     
     # Get test data (assuming you have some question responses)
@@ -40,8 +141,8 @@ def test_agentic_flow():
     except Exception as e:
         print(f"ConfidenceAnalyzer test failed: {e}")
     
-    # 2. Test AgentOrchestrator
-    print("\n2. Testing AgentOrchestrator...")
+    # 3. Test AgentOrchestrator
+    print("\n3. Testing AgentOrchestrator...")
     orchestrator = AgentOrchestrator()
     
     try:
@@ -60,8 +161,8 @@ def test_agentic_flow():
     except Exception as e:
         print(f"AgentOrchestrator test failed: {e}")
     
-    # 3. Test API endpoints (simulation)
-    print("\n3. Testing API endpoints...")
+    # 4. Test API endpoints (simulation)
+    print("\n4. Testing API endpoints...")
     
     # Simulate trigger_agents endpoint
     try:
@@ -85,7 +186,7 @@ def test_agentic_flow():
     except Exception as e:
         print(f"API endpoint test failed: {e}")
     
-    print("\nAgentic Flow System test completed!")
+    print(f"\nAgentic Flow System test completed! Context builder: {'✓' if context_success else '✗'}")
 
 
 def create_sample_prompt_templates():

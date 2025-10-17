@@ -20,6 +20,10 @@ from .models import AgentResponses
 from .models import CoachContent
 from .models import Shares
 from .models import Notifications
+from .models import Organizations
+from .models import OrganizationProducts
+from .models import SignUpCodes
+from .models import UserOrganizations
 ####OBJECT-ACTIONS-SERIALIZER-IMPORTS-ENDS####
 
 logger = logging.getLogger(__name__)
@@ -273,6 +277,26 @@ class PaymentsSerializer(CustomSerializer):
 class PaymentAssignmentsSerializer(CustomSerializer):
     class Meta:
         model = PaymentAssignments
+        fields = '__all__'
+
+class OrganizationsSerializer(CustomSerializer):
+    class Meta:
+        model = Organizations
+        fields = '__all__'
+
+class OrganizationProductsSerializer(CustomSerializer):
+    class Meta:
+        model = OrganizationProducts
+        fields = '__all__'
+
+class SignUpCodesSerializer(CustomSerializer):
+    class Meta:
+        model = SignUpCodes
+        fields = '__all__'
+
+class UserOrganizationsSerializer(CustomSerializer):
+    class Meta:
+        model = UserOrganizations
         fields = '__all__'
 ####OBJECT-ACTIONS-SERIALIZERS-ENDS####
 

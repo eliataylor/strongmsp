@@ -1,6 +1,6 @@
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import MenuIcon from "@mui/icons-material/Menu";
-import { AppBar, Box, Divider, Grid, List, ListItemButton, ListItemText, Typography } from "@mui/material";
+import { AppBar, Box, Grid, ListItemButton, Typography } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import Snackbar from "@mui/material/Snackbar";
 import { styled } from "@mui/material/styles";
@@ -9,9 +9,9 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { useNavDrawer } from "../NavDrawerProvider";
 import Logo from "./Logo";
 // import TrackingConsent from "../components/TrackingConsent"; // enable this if your publishing features in an area that require a cookie consent
-import AllMenus from "../components/AllMenus";
-import AuthMenu from "../components/AuthMenu";
-import ContentMenu from "../components/ContentMenu";
+import { useAuth } from "../allauth/auth";
+import AnonymousMenu from "../components/menus/AnonymousMenu";
+import RoleBasedMenu from "../components/RoleBasedMenu";
 import { FadedPaper, StyledDrawer } from "./StyledFields";
 import { ThemeContext } from "./ThemeContext";
 
@@ -25,6 +25,7 @@ const DrawerHeader = styled("div")(({ theme }) => ({
 const Layout: React.FC = () => {
   const location = useLocation();
   const { navDrawerWidth, setNavDrawerWidth, isMobile } = useNavDrawer();
+  const auth = useAuth();
   const { brandingSettings } = useContext(ThemeContext);
   const [snack, showSnackBar] = React.useState("");
 
@@ -94,39 +95,13 @@ const Layout: React.FC = () => {
               <Box sx={{ marginBottom: 1 }}>
                 <ListItemButton dense={true} alignItems={"center"}>
                   <Logo height={33} />
-                  <Link to={`/home`} style={{ textDecoration: "none", marginLeft: 10, fontSize: 12, fontWeight: 800 }}>
+                  <Link to={`/`} style={{ textDecoration: "none", marginLeft: 10, fontSize: 12, fontWeight: 800 }}>
                     Strong Mind Strong Performance
                   </Link>
                 </ListItemButton>
               </Box>
 
-              <AuthMenu />
-
-              <Divider
-                sx={{
-                  marginTop: 1,
-                  backgroundColor: "background.dark"
-                }}
-              />
-
-              <List dense={true}>
-                <ContentMenu />
-
-                <ListItemButton
-                  selected={location.pathname === `/prompt-tester`}
-                  component={Link}
-                  to={`/prompt-tester`}
-                >
-                  <ListItemText primary={'Prompt Tester'} />
-                </ListItemButton>
-              </List>
-
-              <Divider
-                sx={{
-                  marginTop: 1,
-                  backgroundColor: "background.dark"
-                }}
-              />
+              {auth?.data?.user ? <RoleBasedMenu /> : <AnonymousMenu />}
 
               {/* Powered By Footer - Only show if custom logo is active */}
               {brandingSettings?.customLogoBase64 && (
@@ -215,7 +190,7 @@ const Layout: React.FC = () => {
               <ChevronRightIcon />
             </IconButton>
           </DrawerHeader>
-          <AllMenus />
+          {auth?.data?.user ? <RoleBasedMenu /> : <AnonymousMenu />}
         </StyledDrawer>
       }
 

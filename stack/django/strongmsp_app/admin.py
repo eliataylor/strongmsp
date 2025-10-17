@@ -2,6 +2,7 @@
 ####OBJECT-ACTIONS-ADMIN_IMPORTS-STARTS####
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
+from django.utils.html import format_html
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import Users
 from .models import Courses
@@ -17,6 +18,10 @@ from .models import AgentResponses
 from .models import CoachContent
 from .models import Shares
 from .models import Notifications
+from .models import Organizations
+from .models import OrganizationProducts
+from .models import SignUpCodes
+from .models import UserOrganizations
 ####OBJECT-ACTIONS-ADMIN_IMPORTS-ENDS####
 
 from django.contrib.admin.views.main import ChangeList
@@ -92,11 +97,12 @@ class CoachFilter(SimpleListFilter):
 class UsersAdmin(BaseUserAdmin):
     fieldsets = BaseUserAdmin.fieldsets + (
         (_('Additional Info'), {'fields': ('real_name', 'bio', 'user_types', 'confidence_score')}),
+        (_('Profile Images'), {'fields': ('avatar', 'photo', 'avatar_preview', 'photo_preview')}),
     )
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
         (None, {
             'classes': ('wide',),
-            'fields': ('real_name', 'bio', 'user_types', 'confidence_score'),
+            'fields': ('real_name', 'bio', 'user_types', 'confidence_score', 'avatar', 'photo'),
         }),
     )
 
@@ -115,11 +121,32 @@ class UsersAdmin(BaseUserAdmin):
         return "Not set"
     display_confidence.short_description = "Confidence"
 
-    list_display = ('id', 'username', 'email', 'get_full_name', 'display_user_types', 'display_confidence', 'display_groups', 'is_active', 'date_joined', 'last_login')
+    def avatar_preview(self, obj):
+        if obj.avatar:
+            return format_html('<div style="width: 100px; height: 100px; background-image: url({}); background-size: contain; background-repeat: no-repeat; background-position: center; border: 1px solid #ddd;"></div>', obj.avatar.url)
+        return "No Avatar"
+    avatar_preview.short_description = "Avatar Preview"
+    avatar_preview.allow_tags = True
+
+    def photo_preview(self, obj):
+        if obj.photo:
+            return format_html('<div style="width: 100px; height: 100px; background-image: url({}); background-size: contain; background-repeat: no-repeat; background-position: center; border: 1px solid #ddd;"></div>', obj.photo.url)
+        return "No Photo"
+    photo_preview.short_description = "Photo Preview"
+    photo_preview.allow_tags = True
+
+    def avatar_thumbnail(self, obj):
+        if obj.avatar:
+            return format_html('<img src="{}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%;" />', obj.avatar.url)
+        return "—"
+    avatar_thumbnail.short_description = "Avatar"
+    avatar_thumbnail.allow_tags = True
+
+    list_display = ('id', 'avatar_thumbnail', 'username', 'email', 'get_full_name', 'display_user_types', 'display_confidence', 'display_groups', 'is_active', 'date_joined', 'last_login')
     list_filter = ('is_active', 'is_staff', 'is_superuser', 'user_types', 'groups', 'date_joined', 'last_login')
     search_fields = ('username', 'email', 'first_name', 'last_name', 'real_name')
     list_editable = ('is_active',)
-    readonly_fields = ('id', 'date_joined', 'last_login')
+    readonly_fields = ('id', 'date_joined', 'last_login', 'avatar_preview', 'photo_preview')
     date_hierarchy = 'date_joined'
     ordering = ('-date_joined',)
 
@@ -356,7 +383,7 @@ class PaymentsAdmin(BaseModelAdmin):
     display_subscription.short_description = "Subscription Ends"
 
     list_display = ('id', 'display_purchaser', 'display_product', 'paid', 'status', 'display_subscription', 'created_at', 'modified_at')
-    list_filter = ('status', 'paid', 'subscription_ends', 'created_at', 'modified_at', 'product', 'pre_assessment', 'post_assessment')
+    list_filter = ('status', 'paid', 'subscription_ends', 'created_at', 'modified_at', 'product')
     search_fields = ('author__username', 'author__email', 'author__first_name', 'author__last_name',
                     'product__title', 'stripe_payment_intent_id', 'stripe_customer_id')
     readonly_fields = ('id', 'created_at', 'modified_at')
@@ -818,4 +845,45 @@ class NotificationsAdmin(BaseModelAdmin):
 
 # Register the admin classes
 admin.site.register(Notifications, NotificationsAdmin)
+
+# Organization-related admin classes
+class OrganizationProductsInline(admin.TabularInline):
+    model = OrganizationProducts
+    extra = 1
+    fields = ('product', 'is_featured', 'display_order')
+
+class OrganizationsAdmin(BaseModelAdmin):
+    list_display = ('name', 'slug', 'is_active', 'contact_email', 'created_at')
+    list_filter = ('is_active', 'created_at')
+    search_fields = ('name', 'slug', 'contact_email')
+    inlines = [OrganizationProductsInline]
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'slug', 'is_active')
+        }),
+        ('Contact Information', {
+            'fields': ('contact_email', 'contact_phone'),
+            'classes': ('collapse',)
+        }),
+        ('Branding Settings', {
+            'fields': ('custom_logo_base64', 'branding_palette', 'branding_typography'),
+            'classes': ('collapse',)
+        }),
+    )
+
+class SignUpCodesAdmin(BaseModelAdmin):
+    list_display = ('code', 'organization', 'discount_type', 'discount_value', 'current_uses', 'max_uses', 'is_active', 'valid_until')
+    list_filter = ('organization', 'discount_type', 'is_active', 'valid_until')
+    search_fields = ('code', 'organization__name')
+    filter_horizontal = ('applicable_products',)
+
+class UserOrganizationsAdmin(BaseModelAdmin):
+    list_display = ('user', 'organization', 'is_active', 'joined_at')
+    list_filter = ('organization', 'is_active', 'joined_at')
+    search_fields = ('user__username', 'user__email', 'organization__name')
+    filter_horizontal = ('groups',)
+
+admin.site.register(Organizations, OrganizationsAdmin)
+admin.site.register(SignUpCodes, SignUpCodesAdmin)
+admin.site.register(UserOrganizations, UserOrganizationsAdmin)
 ####OBJECT-ACTIONS-ADMIN_MODELS-ENDS####

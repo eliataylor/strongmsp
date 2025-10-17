@@ -1,7 +1,8 @@
-import React, { createContext, ReactNode, useEffect, useState } from "react";
-import { getAuth, getConfig } from "../lib/allauth";
 import Snackbar from "@mui/material/Snackbar";
+import React, { createContext, ReactNode, useEffect, useState } from "react";
+import { AppContextProvider, useAppContext } from "../../context/AppContext";
 import SplashScreen from "../../screens/SplashScreen";
+import { getAuth, getConfig } from "../lib/allauth";
 
 // these are only to allow navigating the site when the backend is down
 const DEFAULT_SESSION = {
@@ -88,6 +89,17 @@ function LoadingError({ msg = "" }) {
   return <SplashScreen loading={msg} />;
 }
 
+// New wrapper component that waits for both auth and context
+function AppContextWrapper({ children }: { children: ReactNode }) {
+  const { loading, error } = useAppContext();
+
+  if (loading) {
+    return <SplashScreen loading={error || "Loading application context..."} />;
+  }
+
+  return <>{children}</>;
+}
+
 export function AuthContextProvider({ children }: Props) {
   const [auth, setAuth] = useState<any | undefined>(undefined);
   const [config, setConfig] = useState<any | undefined>(undefined);
@@ -165,7 +177,7 @@ export function AuthContextProvider({ children }: Props) {
     };
   }, []);
 
-  const loading = typeof auth === "undefined" || config?.status !== 200;
+  const authLoading = typeof auth === "undefined" || config?.status !== 200;
 
   return (
     <AuthContext.Provider value={{ auth, config }}>
@@ -176,12 +188,14 @@ export function AuthContextProvider({ children }: Props) {
         onClose={closeSnackbar}
         message={snack}
       />
-      {loading ? (
+      {authLoading ? (
         <Loading msg={error} />
       ) : auth === false ? (
         <LoadingError msg={error} />
       ) : (
-        children
+        <AppContextProvider>
+          <AppContextWrapper>{children}</AppContextWrapper>
+        </AppContextProvider>
       )}
     </AuthContext.Provider>
   );

@@ -18,6 +18,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiRespon
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import Group
 from django.db.models import Q
+from django.db import models
 from .serializers import UsersSerializer
 from .models import Users
 from .serializers import CoursesSerializer
@@ -42,8 +43,10 @@ from .serializers import SharesSerializer
 from .models import Shares
 from .serializers import NotificationsSerializer
 from .models import Notifications
+from .models import Organizations, UserOrganizations
 from django.db.models import Count
 from .services.agent_orchestrator import AgentOrchestrator
+from urllib.parse import urlparse
 ####OBJECT-ACTIONS-VIEWSET-IMPORTS-ENDS####
 
 
@@ -759,3 +762,174 @@ class PaymentAssignmentsViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['athlete__username', 'athlete__email', 'payment__id']
     filterset_fields = ['athlete', 'coaches', 'parents']
+
+
+class CurrentContextView(APIView):
+    """
+    Returns current organization (by subdomain), user membership, and payment assignments.
+    Accessible by authenticated and anonymous users.
+    Organization data is always public; membership and payments require authentication.
+    """
+    permission_classes = []  # Allow anonymous access for organization data
+    
+    def get_subdomain_from_request(self, request):
+        # Try Referer header first
+        referer = request.META.get('HTTP_REFERER', '')
+        if referer:
+            parsed = urlparse(referer)
+            hostname = parsed.hostname or ''
+        else:
+            # Fallback to Origin or Host
+            origin = request.META.get('HTTP_ORIGIN', '')
+            if origin:
+                parsed = urlparse(origin)
+                hostname = parsed.hostname or ''
+            else:
+                hostname = request.META.get('HTTP_HOST', '').split(':')[0]
+        
+        # Extract subdomain
+        parts = hostname.split('.')
+        if len(parts) >= 3:
+            subdomain = parts[0]
+            # Fallback for www or empty
+            if subdomain in ['www', 'webapp', 'api', 'localhost', 'localapi']:
+                return 'smsp'
+            return subdomain
+        return 'smsp'  # Default fallback
+    
+    def get(self, request):
+        context_data = {}
+        
+        # Extract subdomain and get organization (public data)
+        subdomain = self.get_subdomain_from_request(request)
+        try:
+            org = Organizations.objects.get(slug=subdomain, is_active=True)
+            context_data['organization'] = {
+                'id': org.id,
+                'name': org.name,
+                'slug': org.slug,
+                'is_active': org.is_active,
+                'custom_logo_base64': org.custom_logo_base64,
+                'branding_palette': org.branding_palette,
+                'branding_typography': org.branding_typography,
+                'contact_email': org.contact_email,
+                'contact_phone': org.contact_phone
+            }
+        except Organizations.DoesNotExist:
+            context_data['organization'] = None  # WARN should never happen!
+        
+        # Get user's membership in this organization (user-specific)
+        context_data['membership'] = None
+        if request.user.is_authenticated and context_data.get('organization'):
+            try:
+                membership = UserOrganizations.objects.select_related('organization').prefetch_related('groups').get(
+                    user=request.user,
+                    organization_id=context_data['organization']['id'],
+                    is_active=True
+                )
+                context_data['membership'] = {
+                    'id': membership.id,
+                    'groups': list(membership.groups.values_list('name', flat=True)),
+                    'joined_at': membership.joined_at.isoformat(),
+                    'is_active': membership.is_active
+                }
+            except UserOrganizations.DoesNotExist:
+                pass
+        
+        # Get payment assignments (user-specific, filtered by organization)
+        context_data['payment_assignments'] = []
+        if request.user.is_authenticated and context_data.get('organization'):
+            org_id = context_data['organization']['id']
+            now = timezone.now().date()
+            
+            # Single query using OR conditions for all user roles
+            assignments = PaymentAssignments.objects.filter(
+                Q(athlete=request.user) | Q(coaches=request.user) | Q(parents=request.user),
+                payment__organization_id=org_id,
+                payment__status='succeeded',
+                payment__product__is_active=True
+            ).filter(
+                Q(payment__subscription_ends__isnull=True) | 
+                Q(payment__subscription_ends__gte=now)
+            ).select_related(
+                'payment__product', 
+                'payment__product__pre_assessment', 
+                'payment__product__post_assessment',
+                'athlete'
+            ).prefetch_related('coaches', 'parents')
+            
+            # Serialize assignments with user RelEntities
+            all_assignments = []
+            
+            for assignment in assignments:
+                # Determine user's role in this assignment
+                user_role = None
+                if assignment.athlete == request.user:
+                    user_role = 'athlete'
+                elif request.user in assignment.coaches.all():
+                    user_role = 'coach'
+                elif request.user in assignment.parents.all():
+                    user_role = 'parent'
+                
+                # Build RelEntity objects for all assigned users
+                athlete_relentity = {
+                    'id': assignment.athlete.id,
+                    'str': str(assignment.athlete),
+                    '_type': 'Users',
+                    'img': assignment.athlete.photo.url if assignment.athlete.photo else None
+                } if assignment.athlete else None
+                
+                coaches_relentities = [
+                    {
+                        'id': coach.id,
+                        'str': str(coach),
+                        '_type': 'Users',
+                        'img': coach.photo.url if coach.photo else None
+                    } for coach in assignment.coaches.all()
+                ]
+                
+                parents_relentities = [
+                    {
+                        'id': parent.id,
+                        'str': str(parent),
+                        '_type': 'Users',
+                        'img': parent.photo.url if parent.photo else None
+                    } for parent in assignment.parents.all()
+                ]
+                
+                all_assignments.append({
+                    'id': assignment.id,
+                    'user_role': user_role,
+                    'athlete': athlete_relentity,
+                    'coaches': coaches_relentities,
+                    'parents': parents_relentities,
+                    'pre_assessment': {
+                        'id': assignment.payment.product.pre_assessment.id,
+                        'str': str(assignment.payment.product.pre_assessment),
+                        '_type': 'Assessments'
+                    } if assignment.payment.product and assignment.payment.product.pre_assessment else None,
+                    'post_assessment': {
+                        'id': assignment.payment.product.post_assessment.id,
+                        'str': str(assignment.payment.product.post_assessment),
+                        '_type': 'Assessments'
+                    } if assignment.payment.product and assignment.payment.product.post_assessment else None,
+                    'payment': {
+                        'id': assignment.payment.id,
+                        'status': assignment.payment.status,
+                        'subscription_ends': assignment.payment.subscription_ends.isoformat() if assignment.payment.subscription_ends else None,
+                        'product': {
+                            'id': assignment.payment.product.id,
+                            'str': str(assignment.payment.product),
+                            '_type': 'Products'
+                        } if assignment.payment.product else None
+                    }
+                })
+            
+            context_data['payment_assignments'] = all_assignments
+        
+        response = Response(context_data, status=status.HTTP_200_OK)
+        # Prevent caching of sensitive user data
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        return response
