@@ -49,9 +49,28 @@ from .services.agent_orchestrator import AgentOrchestrator
 from urllib.parse import urlparse
 ####OBJECT-ACTIONS-VIEWSET-IMPORTS-ENDS####
 
+class AutoAuthorViewSet(viewsets.ModelViewSet):
+    """
+    Base ViewSet that automatically sets the author field to the current user.
+    All ViewSets should inherit from this to ensure consistent author assignment.
+    """
+    def perform_create(self, serializer):
+        # Only set author if the model has an author field
+        if hasattr(serializer.Meta.model, 'author'):
+            serializer.save(author=self.request.user)
+        else:
+            serializer.save()
+    
+    def perform_update(self, serializer):
+        # Only set author if the model has an author field
+        if hasattr(serializer.Meta.model, 'author'):
+            serializer.save(author=self.request.user)
+        else:
+            serializer.save()
+
 
 ####OBJECT-ACTIONS-VIEWSETS-STARTS####
-class UsersViewSet(viewsets.ModelViewSet):
+class UsersViewSet(AutoAuthorViewSet):
     queryset = Users.objects.all().order_by('id')
     serializer_class = UsersSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
@@ -83,7 +102,7 @@ class UsersViewSet(viewsets.ModelViewSet):
 
 
 
-class CoursesViewSet(viewsets.ModelViewSet):
+class CoursesViewSet(AutoAuthorViewSet):
     queryset = Courses.objects.all().order_by('id')
     serializer_class = CoursesSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
@@ -91,12 +110,12 @@ class CoursesViewSet(viewsets.ModelViewSet):
     search_fields = ['title']
 
 
-class AssessmentsViewSet(viewsets.ModelViewSet):
+class AssessmentsViewSet(AutoAuthorViewSet):
     queryset = Assessments.objects.prefetch_related(
         'questions__question'
     ).order_by('id')
     serializer_class = AssessmentsSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ['title']
     
@@ -146,10 +165,10 @@ class AssessmentsViewSet(viewsets.ModelViewSet):
 
 
 
-class QuestionResponsesViewSet(viewsets.ModelViewSet):
+class QuestionResponsesViewSet(AutoAuthorViewSet):
     queryset = QuestionResponses.objects.all().order_by('id')
     serializer_class = QuestionResponsesSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ['question__title', 'assessment__title']
     
@@ -201,16 +220,16 @@ class QuestionResponsesViewSet(viewsets.ModelViewSet):
 
 
 
-class PromptTemplatesViewSet(viewsets.ModelViewSet):
+class PromptTemplatesViewSet(AutoAuthorViewSet):
     queryset = PromptTemplates.objects.all().order_by('id')
     serializer_class = PromptTemplatesSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
 
 
-class AgentResponsesViewSet(viewsets.ModelViewSet):
+class AgentResponsesViewSet(AutoAuthorViewSet):
     queryset = AgentResponses.objects.all().order_by('id')
     serializer_class = AgentResponsesSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
     
     @action(detail=True, methods=['post'])
     def regenerate(self, request, pk=None):
@@ -255,23 +274,23 @@ class AgentResponsesViewSet(viewsets.ModelViewSet):
             )
 
 
-class CoachContentViewSet(viewsets.ModelViewSet):
+class CoachContentViewSet(AutoAuthorViewSet):
     queryset = CoachContent.objects.all().order_by('id')
     serializer_class = CoachContentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ['title']
 
 
-class SharesViewSet(viewsets.ModelViewSet):
+class SharesViewSet(AutoAuthorViewSet):
     queryset = Shares.objects.all().order_by('id')
     serializer_class = SharesSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ['content__title']
 
 
-class NotificationsViewSet(viewsets.ModelViewSet):
+class NotificationsViewSet(AutoAuthorViewSet):
     queryset = Notifications.objects.all().order_by('-created_at')
     serializer_class = NotificationsSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -781,7 +800,7 @@ class VerifyCodeView(APIView):
 
         return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ProductsViewSet(viewsets.ModelViewSet):
+class ProductsViewSet(AutoAuthorViewSet):
     queryset = Products.objects.filter(is_active=True).order_by('id')
     serializer_class = ProductsSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
@@ -789,18 +808,18 @@ class ProductsViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'description']
     filterset_fields = ['is_active', 'price']
 
-class PaymentsViewSet(viewsets.ModelViewSet):
+class PaymentsViewSet(AutoAuthorViewSet):
     queryset = Payments.objects.all().order_by('-created_at')
     serializer_class = PaymentsSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['author__username', 'author__email', 'product__title']
     filterset_fields = ['status', 'product', 'author']
 
-class PaymentAssignmentsViewSet(viewsets.ModelViewSet):
+class PaymentAssignmentsViewSet(AutoAuthorViewSet):
     queryset = PaymentAssignments.objects.all().order_by('-created_at')
     serializer_class = PaymentAssignmentsSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['athlete__username', 'athlete__email', 'payment__id']
     filterset_fields = ['athlete', 'coaches', 'parents']

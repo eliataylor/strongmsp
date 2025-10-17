@@ -202,9 +202,9 @@ class QuestionResponses(SuperModel):
 		verbose_name = "Question Response"
 		verbose_name_plural = "Question Responses"
 
-	author = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Athlete')
-	question = models.ForeignKey('Questions', on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Question')
-	assessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Assessment')
+	author = models.ForeignKey(get_user_model(), on_delete=models.PROTECT, related_name='+', null=False, verbose_name='Athlete')
+	question = models.ForeignKey('Questions', on_delete=models.PROTECT, related_name='+', null=False, verbose_name='Question')
+	assessment = models.ForeignKey('Assessments', on_delete=models.PROTECT, related_name='+', null=False, verbose_name='Assessment')
 	response = models.IntegerField(verbose_name='Response')
 
 class Payments(SuperModel):

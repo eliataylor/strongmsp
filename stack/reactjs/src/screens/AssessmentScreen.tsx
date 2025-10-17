@@ -7,6 +7,8 @@ import {
     Container,
     Fade,
     LinearProgress,
+    Pagination,
+    PaginationItem,
     Paper,
     Typography,
     useTheme
@@ -24,11 +26,12 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
     onComplete
 }) => {
     const { id } = useParams<{ id: string }>();
-    const assessmentId = id ? parseInt(id, 10) : 1;
+    const routeAssessmentId = id ? parseInt(id, 10) : 1;
     const theme = useTheme();
     const {
         title,
         description,
+        assessmentId,
         questions,
         currentQuestionIndex,
         responses,
@@ -43,7 +46,7 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
         goToNextQuestion,
         goToPreviousQuestion,
         goToQuestion,
-        submitAllResponses,
+        submitAssessment,
         resetAssessment,
         retryLastAction
     } = useAssessment();
@@ -52,10 +55,10 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
     const [isCompleted, setIsCompleted] = useState(false);
 
     useEffect(() => {
-        if (assessmentId) {
-            loadAssessment(assessmentId);
+        if (routeAssessmentId) {
+            loadAssessment(routeAssessmentId);
         }
-    }, [assessmentId]);
+    }, [routeAssessmentId]);
 
     const handleResponseSubmit = async (response: number, responseText?: string): Promise<boolean> => {
         const currentQuestion = questions[currentQuestionIndex];
@@ -68,7 +71,7 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
     const handleCompleteAssessment = async () => {
         setIsSubmitting(true);
         try {
-            const success = await submitAllResponses();
+            const success = await submitAssessment();
             if (success) {
                 setIsCompleted(true);
                 onComplete?.();
@@ -136,7 +139,7 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
                     </Button>
                     <Button
                         variant="outlined"
-                        onClick={() => loadAssessment(assessmentId)}
+                        onClick={() => loadAssessment(routeAssessmentId)}
                         disabled={isLoading}
                         sx={{ textTransform: 'none' }}
                     >
@@ -181,15 +184,8 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
                             Thank you for completing the assessment
                         </Typography>
                         <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-                            Your responses have been recorded and will help us provide personalized insights.
+                            You coach will reach out to your soon!
                         </Typography>
-                        <Button
-                            variant="outlined"
-                            onClick={resetAssessment}
-                            sx={{ textTransform: 'none', mr: 2 }}
-                        >
-                            Take Another Assessment
-                        </Button>
                         <Button
                             variant="contained"
                             onClick={() => window.history.back()}
@@ -229,7 +225,7 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
     const currentQuestion = questions[currentQuestionIndex];
 
     return (
-        <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Container >
             {/* Header */}
             <Box sx={{ mb: 4, textAlign: 'center' }}>
                 <Typography variant="h3" gutterBottom fontWeight="bold" color="primary">
@@ -258,66 +254,81 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
                             '& .MuiLinearProgress-bar': {
                                 borderRadius: 4,
                                 background: isComplete
-                                    ? `linear-gradient(90deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`
-                                    : `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
+                                    ? `linear-gradient(90deg, ${theme.palette.secondary.light} 0%, ${theme.palette.secondary.dark} 100%)`
+                                    : `linear-gradient(90deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.dark} 100%)`
                             }
                         }}
                     />
                 </Box>
-
-                {/* Submit Button when Complete */}
-                {isComplete && (
-                    <Box sx={{ mb: 3, textAlign: 'center' }}>
-                        <Button
-                            variant="contained"
-                            size="large"
-                            onClick={handleCompleteAssessment}
-                            disabled={isSubmitting}
-                            sx={{
-                                textTransform: 'none',
-                                px: 4,
-                                py: 1.5,
-                                fontSize: '1.1rem',
-                                fontWeight: 'bold',
-                                background: `linear-gradient(45deg, ${theme.palette.success.main} 30%, ${theme.palette.success.dark} 90%)`,
-                                '&:hover': {
-                                    background: `linear-gradient(45deg, ${theme.palette.success.dark} 30%, ${theme.palette.success.main} 90%)`,
-                                }
-                            }}
-                        >
-                            {isSubmitting ? 'Submitting...' : 'Submit Assessment'}
-                        </Button>
-                    </Box>
-                )}
             </Box>
 
-            {/* Question Navigation */}
+            {/* Question Navigation Pagination */}
             {totalQuestions > 1 && (
-                <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 1 }}>
-                    {questions.map((_, index) => {
-                        const isAnswered = responses.some(r => r.question === questions[index].id);
-                        const isCurrent = index === currentQuestionIndex;
-                        return (
-                            <Button
-                                key={index}
-                                variant={isCurrent ? "contained" : isAnswered ? "outlined" : "text"}
-                                size="small"
-                                onClick={() => goToQuestion(index)}
-                                sx={{
-                                    minWidth: 40,
-                                    height: 40,
-                                    borderRadius: '50%',
-                                    color: isAnswered ? 'success.main' : 'text.secondary',
-                                    borderColor: isAnswered ? 'success.main' : 'divider',
-                                    '&:hover': {
-                                        backgroundColor: isAnswered ? 'success.light' : 'action.hover',
-                                    }
-                                }}
-                            >
-                                {index + 1}
-                            </Button>
-                        );
-                    })}
+                <Box sx={{ mb: 3, width: '100%' }}>
+                    <Pagination
+                        count={totalQuestions}
+                        page={currentQuestionIndex + 1}
+                        onChange={(_: any, page: number) => goToQuestion(page - 1)}
+                        color="primary"
+                        variant="outlined"
+                        shape="rounded"
+                        size="small"
+                        sx={{
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            '& .MuiPagination-ul': {
+                                width: '100%',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                flexWrap: 'nowrap',
+                                gap: 1,
+                            }
+                        }}
+                        renderItem={(item: any) => {
+                            const questionIndex = item.page - 1;
+                            const isAnswered = questionIndex >= 0 && questionIndex < questions.length
+                                ? responses.some(r => r.question === questions[questionIndex].id)
+                                : false;
+                            const isCompleted = questionIndex < currentQuestionIndex || isAnswered;
+
+                            return (
+                                <PaginationItem
+                                    {...item}
+                                    sx={{
+                                        ...item.sx,
+                                        '&.Mui-selected': {
+                                            backgroundColor: isCompleted
+                                                ? theme.palette.success.main
+                                                : theme.palette.primary.main,
+                                            color: 'white',
+                                            '&:hover': {
+                                                backgroundColor: isCompleted
+                                                    ? theme.palette.success.dark
+                                                    : theme.palette.primary.dark,
+                                            },
+                                        },
+                                        '&:not(.Mui-selected)': {
+                                            backgroundColor: isCompleted
+                                                ? theme.palette.success.light
+                                                : theme.palette.grey[100],
+                                            color: isCompleted
+                                                ? theme.palette.success.contrastText
+                                                : theme.palette.text.primary,
+                                            '&:hover': {
+                                                backgroundColor: isCompleted
+                                                    ? theme.palette.success.main
+                                                    : theme.palette.grey[200],
+                                                color: isCompleted
+                                                    ? 'white'
+                                                    : theme.palette.text.primary,
+                                            },
+                                        },
+                                    }}
+                                />
+                            );
+                        }}
+                    />
                 </Box>
             )}
 
@@ -335,6 +346,33 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
                     />
                 </Box>
             </Fade>
+
+
+
+            {/* Submit Button when Complete */}
+            {isComplete && (
+                <Box sx={{ my: 3, textAlign: 'center' }}>
+                    <Button
+                        variant="contained"
+                        size="large"
+                        onClick={handleCompleteAssessment}
+                        disabled={isSubmitting}
+                        sx={{
+                            textTransform: 'none',
+                            px: 4,
+                            py: 1.5,
+                            fontSize: '1.1rem',
+                            fontWeight: 'bold',
+                            background: `linear-gradient(45deg, ${theme.palette.success.main} 30%, ${theme.palette.success.dark} 90%)`,
+                            '&:hover': {
+                                background: `linear-gradient(45deg, ${theme.palette.success.dark} 30%, ${theme.palette.success.main} 90%)`,
+                            }
+                        }}
+                    >
+                        {isSubmitting ? 'Submitting...' : 'Submit Assessment'}
+                    </Button>
+                </Box>
+            )}
 
             {/* Loading Overlay for Submission */}
             {isSubmitting && (

@@ -12,6 +12,7 @@ export interface AssessmentResponse {
 interface AssessmentContextType {
     title: string;
     description: string;
+    assessmentId: number | null;
     questions: Questions[];
     currentQuestionIndex: number;
     responses: AssessmentResponse[];
@@ -26,7 +27,7 @@ interface AssessmentContextType {
     goToNextQuestion: () => void;
     goToPreviousQuestion: () => void;
     goToQuestion: (index: number) => void;
-    submitAllResponses: () => Promise<boolean>;
+    submitAssessment: () => Promise<boolean>;
     resetAssessment: () => void;
     retryLastAction: () => Promise<void>;
 }
@@ -49,6 +50,7 @@ export const AssessmentProvider: React.FC<AssessmentProviderProps> = ({ children
     const [questions, setQuestions] = useState<Questions[]>([]);
     const [title, setTitle] = useState<string>("Generic Health Assesssment")
     const [description, setDescription] = useState<string>("")
+    const [assessmentId, setAssessmentId] = useState<number | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [responses, setResponses] = useState<AssessmentResponse[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -74,6 +76,7 @@ export const AssessmentProvider: React.FC<AssessmentProviderProps> = ({ children
                 const assessmentQuestions = response.data.questions || [];
                 setTitle(response.data.title);
                 setDescription(response.data.description || "");
+                setAssessmentId(assessmentId);
                 setQuestions(assessmentQuestions);
 
                 // Restore existing responses from the API
@@ -118,9 +121,17 @@ export const AssessmentProvider: React.FC<AssessmentProviderProps> = ({ children
     };
 
     const submitResponse = async (questionId: number, response: number, responseText?: string): Promise<boolean> => {
+        if (!assessmentId) {
+            setError('Assessment ID is required to submit responses');
+            return false;
+        }
+
         try {
             // Persist immediately to backend per submission
-            const payload: any = { question: questionId };
+            const payload: any = {
+                question: questionId,
+                assessment: assessmentId
+            };
             // EITHER response OR response_text is required; we prefer numeric response here
             if (typeof response === 'number') {
                 payload.response = response;
@@ -184,44 +195,44 @@ export const AssessmentProvider: React.FC<AssessmentProviderProps> = ({ children
         }
     };
 
-    const submitAllResponses = async (): Promise<boolean> => {
+    const submitAssessment = async (): Promise<boolean> => {
         if (responses.length === 0) return false;
+        if (!assessmentId) {
+            setError('Assessment ID is required to complete assessment');
+            return false;
+        }
 
         setIsLoading(true);
         setError(null);
-        setLastAction(() => () => submitAllResponses());
+        setLastAction(() => () => submitAssessment());
 
         try {
-            // Submit each response individually
-            for (const response of responses) {
-                // Prepare the data in the format expected by the QuestionResponsesViewSet
-                const responseData = {
-                    question: response.question,
-                    response: response.response,
-                    // Note: author will be set by the backend based on the authenticated user
-                };
+            // Trigger agents and handle assessment completion
+            const result = await ApiClient.post('/api/assessments/complete/', {
+                assessment_id: assessmentId,
+                responses: responses
+            });
 
-                const result = await ApiClient.post('/api/question-responses/', responseData);
-                if (!result.success) {
-                    throw new Error(`Failed to submit response for question ${response.question}: ${result.error}`);
-                }
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to complete assessment');
             }
+
             return true;
         } catch (err: any) {
-            let errorMessage = 'Failed to submit responses';
+            let errorMessage = 'Failed to complete assessment';
 
             if (err.response?.status === 400) {
-                errorMessage = 'Some responses are invalid. Please check your answers and try again.';
+                errorMessage = 'Assessment completion failed. Please check your responses and try again.';
             } else if (err.response?.status === 401) {
-                errorMessage = 'Please log in to submit responses.';
+                errorMessage = 'Please log in to complete the assessment.';
             } else if (err.response?.status === 403) {
-                errorMessage = 'You do not have permission to submit responses for this assessment.';
+                errorMessage = 'You do not have permission to complete this assessment.';
             } else if (err.message) {
                 errorMessage = err.message;
             }
 
             setError(errorMessage);
-            console.error('Error submitting responses:', err);
+            console.error('Error completing assessment:', err);
             return false;
         } finally {
             setIsLoading(false);
@@ -236,6 +247,9 @@ export const AssessmentProvider: React.FC<AssessmentProviderProps> = ({ children
 
     const resetAssessment = () => {
         setQuestions([]);
+        setTitle("Generic Health Assesssment");
+        setDescription("");
+        setAssessmentId(null);
         setCurrentQuestionIndex(0);
         setResponses([]);
         setError(null);
@@ -244,6 +258,7 @@ export const AssessmentProvider: React.FC<AssessmentProviderProps> = ({ children
     const value: AssessmentContextType = {
         title,
         description,
+        assessmentId,
         questions,
         currentQuestionIndex,
         responses,
@@ -258,7 +273,7 @@ export const AssessmentProvider: React.FC<AssessmentProviderProps> = ({ children
         goToNextQuestion,
         goToPreviousQuestion,
         goToQuestion,
-        submitAllResponses,
+        submitAssessment,
         resetAssessment,
         retryLastAction,
     };

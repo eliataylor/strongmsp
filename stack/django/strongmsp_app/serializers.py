@@ -171,6 +171,7 @@ class CoursesSerializer(CustomSerializer):
     class Meta:
         model = Courses
         fields = '__all__'
+        read_only_fields = ['author']
         
 class AssessmentsSerializer(serializers.ModelSerializer):
     """
@@ -261,61 +262,74 @@ class QuestionResponsesSerializer(CustomSerializer):
     class Meta:
         model = QuestionResponses
         fields = '__all__'
+        read_only_fields = ['author']
 class PromptTemplatesSerializer(CustomSerializer):
     class Meta:
         model = PromptTemplates
         fields = '__all__'
+        read_only_fields = ['author']
 class AgentResponsesSerializer(CustomSerializer):
     class Meta:
         model = AgentResponses
         fields = '__all__'
+        read_only_fields = ['author']
 class CoachContentSerializer(CustomSerializer):
     class Meta:
         model = CoachContent
         fields = '__all__'
+        read_only_fields = ['author']
 class SharesSerializer(CustomSerializer):
     class Meta:
         model = Shares
         fields = '__all__'
+        read_only_fields = ['author']
 class NotificationsSerializer(CustomSerializer):
     class Meta:
         model = Notifications
         fields = '__all__'
+        read_only_fields = ['author']
 
 class ProductsSerializer(CustomSerializer):
     class Meta:
         model = Products
         fields = '__all__'
+        read_only_fields = ['author']
 
 class PaymentsSerializer(CustomSerializer):
     class Meta:
         model = Payments
         fields = '__all__'
+        read_only_fields = ['author']
 
 class PaymentAssignmentsSerializer(CustomSerializer):
     class Meta:
         model = PaymentAssignments
         fields = '__all__'
+        read_only_fields = ['author']
 
 class OrganizationsSerializer(CustomSerializer):
     class Meta:
         model = Organizations
         fields = '__all__'
+        read_only_fields = ['author']
 
 class OrganizationProductsSerializer(CustomSerializer):
     class Meta:
         model = OrganizationProducts
         fields = '__all__'
+        read_only_fields = ['author']
 
 class SignUpCodesSerializer(CustomSerializer):
     class Meta:
         model = SignUpCodes
         fields = '__all__'
+        read_only_fields = ['author']
 
 class UserOrganizationsSerializer(CustomSerializer):
     class Meta:
         model = UserOrganizations
         fields = '__all__'
+        read_only_fields = ['author']
 ####OBJECT-ACTIONS-SERIALIZERS-ENDS####
 
 
