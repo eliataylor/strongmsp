@@ -160,6 +160,91 @@ class AssessmentsViewSet(AutoAuthorViewSet):
             'request': request
         })
         return Response(serializer.data)
+    
+    @action(detail=False, methods=['post'])
+    def complete(self, request):
+        """
+        Complete an assessment by validating all questions have been answered and triggering agents.
+        POST /api/assessments/complete/
+        Body: {"assessment_id": int, "responses": [{"question": int, "response": int}, ...]}
+        """
+        try:
+            assessment_id = request.data.get('assessment_id')
+            responses_data = request.data.get('responses', [])
+            
+            if not assessment_id or not responses_data:
+                return Response(
+                    {'error': 'assessment_id and responses are required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validate user has access to this assessment
+            from django.utils import timezone
+            from django.db.models import Q
+            
+            today = timezone.now().date()
+            assignment = PaymentAssignments.objects.filter(
+                Q(athlete=request.user) | Q(coaches=request.user) | Q(parents=request.user),
+                Q(payment__status='succeeded'),
+                Q(payment__product__is_active=True),
+                Q(payment__subscription_ends__isnull=True) | Q(payment__subscription_ends__gte=today),
+                Q(payment__product__pre_assessment_id=assessment_id) | Q(payment__product__post_assessment_id=assessment_id)
+            ).select_related('athlete', 'payment__product').first()
+            
+            if not assignment:
+                return Response(
+                    {'detail': 'You do not have access to this assessment'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Get the athlete (the person taking the assessment)
+            athlete = assignment.athlete
+            
+            # Get the assessment to validate question count
+            try:
+                assessment = Assessments.objects.get(id=assessment_id)
+                total_questions = assessment.questions.count()
+            except Assessments.DoesNotExist:
+                return Response(
+                    {'error': 'Assessment not found'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Validate all questions have been answered
+            answered_questions = set()
+            for response_data in responses_data:
+                question_id = response_data.get('question')
+                response_value = response_data.get('response')
+                
+                if question_id and response_value is not None:
+                    answered_questions.add(question_id)
+            
+            # Check if all questions are answered
+            if len(answered_questions) < total_questions:
+                missing_count = total_questions - len(answered_questions)
+                return Response(
+                    {'error': f'Assessment incomplete. {missing_count} questions still need to be answered.'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # All questions answered - trigger agents
+            orchestrator = AgentOrchestrator()
+            agent_responses = orchestrator.trigger_assessment_agents(athlete.id, assessment_id)
+            
+            return Response({
+                'success': True,
+                'message': 'Assessment completed successfully',
+                'total_questions': total_questions,
+                'questions_answered': len(answered_questions),
+                'agents_triggered': len(agent_responses),
+                'assessment_id': assessment_id
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to complete assessment: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 
