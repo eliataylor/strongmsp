@@ -36,13 +36,16 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
         error,
         progress,
         totalQuestions,
+        isComplete,
+        answeredQuestions,
         loadAssessment,
         submitResponse,
         goToNextQuestion,
         goToPreviousQuestion,
         goToQuestion,
         submitAllResponses,
-        resetAssessment
+        resetAssessment,
+        retryLastAction
     } = useAssessment();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,11 +79,10 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
     };
 
     const handleNext = () => {
-        if (currentQuestionIndex === totalQuestions - 1) {
-            handleCompleteAssessment();
-        } else {
+        if (currentQuestionIndex < totalQuestions - 1) {
             goToNextQuestion();
         }
+        // Note: Assessment completion is now handled by the dedicated submit button
     };
 
     const handlePrevious = () => {
@@ -117,19 +119,37 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
             <Container maxWidth="md" sx={{ py: 8 }}>
                 <Alert severity="error" sx={{ mb: 3 }}>
                     <Typography variant="h6" gutterBottom>
-                        Error Loading Assessment
+                        {isLoading ? 'Error During Operation' : 'Error Loading Assessment'}
                     </Typography>
                     <Typography variant="body1">
                         {error}
                     </Typography>
                 </Alert>
-                <Button
-                    variant="contained"
-                    onClick={() => loadAssessment(assessmentId)}
-                    sx={{ textTransform: 'none' }}
-                >
-                    Try Again
-                </Button>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                    <Button
+                        variant="contained"
+                        onClick={retryLastAction}
+                        disabled={isLoading}
+                        sx={{ textTransform: 'none' }}
+                    >
+                        {isLoading ? 'Retrying...' : 'Retry'}
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        onClick={() => loadAssessment(assessmentId)}
+                        disabled={isLoading}
+                        sx={{ textTransform: 'none' }}
+                    >
+                        Reload Assessment
+                    </Button>
+                    <Button
+                        variant="text"
+                        onClick={() => window.history.back()}
+                        sx={{ textTransform: 'none' }}
+                    >
+                        Go Back
+                    </Button>
+                </Box>
             </Container>
         );
     }
@@ -226,7 +246,7 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
                             Question {currentQuestionIndex + 1} of {totalQuestions}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                            {Math.round(progress)}% Complete
+                            {answeredQuestions} of {totalQuestions} answered ({Math.round(progress)}%)
                         </Typography>
                     </Box>
                     <LinearProgress
@@ -237,12 +257,69 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
                             borderRadius: 4,
                             '& .MuiLinearProgress-bar': {
                                 borderRadius: 4,
-                                background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
+                                background: isComplete
+                                    ? `linear-gradient(90deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`
+                                    : `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
                             }
                         }}
                     />
                 </Box>
+
+                {/* Submit Button when Complete */}
+                {isComplete && (
+                    <Box sx={{ mb: 3, textAlign: 'center' }}>
+                        <Button
+                            variant="contained"
+                            size="large"
+                            onClick={handleCompleteAssessment}
+                            disabled={isSubmitting}
+                            sx={{
+                                textTransform: 'none',
+                                px: 4,
+                                py: 1.5,
+                                fontSize: '1.1rem',
+                                fontWeight: 'bold',
+                                background: `linear-gradient(45deg, ${theme.palette.success.main} 30%, ${theme.palette.success.dark} 90%)`,
+                                '&:hover': {
+                                    background: `linear-gradient(45deg, ${theme.palette.success.dark} 30%, ${theme.palette.success.main} 90%)`,
+                                }
+                            }}
+                        >
+                            {isSubmitting ? 'Submitting...' : 'Submit Assessment'}
+                        </Button>
+                    </Box>
+                )}
             </Box>
+
+            {/* Question Navigation */}
+            {totalQuestions > 1 && (
+                <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 1 }}>
+                    {questions.map((_, index) => {
+                        const isAnswered = responses.some(r => r.question === questions[index].id);
+                        const isCurrent = index === currentQuestionIndex;
+                        return (
+                            <Button
+                                key={index}
+                                variant={isCurrent ? "contained" : isAnswered ? "outlined" : "text"}
+                                size="small"
+                                onClick={() => goToQuestion(index)}
+                                sx={{
+                                    minWidth: 40,
+                                    height: 40,
+                                    borderRadius: '50%',
+                                    color: isAnswered ? 'success.main' : 'text.secondary',
+                                    borderColor: isAnswered ? 'success.main' : 'divider',
+                                    '&:hover': {
+                                        backgroundColor: isAnswered ? 'success.light' : 'action.hover',
+                                    }
+                                }}
+                            >
+                                {index + 1}
+                            </Button>
+                        );
+                    })}
+                </Box>
+            )}
 
             {/* Question Card */}
             <Fade in={true} timeout={300}>

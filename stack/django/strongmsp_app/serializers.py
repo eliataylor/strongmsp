@@ -217,6 +217,20 @@ class AssessmentsSerializer(serializers.ModelSerializer):
             # Get all AssessmentQuestions for this assessment, ordered by order
             assessment_questions = obj.questions.all().order_by('order')
 
+            # Get athlete_id from context to include responses
+            athlete_id = self.context.get('athlete_id')
+            existing_responses = {}
+            
+            if athlete_id:
+                # Query existing responses for this athlete and assessment
+                responses = QuestionResponses.objects.filter(
+                    author_id=athlete_id,
+                    assessment_id=obj.id
+                ).values('question_id', 'response')
+                
+                # Create a lookup dict for quick response retrieval
+                existing_responses = {resp['question_id']: resp['response'] for resp in responses}
+
             for assessment_question in assessment_questions:
                 if assessment_question.question:  # Check if question exists
                     question_data = {
@@ -229,6 +243,10 @@ class AssessmentsSerializer(serializers.ModelSerializer):
                         'id': assessment_question.question.id,
                         '_type': 'Questions'
                     }
+                    
+                    if assessment_question.question.id in existing_responses:
+                        question_data['response'] = existing_responses.get(assessment_question.question.id)
+                    
                     questions_data.append(question_data)
         except Exception as e:
             # Log error and return empty list

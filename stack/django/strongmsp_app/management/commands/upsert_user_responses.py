@@ -4,13 +4,13 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.contrib.auth import get_user_model
 from allauth.account.models import EmailAddress
-from strongmsp_app.models import Questions, QuestionResponses
+from strongmsp_app.models import Questions, QuestionResponses, Assessments
 from .utils import clean_question
 
 User = get_user_model()
 
 class Command(BaseCommand):
-    help = 'Upsert users and their assessment responses from CSV file'
+    help = 'Upsert users and their assessment responses from CSV file, and optionally update all responses to relate to a specific assessment'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -30,11 +30,36 @@ class Command(BaseCommand):
             default='makemestrong!',
             help='Default password for new users (default: makemestrong)'
         )
+        parser.add_argument(
+            '--update-assessment',
+            type=int,
+            help='Update all existing question responses to relate to this assessment ID'
+        )
+        parser.add_argument(
+            '--force-assessment',
+            action='store_true',
+            help='Force assessment update even if assessment does not exist'
+        )
+        parser.add_argument(
+            '--filter-questions',
+            action='store_true',
+            help='Only update responses for questions that exist in the target assessment'
+        )
 
     def handle(self, *args, **options):
         csv_file = options['csv_file']
         dry_run = options['dry_run']
         default_password = options['default_password']
+        update_assessment = options['update_assessment']
+        force_assessment = options['force_assessment']
+        filter_questions = options['filter_questions']
+
+        # Handle assessment update if requested
+        if update_assessment:
+            self._update_responses_assessment(
+                update_assessment, dry_run, force_assessment, filter_questions
+            )
+            return
 
         csv_path = os.path.join(
             os.path.dirname(__file__), 
@@ -290,3 +315,117 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS('\n🔍 Dry run completed - no changes made')
         )
+
+    def _update_responses_assessment(self, assessment_id, dry_run, force, filter_questions):
+        """Update all question responses to relate to a specific assessment"""
+        from django.db.models import Q
+        
+        # Check if the target assessment exists
+        try:
+            target_assessment = Assessments.objects.get(id=assessment_id)
+            self.stdout.write(
+                self.style.SUCCESS(f'Found target assessment: {target_assessment.title} (ID: {assessment_id})')
+            )
+        except Assessments.DoesNotExist:
+            if not force:
+                self.stdout.write(
+                    self.style.ERROR(f'Assessment with ID {assessment_id} does not exist. Use --force to proceed anyway.')
+                )
+                return
+            else:
+                self.stdout.write(
+                    self.style.WARNING(f'Assessment with ID {assessment_id} does not exist, but proceeding with --force')
+                )
+
+        # Get all question responses
+        responses = QuestionResponses.objects.all()
+        total_responses = responses.count()
+        
+        if total_responses == 0:
+            self.stdout.write(
+                self.style.WARNING('No question responses found in the database')
+            )
+            return
+
+        self.stdout.write(f'Found {total_responses} question responses to update')
+
+        # If filtering by questions, get valid question IDs from the target assessment
+        valid_question_ids = None
+        if filter_questions and not force:
+            try:
+                assessment_questions = target_assessment.questions.all()
+                valid_question_ids = set(assessment_questions.values_list('question_id', flat=True))
+                self.stdout.write(f'Found {len(valid_question_ids)} questions in target assessment')
+            except Exception as e:
+                self.stdout.write(
+                    self.style.ERROR(f'Error getting questions from assessment: {e}')
+                )
+                return
+
+        # Filter responses if needed
+        if valid_question_ids is not None:
+            responses = responses.filter(question_id__in=valid_question_ids)
+            filtered_count = responses.count()
+            self.stdout.write(f'Filtered to {filtered_count} responses with questions in target assessment')
+
+        # Show current state
+        responses_with_assessment = responses.filter(assessment_id=assessment_id).count()
+        responses_without_assessment = responses.filter(assessment__isnull=True).count()
+        responses_with_other_assessment = responses.exclude(
+            Q(assessment_id=assessment_id) | Q(assessment__isnull=True)
+        ).count()
+
+        self.stdout.write(f'Current state:')
+        self.stdout.write(f'  - Responses already assigned to Assessment {assessment_id}: {responses_with_assessment}')
+        self.stdout.write(f'  - Responses with no assessment: {responses_without_assessment}')
+        self.stdout.write(f'  - Responses assigned to other assessments: {responses_with_other_assessment}')
+
+        if dry_run:
+            self.stdout.write(
+                self.style.WARNING('DRY RUN: Would update the following responses:')
+            )
+            for response in responses[:10]:  # Show first 10
+                current_assessment = response.assessment.title if response.assessment else 'None'
+                self.stdout.write(f'  - Response ID {response.id}: Question {response.question_id} -> Assessment {assessment_id} (was: {current_assessment})')
+            
+            if responses.count() > 10:
+                self.stdout.write(f'  ... and {responses.count() - 10} more responses')
+            
+            self.stdout.write(
+                self.style.SUCCESS(f'DRY RUN: Would update {responses.count()} responses to Assessment {assessment_id}')
+            )
+            return
+
+        # Confirm before proceeding
+        if not force:
+            confirm = input(f'Are you sure you want to update {responses.count()} responses to Assessment {assessment_id}? (yes/no): ')
+            if confirm.lower() != 'yes':
+                self.stdout.write('Operation cancelled')
+                return
+
+        # Perform the update
+        try:
+            with transaction.atomic():
+                updated_count = 0
+                for response in responses:
+                    old_assessment = response.assessment.title if response.assessment else 'None'
+                    response.assessment_id = assessment_id
+                    response.save()
+                    updated_count += 1
+                    
+                    if updated_count % 100 == 0:
+                        self.stdout.write(f'Updated {updated_count} responses...')
+
+                self.stdout.write(
+                    self.style.SUCCESS(f'Successfully updated {updated_count} responses to Assessment {assessment_id}')
+                )
+
+                # Show final statistics
+                final_responses = QuestionResponses.objects.filter(assessment_id=assessment_id).count()
+                self.stdout.write(f'Total responses now assigned to Assessment {assessment_id}: {final_responses}')
+
+        except Exception as e:
+            self.stdout.write(
+                self.style.ERROR(f'Error updating responses: {e}')
+            )
+            raise

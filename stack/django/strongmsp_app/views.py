@@ -99,6 +99,48 @@ class AssessmentsViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [filters.SearchFilter]
     search_fields = ['title']
+    
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Override retrieve to validate user has access to this assessment
+        through a valid PaymentAssignment.
+        """
+        from django.utils import timezone
+        from django.db.models import Q
+        
+        # Get the assessment instance
+        assessment = self.get_object()
+        assessment_id = assessment.id
+        
+        # Check if user is authenticated
+        if not request.user.is_authenticated:
+            return Response(
+                {'detail': 'Authentication required'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        # Validate user has access through PaymentAssignment
+        today = timezone.now().date()
+        assignment = PaymentAssignments.objects.filter(
+            Q(athlete=request.user) | Q(coaches=request.user) | Q(parents=request.user),
+            Q(payment__status='succeeded'),
+            Q(payment__product__is_active=True),
+            Q(payment__subscription_ends__isnull=True) | Q(payment__subscription_ends__gte=today),
+            Q(payment__product__pre_assessment_id=assessment_id) | Q(payment__product__post_assessment_id=assessment_id)
+        ).select_related('athlete', 'payment__product').first()
+        
+        if not assignment:
+            return Response(
+                {'detail': 'You do not have access to this assessment'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Serialize with athlete context for response inclusion
+        serializer = self.get_serializer(assessment, context={
+            'athlete_id': assignment.athlete.id,
+            'request': request
+        })
+        return Response(serializer.data)
 
 
 

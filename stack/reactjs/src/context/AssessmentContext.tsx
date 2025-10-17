@@ -19,6 +19,8 @@ interface AssessmentContextType {
     error: string | null;
     progress: number;
     totalQuestions: number;
+    isComplete: boolean;
+    answeredQuestions: number;
     loadAssessment: (assessmentId: number) => Promise<void>;
     submitResponse: (questionId: number, response: number, responseText?: string) => Promise<boolean>;
     goToNextQuestion: () => void;
@@ -26,6 +28,7 @@ interface AssessmentContextType {
     goToQuestion: (index: number) => void;
     submitAllResponses: () => Promise<boolean>;
     resetAssessment: () => void;
+    retryLastAction: () => Promise<void>;
 }
 
 const AssessmentContext = createContext<AssessmentContextType | undefined>(undefined);
@@ -50,14 +53,18 @@ export const AssessmentProvider: React.FC<AssessmentProviderProps> = ({ children
     const [responses, setResponses] = useState<AssessmentResponse[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [lastAction, setLastAction] = useState<(() => Promise<any>) | null>(null);
 
     const totalQuestions = questions.length;
-    const progress = totalQuestions > 0 ? ((currentQuestionIndex + 1) / totalQuestions) * 100 : 0;
+    const answeredQuestions = responses.length;
+    const isComplete = totalQuestions > 0 && answeredQuestions === totalQuestions;
+    const progress = totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
 
     const loadAssessment = async (assessmentId: number) => {
         if (isLoading === true) return;
         setIsLoading(true);
         setError(null);
+        setLastAction(() => () => loadAssessment(assessmentId));
 
         try {
             const response: HttpResponse<AssessmentData> = await ApiClient.get(`/api/assessments/${assessmentId}`);
@@ -65,17 +72,45 @@ export const AssessmentProvider: React.FC<AssessmentProviderProps> = ({ children
             if (response.success && response.data) {
                 // Extract questions from the assessment
                 const assessmentQuestions = response.data.questions || [];
-                setTitle(response.data.title)
-                // Note: description is not available in AssessmentData type
-                setDescription("")
+                setTitle(response.data.title);
+                setDescription(response.data.description || "");
                 setQuestions(assessmentQuestions);
-                setCurrentQuestionIndex(0);
-                setResponses([]);
+
+                // Restore existing responses from the API
+                const existingResponses: AssessmentResponse[] = [];
+                assessmentQuestions.forEach((question: any) => {
+                    if (question.response !== undefined && question.response !== null) {
+                        existingResponses.push({
+                            question: question.id,
+                            response: Number(question.response),
+                        });
+                    }
+                });
+
+                setResponses(existingResponses);
+
+                // Find the first unanswered question or start from the beginning
+                const firstUnansweredIndex = assessmentQuestions.findIndex(
+                    (q: any) => q.response === undefined || q.response === null
+                );
+                setCurrentQuestionIndex(firstUnansweredIndex >= 0 ? firstUnansweredIndex : 0);
             } else {
                 throw new Error(response.error || 'Failed to load assessment');
             }
         } catch (err: any) {
-            setError(err.message || 'Failed to load assessment');
+            let errorMessage = 'Failed to load assessment';
+
+            if (err.response?.status === 403) {
+                errorMessage = 'You do not have access to this assessment. Please check your payment assignments.';
+            } else if (err.response?.status === 401) {
+                errorMessage = 'Please log in to access this assessment.';
+            } else if (err.response?.status === 404) {
+                errorMessage = 'Assessment not found.';
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+
+            setError(errorMessage);
             console.error('Error loading assessment:', err);
         } finally {
             setIsLoading(false);
@@ -108,10 +143,25 @@ export const AssessmentProvider: React.FC<AssessmentProviderProps> = ({ children
                     return [...prev, { question: questionId, response }];
                 }
             });
+
+            // Clear any previous errors on successful submission
+            setError(null);
             return true;
-        } catch (err) {
+        } catch (err: any) {
+            let errorMessage = 'Failed to submit response';
+
+            if (err.response?.status === 400) {
+                errorMessage = 'Invalid response. Please check your answer and try again.';
+            } else if (err.response?.status === 401) {
+                errorMessage = 'Please log in to submit responses.';
+            } else if (err.response?.status === 403) {
+                errorMessage = 'You do not have permission to submit responses for this assessment.';
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+
             console.error('Error submitting response:', err);
-            setError((err as any)?.message || 'Failed to submit response');
+            setError(errorMessage);
             return false;
         }
     };
@@ -139,6 +189,7 @@ export const AssessmentProvider: React.FC<AssessmentProviderProps> = ({ children
 
         setIsLoading(true);
         setError(null);
+        setLastAction(() => () => submitAllResponses());
 
         try {
             // Submit each response individually
@@ -157,11 +208,29 @@ export const AssessmentProvider: React.FC<AssessmentProviderProps> = ({ children
             }
             return true;
         } catch (err: any) {
-            setError(err.message || 'Failed to submit responses');
+            let errorMessage = 'Failed to submit responses';
+
+            if (err.response?.status === 400) {
+                errorMessage = 'Some responses are invalid. Please check your answers and try again.';
+            } else if (err.response?.status === 401) {
+                errorMessage = 'Please log in to submit responses.';
+            } else if (err.response?.status === 403) {
+                errorMessage = 'You do not have permission to submit responses for this assessment.';
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+
+            setError(errorMessage);
             console.error('Error submitting responses:', err);
             return false;
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const retryLastAction = async () => {
+        if (lastAction) {
+            await lastAction();
         }
     };
 
@@ -182,6 +251,8 @@ export const AssessmentProvider: React.FC<AssessmentProviderProps> = ({ children
         error,
         progress,
         totalQuestions,
+        isComplete,
+        answeredQuestions,
         loadAssessment,
         submitResponse,
         goToNextQuestion,
@@ -189,6 +260,7 @@ export const AssessmentProvider: React.FC<AssessmentProviderProps> = ({ children
         goToQuestion,
         submitAllResponses,
         resetAssessment,
+        retryLastAction,
     };
 
     return (
