@@ -22,6 +22,7 @@ from .models import Organizations
 from .models import OrganizationProducts
 from .models import SignUpCodes
 from .models import UserOrganizations
+from django.contrib.auth.models import Group
 ####OBJECT-ACTIONS-ADMIN_IMPORTS-ENDS####
 
 from django.contrib.admin.views.main import ChangeList
@@ -877,12 +878,46 @@ class SignUpCodesAdmin(BaseModelAdmin):
     search_fields = ('code', 'organization__name')
     filter_horizontal = ('applicable_products',)
 
+class UserOrganizationsGroupsInline(admin.TabularInline):
+    model = UserOrganizations.groups.through
+    extra = 0
+    verbose_name = "Group"
+    verbose_name_plural = "Groups"
+    autocomplete_fields = ('group',)
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('group')
+
 class UserOrganizationsAdmin(BaseModelAdmin):
-    list_display = ('user', 'organization', 'is_active', 'joined_at')
-    list_filter = ('organization', 'is_active', 'joined_at')
+    list_display = ('user', 'organization', 'display_groups', 'is_active', 'joined_at')
+    list_filter = ('organization', 'groups', 'is_active', 'joined_at')
     search_fields = ('user__username', 'user__email', 'organization__name')
     filter_horizontal = ('groups',)
+    list_editable = ('is_active',)
+    inlines = [UserOrganizationsGroupsInline]
+    
+    def display_groups(self, obj):
+        """Display groups as a comma-separated string"""
+        if obj.groups.exists():
+            return ', '.join([group.name for group in obj.groups.all()])
+        return 'No groups'
+    display_groups.short_description = 'Groups'
+    display_groups.admin_order_field = 'groups__name'
 
+class GroupAdmin(BaseModelAdmin):
+    list_display = ('name', 'user_count')
+    search_fields = ('name',)
+    ordering = ('name',)
+    
+    def user_count(self, obj):
+        """Display the number of users in this group"""
+        return obj.user_set.count()
+    user_count.short_description = 'Users Count'
+    user_count.admin_order_field = 'user_set__count'
+
+# Unregister the default Group admin and register our custom one
+admin.site.unregister(Group)
+admin.site.register(Group, GroupAdmin)
 admin.site.register(Organizations, OrganizationsAdmin)
 admin.site.register(SignUpCodes, SignUpCodesAdmin)
 admin.site.register(UserOrganizations, UserOrganizationsAdmin)

@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import About from "./screens/About";
+import FAQs from "./screens/FAQs";
 import Home from "./screens/Home";
+import LandingPage from "./screens/LandingPage";
 import Layout from "./theme/Layout";
 
 import ChangeEmail from "./allauth/account/ChangeEmail";
@@ -41,7 +44,6 @@ import WorksheetLoader from "./object-actions/generator/WorksheetLoader";
 import { NAVITEMS } from "./object-actions/types/types";
 import AssessmentScreen from "./screens/AssessmentScreen";
 import BrandingSettings from "./screens/BrandingSettings";
-import BuyConfidenceAssessment from "./screens/BuyConfidenceAssessment";
 import Dashboard from "./screens/Dashboard";
 import EntityForm from "./screens/EntityForm";
 import EntityList from "./screens/EntityList";
@@ -65,6 +67,18 @@ function createRouter() {
       children: [
         {
           path: "/",
+          element: <LandingPage />
+        },
+        {
+          path: "/faqs",
+          element: <FAQs />
+        },
+        {
+          path: "/about",
+          element: <About />
+        },
+        {
+          path: "/home",
           element: <Home />
         },
         {
@@ -353,10 +367,6 @@ function createRouter() {
     element: <AssessmentScreen />
   });
 
-  allRoutes[0].children.push({
-    path: `/buy-assessment`,
-    element: <BuyConfidenceAssessment />
-  });
 
   NAVITEMS.forEach((item) => {
     // Create route with role protection if roles are defined

@@ -36,8 +36,9 @@ const Home: React.FC<HomeProps> = ({ loading = false }) => {
         <Grid container spacing={2} justifyContent="center">
           <Grid item>
             <Button
-              component={Link}
-              to="/buy-assessment"
+              href="https://buy.stripe.com/eVq4gB3Vv5IngOp6v0abK0v"
+              target="_blank"
+              rel="noopener noreferrer"
               variant="contained"
               size="large"
               sx={{
@@ -194,8 +195,9 @@ const Home: React.FC<HomeProps> = ({ loading = false }) => {
                   <strong>Ideal for families who want full support and accountability</strong>
                 </Typography>
                 <Button
-                  component={Link}
-                  to="/buy-assessment"
+                  href="https://buy.stripe.com/eVq4gB3Vv5IngOp6v0abK0v"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   variant="contained"
                   fullWidth
                   size="large"
@@ -230,8 +232,9 @@ const Home: React.FC<HomeProps> = ({ loading = false }) => {
                   <strong>Best for families and coaches who want to guide the process themselves</strong>
                 </Typography>
                 <Button
-                  component={Link}
-                  to="/buy-assessment"
+                  href="https://buy.stripe.com/eVq4gB3Vv5IngOp6v0abK0v"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   variant="contained"
                   fullWidth
                   size="large"
@@ -306,8 +309,9 @@ const Home: React.FC<HomeProps> = ({ loading = false }) => {
         <Grid container spacing={2} justifyContent="center">
           <Grid item>
             <Button
-              component={Link}
-              to="/buy-assessment"
+              href="https://buy.stripe.com/eVq4gB3Vv5IngOp6v0abK0v"
+              target="_blank"
+              rel="noopener noreferrer"
               variant="contained"
               size="large"
               sx={{

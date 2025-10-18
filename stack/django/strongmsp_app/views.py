@@ -82,24 +82,22 @@ class UsersViewSet(AutoAuthorViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         
-        # Filter by athletes group if requested
-        groups = self.request.query_params.get('groups')
-        if groups:
-            if groups == 'athletes':
-                try:
-                    athletes_group = Group.objects.get(name='athletes')
-                    queryset = queryset.filter(groups=athletes_group)
-                except Group.DoesNotExist:
-                    # Return empty queryset if athletes group doesn't exist
-                    queryset = queryset.none()
-            else:
-                # Handle other group filters if needed
-                group_names = groups.split(',')
-                queryset = queryset.filter(groups__name__in=group_names)
+        # Always filter by coaches group in UserOrganizations
+        coaches_group = Group.objects.get(name='coach')
+        queryset = queryset.filter(
+            user_organizations__groups=coaches_group,
+            user_organizations__is_active=True
+        ).distinct()
+        
+        # Filter by organization if organization query parameter is provided
+        organization_slug = self.request.query_params.get('organization')
+        if organization_slug:
+            queryset = queryset.filter(
+                user_organizations__organization__slug=organization_slug,
+                user_organizations__is_active=True
+            ).distinct()
         
         return queryset
-    
-
 
 
 

@@ -167,6 +167,7 @@ class UsersSerializer(CustomUsersSerializer):
     class Meta:
         model = Users
         exclude = ('password', 'email', 'is_active', 'is_staff', 'is_superuser')
+        
 class CoursesSerializer(CustomSerializer):
     class Meta:
         model = Courses

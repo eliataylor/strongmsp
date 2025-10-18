@@ -48,8 +48,9 @@ const Layout: React.FC = () => {
     setNavDrawerWidth(0);
   };
 
-  const isHomePage = (): boolean => {
-    return location.pathname === "/";
+  const isPublicPage = (): boolean => {
+    const publicRoutes = ["/", "/faqs", "/about"];
+    return publicRoutes.includes(location.pathname);
   };
 
   function formatPathnameToDocTitle(pathname: string) {
@@ -84,7 +85,7 @@ const Layout: React.FC = () => {
       */}
 
       <Grid container justifyContent={"space-around"} flexWrap={"nowrap"}>
-        {isMobile === false && !isHomePage() && (
+        {isMobile === false && !isPublicPage() && (
           <div style={{ position: 'relative' }}>
             <Grid
               aria-label={"Menu Mounted"}
@@ -128,7 +129,7 @@ const Layout: React.FC = () => {
         }
 
         <Grid item flexGrow={1}>
-          {isMobile === true && !isHomePage() &&
+          {isMobile === true && !isPublicPage() &&
             <AppBar position="fixed" color={"default"}>
               <Grid
                 container
@@ -158,8 +159,8 @@ const Layout: React.FC = () => {
             style={{
               width: "100%",
               margin: `${!isMobile ? 0 : "100px"} auto 0 auto`,
-              padding: "1%",
-              maxWidth: 1224
+              padding: isPublicPage() ? 0 : "1%",
+              maxWidth: isPublicPage() ? "100%" : 1224
             }}
           >
             <Outlet />
@@ -167,7 +168,7 @@ const Layout: React.FC = () => {
         </Grid>
       </Grid>
 
-      {isMobile === true && !isHomePage() &&
+      {isMobile === true && !isPublicPage() &&
         <StyledDrawer
           id={"MobileDrawer"}
           anchor="right"
