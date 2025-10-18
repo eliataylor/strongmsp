@@ -185,7 +185,6 @@ class Command(BaseCommand):
                     'first_name': first_name,
                     'last_name': last_name,
                     'password': default_password,
-                    'user_types': 'athlete'
                 }
             )
             

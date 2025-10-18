@@ -136,13 +136,7 @@ const UserView: React.FC = () => {
 
   // Determine user type and render appropriate component
   const getUserType = (): USER_TYPE => {
-    // Check if user has user_types field and it's not empty
-    if (userProfile.user_types && userProfile.user_types.length > 0) {
-      // Return the first user type if multiple are selected
-      return userProfile.user_types[0] as USER_TYPE;
-    }
-
-    // Fallback to checking groups if user_types is not available
+    // Use groups to determine user type
     if (me?.groups && Array.isArray(me.groups)) {
       const validGroups = me.groups.filter((group: string) =>
         ['athlete', 'parent', 'coach', 'admin', 'agent'].includes(group)

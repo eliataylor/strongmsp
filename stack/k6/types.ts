@@ -263,780 +263,775 @@ export const TypeFieldSchema: ITypeFieldSchema = {
       "required": false,
       "example": ""
     },
-    "user_types": {
-      "machine": "user_types",
-      "singular": "User Type",
-      "plural": "User Typeses",
-      "field_type": "enum",
-      "data_type": "string",
-      "cardinality": 3,
-      "default": "",
-      "required": false,
-      "example": "athlete, parent, coach",
-      "options": [
-        {
-          "label": "Athlete",
-          "id": "athlete"
-        },
-        {
-          "label": "Parent",
-          "id": "parent"
-        },
-        {
-          "label": "Coach",
-          "id": "coach"
-        }
-      ]
-    },
-    "confidence_score": {
-      "machine": "confidence_score",
-      "singular": "Confidence Score",
-      "plural": "Confidence Scores",
-      "field_type": "integer",
-      "data_type": "number",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    }
+    "data_type": "string",
+    "cardinality": 3,
+    "default": "",
+    "required": false,
+    "example": "athlete, parent, coach",
+    "options": [
+      {
+        "label": "Athlete",
+        "id": "athlete"
+      },
+      {
+        "label": "Parent",
+        "id": "parent"
+      },
+      {
+        "label": "Coach",
+        "id": "coach"
+      }
+    ]
   },
-  "Courses": {
-    "title": {
-      "machine": "title",
-      "singular": "Title",
-      "plural": "Titles",
-      "field_type": "text",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "description": {
-      "machine": "description",
-      "singular": "Description",
-      "plural": "Descriptions",
-      "field_type": "textarea",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    },
-    "preassessment": {
-      "machine": "preassessment",
-      "singular": "Pre-Assessment",
-      "plural": "Pre-Assessments",
-      "relationship": "Assessments",
-      "field_type": "type_reference",
-      "data_type": "RelEntity",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "postassessment": {
-      "machine": "postassessment",
-      "singular": "Post-Assessment",
-      "plural": "Post-Assessments",
-      "relationship": "Assessments",
-      "field_type": "type_reference",
-      "data_type": "RelEntity",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "price": {
-      "machine": "price",
-      "singular": "Price",
-      "plural": "Prices",
-      "field_type": "decimal",
-      "data_type": "number",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "icon": {
-      "machine": "icon",
-      "singular": "Icon",
-      "plural": "Icons",
-      "field_type": "image",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    },
-    "cover_photo": {
-      "machine": "cover_photo",
-      "singular": "Cover Photo",
-      "plural": "Cover Photos",
-      "field_type": "image",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    }
-  },
-  "Assessments": {
-    "title": {
-      "machine": "title",
-      "singular": "Title",
-      "plural": "Titles",
-      "field_type": "text",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "questions": {
-      "machine": "questions",
-      "singular": "Question",
-      "plural": "Questionss",
-      "relationship": "AssessmentQuestions",
-      "field_type": "type_reference",
-      "data_type": "RelEntity",
-      "cardinality": Infinity,
-      "default": "",
-      "required": true,
-      "example": ""
-    }
-  },
-  "AssessmentQuestions": {
-    "question": {
-      "machine": "question",
-      "singular": "Question",
-      "plural": "Questions",
-      "relationship": "Questions",
-      "field_type": "type_reference",
-      "data_type": "RelEntity",
-      "cardinality": Infinity,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "order": {
-      "machine": "order",
-      "singular": "Order",
-      "plural": "Orders",
-      "field_type": "integer",
-      "data_type": "number",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "conditions": {
-      "machine": "conditions",
-      "singular": "Condition",
-      "plural": "Conditionss",
-      "field_type": "json",
-      "data_type": "object",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    }
-  },
-  "Questions": {
-    "title": {
-      "machine": "title",
-      "singular": "Title",
-      "plural": "Titles",
-      "field_type": "text",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "help_text": {
-      "machine": "help_text",
-      "singular": "Help Text",
-      "plural": "Help Texts",
-      "field_type": "text",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    },
-    "question_category": {
-      "machine": "question_category",
-      "singular": "Question Category",
-      "plural": "Question Categorys",
-      "field_type": "enum",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": "Performance Mindset, Emotional Regulation, Confidence,Resilience & Motivation, Concentration, Leadership, Mental Well-being",
-      "options": [
-        {
-          "label": "Performance Mindset",
-          "id": "performance_mindset"
-        },
-        {
-          "label": "Emotional Regulation",
-          "id": "emotional_regulation"
-        },
-        {
-          "label": "Confidence",
-          "id": "confidence"
-        },
-        {
-          "label": "Resilience & Motivation",
-          "id": "resilience__motivation"
-        },
-        {
-          "label": "Concentration",
-          "id": "concentration"
-        },
-        {
-          "label": "Leadership",
-          "id": "leadership"
-        },
-        {
-          "label": "Mental Well-being",
-          "id": "mental_wellbeing"
-        }
-      ]
-    },
-    "scale": {
-      "machine": "scale",
-      "singular": "Scale",
-      "plural": "Scales",
-      "field_type": "enum",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": "percentage,one-to-five,one-to-ten",
-      "options": [
-        {
-          "label": "Percentage",
-          "id": "percentage"
-        },
-        {
-          "label": "One-to-five",
-          "id": "onetofive"
-        },
-        {
-          "label": "One-to-ten",
-          "id": "onetoten"
-        }
-      ]
-    }
-  },
-  "QuestionResponses": {
-    "author": {
-      "machine": "author",
-      "singular": "Athlete",
-      "plural": "Athletes",
-      "relationship": "Users",
-      "field_type": "user_account",
-      "data_type": "RelEntity",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "question": {
-      "machine": "question",
-      "singular": "Question",
-      "plural": "Questions",
-      "relationship": "Questions",
-      "field_type": "type_reference",
-      "data_type": "RelEntity",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "response": {
-      "machine": "response",
-      "singular": "Response",
-      "plural": "Responses",
-      "field_type": "integer",
-      "data_type": "number",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    }
-  },
-  "Products": {
-    "title": {
-      "machine": "title",
-      "singular": "Title",
-      "plural": "Titles",
-      "field_type": "text",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "description": {
-      "machine": "description",
-      "singular": "Description",
-      "plural": "Descriptions",
-      "field_type": "textarea",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    },
-    "price": {
-      "machine": "price",
-      "singular": "Price",
-      "plural": "Prices",
-      "field_type": "decimal",
-      "data_type": "number",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "stripe_product_id": {
-      "machine": "stripe_product_id",
-      "singular": "Stripe Product ID",
-      "plural": "Stripe Product IDs",
-      "field_type": "text",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    },
-    "stripe_price_id": {
-      "machine": "stripe_price_id",
-      "singular": "Stripe Price ID",
-      "plural": "Stripe Price IDs",
-      "field_type": "text",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    },
-  },
-  "Payments": {
-    "athlete": {
-      "machine": "athlete",
-      "singular": "Athlete",
-      "plural": "Athletes",
-      "relationship": "Users",
-      "field_type": "user_account",
-      "data_type": "RelEntity",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    },
-    "preferred_coach": {
-      "machine": "preferred_coach",
-      "singular": "Preferred Coach",
-      "plural": "Preferred Coaches",
-      "relationship": "Users",
-      "field_type": "user_account",
-      "data_type": "RelEntity",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    },
-    "course": {
-      "machine": "course",
-      "singular": "Course",
-      "plural": "Courses",
-      "relationship": "Courses",
-      "field_type": "type_reference",
-      "data_type": "RelEntity",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "paid": {
-      "machine": "paid",
-      "singular": "Paid",
-      "plural": "Paids",
-      "field_type": "decimal",
-      "data_type": "number",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "status": {
-      "machine": "status",
-      "singular": "Status",
-      "plural": "Statuses",
-      "field_type": "enum",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": "paid, order, request, declined",
-      "options": [
-        {
-          "label": "Paid",
-          "id": "paid"
-        },
-        {
-          "label": "Order",
-          "id": "order"
-        },
-        {
-          "label": "Request",
-          "id": "request"
-        },
-        {
-          "label": "Declined",
-          "id": "declined"
-        }
-      ]
-    },
-    "subscription_ends": {
-      "machine": "subscription_ends",
-      "singular": "Subscription End",
-      "plural": "Subscription Endss",
-      "field_type": "date",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    }
-  },
-  "PromptTemplates": {
-    "prompt": {
-      "machine": "prompt",
-      "singular": "Prompt",
-      "plural": "Prompts",
-      "field_type": "textarea",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "instructions": {
-      "machine": "instructions",
-      "singular": "Instruction",
-      "plural": "Instructionss",
-      "field_type": "textarea",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    },
-    "model": {
-      "machine": "model",
-      "singular": "Model",
-      "plural": "Models",
-      "field_type": "text",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    },
-    "status": {
-      "machine": "status",
-      "singular": "Status",
-      "plural": "Statuses",
-      "field_type": "enum",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "active",
-      "required": true,
-      "example": "active, archived",
-      "options": [
-        {
-          "label": "Active",
-          "id": "active"
-        },
-        {
-          "label": "Archived",
-          "id": "archived"
-        }
-      ]
-    },
-    "purpose": {
-      "machine": "purpose",
-      "singular": "Purpose",
-      "plural": "Purposes",
-      "field_type": "enum",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": "lesson-package, 12-sessions, talking-points, feedback-report, parent-email",
-      "options": [
-        {
-          "label": "Lesson-package",
-          "id": "lessonpackage"
-        },
-        {
-          "label": "12-sessions",
-          "id": "12sessions"
-        },
-        {
-          "label": "Talking-points",
-          "id": "talkingpoints"
-        },
-        {
-          "label": "Feedback-report",
-          "id": "feedbackreport"
-        },
-        {
-          "label": "Parent-email",
-          "id": "parentemail"
-        }
-      ]
-    },
-    "response_format": {
-      "machine": "response_format",
-      "singular": "Response Format",
-      "plural": "Response Formats",
-      "field_type": "enum",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "text",
-      "required": false,
-      "example": "text,json",
-      "options": [
-        {
-          "label": "Text",
-          "id": "text"
-        },
-        {
-          "label": "Json",
-          "id": "json"
-        }
-      ]
-    }
-  },
-  "AgentResponses": {
-    "athlete": {
-      "machine": "athlete",
-      "singular": "Athlete",
-      "plural": "Athletes",
-      "relationship": "Users",
-      "field_type": "user_account",
-      "data_type": "RelEntity",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "prompt_template": {
-      "machine": "prompt_template",
-      "singular": "Prompt Template",
-      "plural": "Prompt Templates",
-      "relationship": "PromptTemplates",
-      "field_type": "type_reference",
-      "data_type": "RelEntity",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "purpose": {
-      "machine": "purpose",
-      "singular": "Purpose",
-      "plural": "Purposes",
-      "field_type": "enum",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": "lesson-package, 12-sessions, talking-points, feedback-report, parent-email",
-      "options": [
-        {
-          "label": "Lesson-package",
-          "id": "lessonpackage"
-        },
-        {
-          "label": "12-sessions",
-          "id": "12sessions"
-        },
-        {
-          "label": "Talking-points",
-          "id": "talkingpoints"
-        },
-        {
-          "label": "Feedback-report",
-          "id": "feedbackreport"
-        },
-        {
-          "label": "Parent-email",
-          "id": "parentemail"
-        }
-      ]
-    },
-    "message_body": {
-      "machine": "message_body",
-      "singular": "Message Body",
-      "plural": "Message Bodys",
-      "field_type": "textarea",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "ai_response": {
-      "machine": "ai_response",
-      "singular": "AI Response",
-      "plural": "AI Responses",
-      "field_type": "textarea",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "ai_reasoning": {
-      "machine": "ai_reasoning",
-      "singular": "AI Reasoning",
-      "plural": "AI Reasonings",
-      "field_type": "textarea",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    }
-  },
-  "CoachContent": {
-    "author": {
-      "machine": "author",
-      "singular": "Coach",
-      "plural": "Coaches",
-      "relationship": "Users",
-      "field_type": "user_account",
-      "data_type": "RelEntity",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    },
-    "title": {
-      "machine": "title",
-      "singular": "Title",
-      "plural": "Titles",
-      "field_type": "textarea",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "body": {
-      "machine": "body",
-      "singular": "Body",
-      "plural": "Bodys",
-      "field_type": "textarea",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "icon": {
-      "machine": "icon",
-      "singular": "Icon",
-      "plural": "Icons",
-      "field_type": "image",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    },
-    "cover_photo": {
-      "machine": "cover_photo",
-      "singular": "Cover Photo",
-      "plural": "Cover Photos",
-      "field_type": "image",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    },
-    "privacy": {
-      "machine": "privacy",
-      "singular": "Privacy",
-      "plural": "Privacys",
-      "field_type": "enum",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "mentioned",
-      "required": true,
-      "example": "public, authenticated, mentioned",
-      "options": [
-        {
-          "label": "Public",
-          "id": "public"
-        },
-        {
-          "label": "Authenticated",
-          "id": "authenticated"
-        },
-        {
-          "label": "Mentioned",
-          "id": "mentioned"
-        }
-      ]
-    }
-  },
-  "Shares": {
-    "recipient": {
-      "machine": "recipient",
-      "singular": "Recipient",
-      "plural": "Recipients",
-      "relationship": "Users",
-      "field_type": "user_account",
-      "data_type": "RelEntity",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "content": {
-      "machine": "content",
-      "singular": "Content",
-      "plural": "Contents",
-      "relationship": "CoachContent",
-      "field_type": "type_reference",
-      "data_type": "RelEntity",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "expires": {
-      "machine": "expires",
-      "singular": "Expire",
-      "plural": "Expireses",
-      "field_type": "date",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    }
+  "confidence_score": {
+    "machine": "confidence_score",
+    "singular": "Confidence Score",
+    "plural": "Confidence Scores",
+    "field_type": "integer",
+    "data_type": "number",
+    "cardinality": 1,
+    "default": "",
+    "required": false,
+    "example": ""
   }
+},
+"Courses": {
+  "title": {
+    "machine": "title",
+      "singular": "Title",
+        "plural": "Titles",
+          "field_type": "text",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": true,
+                    "example": ""
+  },
+  "description": {
+    "machine": "description",
+      "singular": "Description",
+        "plural": "Descriptions",
+          "field_type": "textarea",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": false,
+                    "example": ""
+  },
+  "preassessment": {
+    "machine": "preassessment",
+      "singular": "Pre-Assessment",
+        "plural": "Pre-Assessments",
+          "relationship": "Assessments",
+            "field_type": "type_reference",
+              "data_type": "RelEntity",
+                "cardinality": 1,
+                  "default": "",
+                    "required": true,
+                      "example": ""
+  },
+  "postassessment": {
+    "machine": "postassessment",
+      "singular": "Post-Assessment",
+        "plural": "Post-Assessments",
+          "relationship": "Assessments",
+            "field_type": "type_reference",
+              "data_type": "RelEntity",
+                "cardinality": 1,
+                  "default": "",
+                    "required": true,
+                      "example": ""
+  },
+  "price": {
+    "machine": "price",
+      "singular": "Price",
+        "plural": "Prices",
+          "field_type": "decimal",
+            "data_type": "number",
+              "cardinality": 1,
+                "default": "",
+                  "required": true,
+                    "example": ""
+  },
+  "icon": {
+    "machine": "icon",
+      "singular": "Icon",
+        "plural": "Icons",
+          "field_type": "image",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": false,
+                    "example": ""
+  },
+  "cover_photo": {
+    "machine": "cover_photo",
+      "singular": "Cover Photo",
+        "plural": "Cover Photos",
+          "field_type": "image",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": false,
+                    "example": ""
+  }
+},
+"Assessments": {
+  "title": {
+    "machine": "title",
+      "singular": "Title",
+        "plural": "Titles",
+          "field_type": "text",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": true,
+                    "example": ""
+  },
+  "questions": {
+    "machine": "questions",
+      "singular": "Question",
+        "plural": "Questionss",
+          "relationship": "AssessmentQuestions",
+            "field_type": "type_reference",
+              "data_type": "RelEntity",
+                "cardinality": Infinity,
+                  "default": "",
+                    "required": true,
+                      "example": ""
+  }
+},
+"AssessmentQuestions": {
+  "question": {
+    "machine": "question",
+      "singular": "Question",
+        "plural": "Questions",
+          "relationship": "Questions",
+            "field_type": "type_reference",
+              "data_type": "RelEntity",
+                "cardinality": Infinity,
+                  "default": "",
+                    "required": true,
+                      "example": ""
+  },
+  "order": {
+    "machine": "order",
+      "singular": "Order",
+        "plural": "Orders",
+          "field_type": "integer",
+            "data_type": "number",
+              "cardinality": 1,
+                "default": "",
+                  "required": true,
+                    "example": ""
+  },
+  "conditions": {
+    "machine": "conditions",
+      "singular": "Condition",
+        "plural": "Conditionss",
+          "field_type": "json",
+            "data_type": "object",
+              "cardinality": 1,
+                "default": "",
+                  "required": false,
+                    "example": ""
+  }
+},
+"Questions": {
+  "title": {
+    "machine": "title",
+      "singular": "Title",
+        "plural": "Titles",
+          "field_type": "text",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": true,
+                    "example": ""
+  },
+  "help_text": {
+    "machine": "help_text",
+      "singular": "Help Text",
+        "plural": "Help Texts",
+          "field_type": "text",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": false,
+                    "example": ""
+  },
+  "question_category": {
+    "machine": "question_category",
+      "singular": "Question Category",
+        "plural": "Question Categorys",
+          "field_type": "enum",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": false,
+                    "example": "Performance Mindset, Emotional Regulation, Confidence,Resilience & Motivation, Concentration, Leadership, Mental Well-being",
+                      "options": [
+                        {
+                          "label": "Performance Mindset",
+                          "id": "performance_mindset"
+                        },
+                        {
+                          "label": "Emotional Regulation",
+                          "id": "emotional_regulation"
+                        },
+                        {
+                          "label": "Confidence",
+                          "id": "confidence"
+                        },
+                        {
+                          "label": "Resilience & Motivation",
+                          "id": "resilience__motivation"
+                        },
+                        {
+                          "label": "Concentration",
+                          "id": "concentration"
+                        },
+                        {
+                          "label": "Leadership",
+                          "id": "leadership"
+                        },
+                        {
+                          "label": "Mental Well-being",
+                          "id": "mental_wellbeing"
+                        }
+                      ]
+  },
+  "scale": {
+    "machine": "scale",
+      "singular": "Scale",
+        "plural": "Scales",
+          "field_type": "enum",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": false,
+                    "example": "percentage,one-to-five,one-to-ten",
+                      "options": [
+                        {
+                          "label": "Percentage",
+                          "id": "percentage"
+                        },
+                        {
+                          "label": "One-to-five",
+                          "id": "onetofive"
+                        },
+                        {
+                          "label": "One-to-ten",
+                          "id": "onetoten"
+                        }
+                      ]
+  }
+},
+"QuestionResponses": {
+  "author": {
+    "machine": "author",
+      "singular": "Athlete",
+        "plural": "Athletes",
+          "relationship": "Users",
+            "field_type": "user_account",
+              "data_type": "RelEntity",
+                "cardinality": 1,
+                  "default": "",
+                    "required": true,
+                      "example": ""
+  },
+  "question": {
+    "machine": "question",
+      "singular": "Question",
+        "plural": "Questions",
+          "relationship": "Questions",
+            "field_type": "type_reference",
+              "data_type": "RelEntity",
+                "cardinality": 1,
+                  "default": "",
+                    "required": true,
+                      "example": ""
+  },
+  "response": {
+    "machine": "response",
+      "singular": "Response",
+        "plural": "Responses",
+          "field_type": "integer",
+            "data_type": "number",
+              "cardinality": 1,
+                "default": "",
+                  "required": true,
+                    "example": ""
+  }
+},
+"Products": {
+  "title": {
+    "machine": "title",
+      "singular": "Title",
+        "plural": "Titles",
+          "field_type": "text",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": true,
+                    "example": ""
+  },
+  "description": {
+    "machine": "description",
+      "singular": "Description",
+        "plural": "Descriptions",
+          "field_type": "textarea",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": false,
+                    "example": ""
+  },
+  "price": {
+    "machine": "price",
+      "singular": "Price",
+        "plural": "Prices",
+          "field_type": "decimal",
+            "data_type": "number",
+              "cardinality": 1,
+                "default": "",
+                  "required": true,
+                    "example": ""
+  },
+  "stripe_product_id": {
+    "machine": "stripe_product_id",
+      "singular": "Stripe Product ID",
+        "plural": "Stripe Product IDs",
+          "field_type": "text",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": false,
+                    "example": ""
+  },
+  "stripe_price_id": {
+    "machine": "stripe_price_id",
+      "singular": "Stripe Price ID",
+        "plural": "Stripe Price IDs",
+          "field_type": "text",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": false,
+                    "example": ""
+  },
+},
+"Payments": {
+  "athlete": {
+    "machine": "athlete",
+      "singular": "Athlete",
+        "plural": "Athletes",
+          "relationship": "Users",
+            "field_type": "user_account",
+              "data_type": "RelEntity",
+                "cardinality": 1,
+                  "default": "",
+                    "required": false,
+                      "example": ""
+  },
+  "preferred_coach": {
+    "machine": "preferred_coach",
+      "singular": "Preferred Coach",
+        "plural": "Preferred Coaches",
+          "relationship": "Users",
+            "field_type": "user_account",
+              "data_type": "RelEntity",
+                "cardinality": 1,
+                  "default": "",
+                    "required": false,
+                      "example": ""
+  },
+  "course": {
+    "machine": "course",
+      "singular": "Course",
+        "plural": "Courses",
+          "relationship": "Courses",
+            "field_type": "type_reference",
+              "data_type": "RelEntity",
+                "cardinality": 1,
+                  "default": "",
+                    "required": true,
+                      "example": ""
+  },
+  "paid": {
+    "machine": "paid",
+      "singular": "Paid",
+        "plural": "Paids",
+          "field_type": "decimal",
+            "data_type": "number",
+              "cardinality": 1,
+                "default": "",
+                  "required": true,
+                    "example": ""
+  },
+  "status": {
+    "machine": "status",
+      "singular": "Status",
+        "plural": "Statuses",
+          "field_type": "enum",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": true,
+                    "example": "paid, order, request, declined",
+                      "options": [
+                        {
+                          "label": "Paid",
+                          "id": "paid"
+                        },
+                        {
+                          "label": "Order",
+                          "id": "order"
+                        },
+                        {
+                          "label": "Request",
+                          "id": "request"
+                        },
+                        {
+                          "label": "Declined",
+                          "id": "declined"
+                        }
+                      ]
+  },
+  "subscription_ends": {
+    "machine": "subscription_ends",
+      "singular": "Subscription End",
+        "plural": "Subscription Endss",
+          "field_type": "date",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": false,
+                    "example": ""
+  }
+},
+"PromptTemplates": {
+  "prompt": {
+    "machine": "prompt",
+      "singular": "Prompt",
+        "plural": "Prompts",
+          "field_type": "textarea",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": true,
+                    "example": ""
+  },
+  "instructions": {
+    "machine": "instructions",
+      "singular": "Instruction",
+        "plural": "Instructionss",
+          "field_type": "textarea",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": false,
+                    "example": ""
+  },
+  "model": {
+    "machine": "model",
+      "singular": "Model",
+        "plural": "Models",
+          "field_type": "text",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": false,
+                    "example": ""
+  },
+  "status": {
+    "machine": "status",
+      "singular": "Status",
+        "plural": "Statuses",
+          "field_type": "enum",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "active",
+                  "required": true,
+                    "example": "active, archived",
+                      "options": [
+                        {
+                          "label": "Active",
+                          "id": "active"
+                        },
+                        {
+                          "label": "Archived",
+                          "id": "archived"
+                        }
+                      ]
+  },
+  "purpose": {
+    "machine": "purpose",
+      "singular": "Purpose",
+        "plural": "Purposes",
+          "field_type": "enum",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": true,
+                    "example": "lesson-package, 12-sessions, talking-points, feedback-report, parent-email",
+                      "options": [
+                        {
+                          "label": "Lesson-package",
+                          "id": "lessonpackage"
+                        },
+                        {
+                          "label": "12-sessions",
+                          "id": "12sessions"
+                        },
+                        {
+                          "label": "Talking-points",
+                          "id": "talkingpoints"
+                        },
+                        {
+                          "label": "Feedback-report",
+                          "id": "feedbackreport"
+                        },
+                        {
+                          "label": "Parent-email",
+                          "id": "parentemail"
+                        }
+                      ]
+  },
+  "response_format": {
+    "machine": "response_format",
+      "singular": "Response Format",
+        "plural": "Response Formats",
+          "field_type": "enum",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "text",
+                  "required": false,
+                    "example": "text,json",
+                      "options": [
+                        {
+                          "label": "Text",
+                          "id": "text"
+                        },
+                        {
+                          "label": "Json",
+                          "id": "json"
+                        }
+                      ]
+  }
+},
+"AgentResponses": {
+  "athlete": {
+    "machine": "athlete",
+      "singular": "Athlete",
+        "plural": "Athletes",
+          "relationship": "Users",
+            "field_type": "user_account",
+              "data_type": "RelEntity",
+                "cardinality": 1,
+                  "default": "",
+                    "required": true,
+                      "example": ""
+  },
+  "prompt_template": {
+    "machine": "prompt_template",
+      "singular": "Prompt Template",
+        "plural": "Prompt Templates",
+          "relationship": "PromptTemplates",
+            "field_type": "type_reference",
+              "data_type": "RelEntity",
+                "cardinality": 1,
+                  "default": "",
+                    "required": true,
+                      "example": ""
+  },
+  "purpose": {
+    "machine": "purpose",
+      "singular": "Purpose",
+        "plural": "Purposes",
+          "field_type": "enum",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": true,
+                    "example": "lesson-package, 12-sessions, talking-points, feedback-report, parent-email",
+                      "options": [
+                        {
+                          "label": "Lesson-package",
+                          "id": "lessonpackage"
+                        },
+                        {
+                          "label": "12-sessions",
+                          "id": "12sessions"
+                        },
+                        {
+                          "label": "Talking-points",
+                          "id": "talkingpoints"
+                        },
+                        {
+                          "label": "Feedback-report",
+                          "id": "feedbackreport"
+                        },
+                        {
+                          "label": "Parent-email",
+                          "id": "parentemail"
+                        }
+                      ]
+  },
+  "message_body": {
+    "machine": "message_body",
+      "singular": "Message Body",
+        "plural": "Message Bodys",
+          "field_type": "textarea",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": true,
+                    "example": ""
+  },
+  "ai_response": {
+    "machine": "ai_response",
+      "singular": "AI Response",
+        "plural": "AI Responses",
+          "field_type": "textarea",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": true,
+                    "example": ""
+  },
+  "ai_reasoning": {
+    "machine": "ai_reasoning",
+      "singular": "AI Reasoning",
+        "plural": "AI Reasonings",
+          "field_type": "textarea",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": false,
+                    "example": ""
+  }
+},
+"CoachContent": {
+  "author": {
+    "machine": "author",
+      "singular": "Coach",
+        "plural": "Coaches",
+          "relationship": "Users",
+            "field_type": "user_account",
+              "data_type": "RelEntity",
+                "cardinality": 1,
+                  "default": "",
+                    "required": false,
+                      "example": ""
+  },
+  "title": {
+    "machine": "title",
+      "singular": "Title",
+        "plural": "Titles",
+          "field_type": "textarea",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": true,
+                    "example": ""
+  },
+  "body": {
+    "machine": "body",
+      "singular": "Body",
+        "plural": "Bodys",
+          "field_type": "textarea",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": true,
+                    "example": ""
+  },
+  "icon": {
+    "machine": "icon",
+      "singular": "Icon",
+        "plural": "Icons",
+          "field_type": "image",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": false,
+                    "example": ""
+  },
+  "cover_photo": {
+    "machine": "cover_photo",
+      "singular": "Cover Photo",
+        "plural": "Cover Photos",
+          "field_type": "image",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": false,
+                    "example": ""
+  },
+  "privacy": {
+    "machine": "privacy",
+      "singular": "Privacy",
+        "plural": "Privacys",
+          "field_type": "enum",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "mentioned",
+                  "required": true,
+                    "example": "public, authenticated, mentioned",
+                      "options": [
+                        {
+                          "label": "Public",
+                          "id": "public"
+                        },
+                        {
+                          "label": "Authenticated",
+                          "id": "authenticated"
+                        },
+                        {
+                          "label": "Mentioned",
+                          "id": "mentioned"
+                        }
+                      ]
+  }
+},
+"Shares": {
+  "recipient": {
+    "machine": "recipient",
+      "singular": "Recipient",
+        "plural": "Recipients",
+          "relationship": "Users",
+            "field_type": "user_account",
+              "data_type": "RelEntity",
+                "cardinality": 1,
+                  "default": "",
+                    "required": true,
+                      "example": ""
+  },
+  "content": {
+    "machine": "content",
+      "singular": "Content",
+        "plural": "Contents",
+          "relationship": "CoachContent",
+            "field_type": "type_reference",
+              "data_type": "RelEntity",
+                "cardinality": 1,
+                  "default": "",
+                    "required": true,
+                      "example": ""
+  },
+  "expires": {
+    "machine": "expires",
+      "singular": "Expire",
+        "plural": "Expireses",
+          "field_type": "date",
+            "data_type": "string",
+              "cardinality": 1,
+                "default": "",
+                  "required": false,
+                    "example": ""
+  }
+}
 }
 //---OBJECT-ACTIONS-TYPE-CONSTANTS-ENDS---//
 
@@ -1063,7 +1058,6 @@ export interface Users {
   username: string;
   real_name?: string | null;
   bio?: string | null;
-  user_types?: string[] | null;
   confidence_score?: number | null;
 }
 export interface Courses extends SuperModel {

@@ -79,9 +79,9 @@ class CoachFilter(SimpleListFilter):
     
     def lookups(self, request, model_admin):
         """Return a list of tuples for the filter options"""
-        # Get users who are coaches (either by user_types or by being in a Coaches group)
+        # Get users who are coaches (by being in a Coaches group)
         coach_users = Users.objects.filter(
-            Q(user_types='coach') | Q(groups__name='Coaches')
+            groups__name='Coaches'
         ).distinct().order_by('username')
         
         return [(user.id, f"{user.get_full_name() or user.username} ({user.email})") for user in coach_users]
@@ -97,30 +97,20 @@ class CoachFilter(SimpleListFilter):
 @admin.register(Users)
 class UsersAdmin(BaseUserAdmin):
     fieldsets = BaseUserAdmin.fieldsets + (
-        (_('Additional Info'), {'fields': ('real_name', 'bio', 'user_types', 'confidence_score')}),
+        (_('Additional Info'), {'fields': ('real_name', 'bio', 'gender', 'ethnicity', 'birthdate', 'zip_code')}),
         (_('Profile Images'), {'fields': ('avatar', 'photo', 'avatar_preview', 'photo_preview')}),
     )
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
         (None, {
             'classes': ('wide',),
-            'fields': ('real_name', 'bio', 'user_types', 'confidence_score', 'avatar', 'photo'),
+            'fields': ('real_name', 'bio', 'avatar', 'photo'),
         }),
     )
 
     def display_groups(self, obj):
         return ", ".join([group.name for group in obj.groups.all()])
 
-    def display_user_types(self, obj):
-        if obj.user_types:
-            return dict(Users.User_typesChoices.choices).get(obj.user_types, obj.user_types)
-        return "Not specified"
-    display_user_types.short_description = "User Type"
 
-    def display_confidence(self, obj):
-        if obj.confidence_score is not None:
-            return f"{obj.confidence_score}/100"
-        return "Not set"
-    display_confidence.short_description = "Confidence"
 
     def avatar_preview(self, obj):
         if obj.avatar:
@@ -143,8 +133,8 @@ class UsersAdmin(BaseUserAdmin):
     avatar_thumbnail.short_description = "Avatar"
     avatar_thumbnail.allow_tags = True
 
-    list_display = ('id', 'avatar_thumbnail', 'username', 'email', 'get_full_name', 'display_user_types', 'display_confidence', 'display_groups', 'is_active', 'date_joined', 'last_login')
-    list_filter = ('is_active', 'is_staff', 'is_superuser', 'user_types', 'groups', 'date_joined', 'last_login')
+    list_display = ('id', 'avatar_thumbnail', 'username', 'email', 'get_full_name', 'display_groups', 'is_active', 'date_joined', 'last_login')
+    list_filter = ('is_active', 'is_staff', 'is_superuser', 'groups', 'date_joined', 'last_login')
     search_fields = ('username', 'email', 'first_name', 'last_name', 'real_name')
     list_editable = ('is_active',)
     readonly_fields = ('id', 'date_joined', 'last_login', 'avatar_preview', 'photo_preview')

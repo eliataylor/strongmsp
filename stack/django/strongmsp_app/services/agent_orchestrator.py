@@ -69,7 +69,7 @@ class AgentOrchestrator:
             
             # If no parents found via assignments, try to find any parent users
             if not parents:
-                parents = list(User.objects.filter(user_types='parent')[:5])  # Limit to 5
+                parents = list(User.objects.filter(groups__name='parent')[:5])  # Limit to 5
             
             return parents
             

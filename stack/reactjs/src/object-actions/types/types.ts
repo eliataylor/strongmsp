@@ -141,37 +141,111 @@ export const TypeFieldSchema: ITypeFieldSchema = {
       "required": false,
       "example": ""
     },
-    "user_types": {
-      "machine": "user_types",
-      "singular": "User Type",
-      "plural": "User Types",
-      "field_type": "enum",
+    "avatar": {
+      "machine": "avatar",
+      "singular": "Avatar",
+      "plural": "Avatars",
+      "field_type": "image",
       "data_type": "string",
-      "cardinality": 3,
+      "cardinality": 1,
       "default": "",
       "required": false,
-      "example": "athlete, parent, coach",
+      "example": ""
+    },
+    "photo": {
+      "machine": "photo",
+      "singular": "Photo",
+      "plural": "Photos",
+      "field_type": "image",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": ""
+    },
+    "gender": {
+      "machine": "gender",
+      "singular": "Gender",
+      "plural": "Genders",
+      "field_type": "select",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": "",
       "options": [
         {
-          "label": "Athlete",
-          "id": "athlete"
+          "label": "Male",
+          "id": "male"
         },
         {
-          "label": "Parent",
-          "id": "parent"
+          "label": "Female",
+          "id": "female"
         },
         {
-          "label": "Coach",
-          "id": "coach"
+          "label": "Rather Not Say",
+          "id": "rather_not_say"
         }
       ]
     },
-    "confidence_score": {
-      "machine": "confidence_score",
-      "singular": "Confidence Score",
-      "plural": "Confidence Scores",
-      "field_type": "integer",
-      "data_type": "number",
+    "ethnicity": {
+      "machine": "ethnicity",
+      "singular": "Ethnicity",
+      "plural": "Ethnicities",
+      "field_type": "multiselect",
+      "data_type": "object",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": "",
+      "options": [
+        {
+          "label": "Black or African American",
+          "id": "african_american"
+        },
+        {
+          "label": "White",
+          "id": "caucasian"
+        },
+        {
+          "label": "Native American",
+          "id": "american_native"
+        },
+        {
+          "label": "Asian",
+          "id": "south_asian"
+        },
+        {
+          "label": "Hispanic or Latino",
+          "id": "hispanic_latino"
+        },
+        {
+          "label": "Other",
+          "id": "other"
+        },
+        {
+          "label": "Prefer Not to Say",
+          "id": "prefer_not_to_say"
+        }
+      ]
+    },
+    "birthdate": {
+      "machine": "birthdate",
+      "singular": "Birthdate",
+      "plural": "Birthdates",
+      "field_type": "date",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": ""
+    },
+    "zip_code": {
+      "machine": "zip_code",
+      "singular": "Zip Code",
+      "plural": "Zip Codes",
+      "field_type": "text",
+      "data_type": "string",
       "cardinality": 1,
       "default": "",
       "required": false,
@@ -1072,8 +1146,12 @@ export interface Users {
   username: string;
   real_name?: string | null;
   bio?: string | null;
-  user_types?: string[] | null;
-  confidence_score?: number | null;
+  avatar?: string | null;
+  photo?: string | null;
+  gender?: string | null;
+  ethnicity?: string[] | null;
+  birthdate?: string | null;
+  zip_code?: string | null;
 }
 
 // Context API types

@@ -79,19 +79,14 @@ class Command(BaseCommand):
             if created:
                 migrated_count += 1
                 
-                # Assign groups based on user_types
-                if user.user_types == 'coach':
-                    user_org.groups.add(coach_group)
-                elif user.user_types == 'athlete':
-                    user_org.groups.add(athlete_group)
-                elif user.user_types == 'parent':
-                    user_org.groups.add(parent_group)
+                # Note: Groups are now managed separately from user creation
+                # Users should be assigned to groups through other means
                 
                 # If user is superuser, also add admin group
                 if user.is_superuser:
                     user_org.groups.add(admin_group)
                 
-                self.stdout.write(f'Migrated user: {user.username} ({user.user_types})')
+                self.stdout.write(f'Migrated user: {user.username}')
             else:
                 self.stdout.write(f'User already in organization: {user.username}')
 

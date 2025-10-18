@@ -32,10 +32,6 @@ class Users(AbstractUser, BumpParentsModelMixin):
 		ordering = ['last_login']
 
 
-	class User_typesChoices(models.TextChoices):
-		athlete = ("athlete", "Athlete")
-		parent = ("parent", " parent")
-		coach = ("coach", " coach")
 
 	class GenderChoices(models.TextChoices):
 		male = ("male", "Male")
@@ -54,8 +50,6 @@ class Users(AbstractUser, BumpParentsModelMixin):
 
 	real_name = models.CharField(max_length=255, blank=True, null=True, verbose_name='Real Name')
 	bio = models.TextField(blank=True, null=True, verbose_name='Bio')
-	user_types = models.CharField(max_length=7, choices=User_typesChoices.choices, verbose_name='User Types', blank=True, null=True)
-	confidence_score = models.IntegerField(blank=True, null=True, verbose_name='Confidence Score')
 	avatar = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Avatar')
 	photo = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Photo')
 	

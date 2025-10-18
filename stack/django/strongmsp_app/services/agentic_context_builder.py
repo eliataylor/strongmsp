@@ -136,12 +136,11 @@ class AgenticContextBuilder:
         if athlete.email:
             sections.append(f"**Email:** {athlete.email}")
         
-        # User type and additional fields
-        if athlete.user_types:
-            sections.append(f"**User Type:** {athlete.user_types}")
+        # User groups and additional fields
+        if athlete.groups.exists():
+            group_names = [group.name for group in athlete.groups.all()]
+            sections.append(f"**User Groups:** {', '.join(group_names)}")
         
-        if hasattr(athlete, 'confidence_score') and athlete.confidence_score:
-            sections.append(f"**Confidence Score:** {athlete.confidence_score}")
         
         if hasattr(athlete, 'real_name') and athlete.real_name:
             sections.append(f"**Real Name:** {athlete.real_name}")

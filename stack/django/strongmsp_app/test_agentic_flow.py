@@ -30,8 +30,6 @@ def test_context_builder():
             'get_full_name': lambda: 'John Smith',
             'username': 'john.smith',
             'email': 'john@example.com',
-            'user_types': 'athlete',
-            'confidence_score': 85,
             'real_name': 'John Smith',
             'bio': 'Elite athlete'
         })()

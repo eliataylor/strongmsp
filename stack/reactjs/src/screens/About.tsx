@@ -144,9 +144,8 @@ const About: React.FC = () => {
                                                     fontSize: '2rem',
                                                     fontWeight: 'bold'
                                                 }}
-                                            >
-                                                {coach.first_name?.[0]}{coach.last_name?.[0]}
-                                            </Avatar>
+                                                src={coach.photo || [coach.first_name, coach.last_name].join(' ')}
+                                            />
                                         </Box>
 
                                         <CardContent sx={{

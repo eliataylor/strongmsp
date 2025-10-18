@@ -191,7 +191,6 @@ class Command(BaseCommand):
             user.first_name = first_name
             user.last_name = last_name
             user.bio = description
-            user.user_types = 'coach'
             user.save()
             action = 'updated'
         else:
@@ -201,7 +200,6 @@ class Command(BaseCommand):
                 email=email,
                 first_name=first_name,
                 last_name=last_name,
-                user_types='coach',
                 bio=description,
                 is_active=True,
                 is_staff=False,
