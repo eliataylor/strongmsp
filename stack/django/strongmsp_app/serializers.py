@@ -305,7 +305,116 @@ class PaymentAssignmentsSerializer(CustomSerializer):
     class Meta:
         model = PaymentAssignments
         fields = '__all__'
-        read_only_fields = ['author']
+        read_only_fields = ['author', 'pre_assessment_submitted', 'post_assessment_submitted', 'pre_assessment_submitted_at', 'post_assessment_submitted_at']
+    
+    def get_fields(self):
+        """
+        Dynamically set read-only fields based on user role and submission status.
+        """
+        fields = super().get_fields()
+        request = self.context.get('request')
+        
+        if not request or not request.user.is_authenticated:
+            return fields
+            
+        # Get the instance to check submission status and user role
+        instance = getattr(self, 'instance', None)
+        if instance:
+            # Check if any assessment is submitted
+            if instance.pre_assessment_submitted or instance.post_assessment_submitted:
+                # If submitted, make all fields read-only except submission tracking fields
+                for field_name in ['athlete', 'coaches', 'parents']:
+                    if field_name in fields:
+                        fields[field_name].read_only = True
+            else:
+                # Apply role-based field restrictions
+                user_role = self._get_user_role(request.user, instance)
+                
+                if user_role == 'payer':
+                    # Payer can change athlete, coaches, parents
+                    pass  # No restrictions
+                elif user_role == 'parent':
+                    # Parent can change coaches, athlete (not parents)
+                    if 'parents' in fields:
+                        fields['parents'].read_only = True
+                elif user_role == 'athlete':
+                    # Athlete can change coaches only
+                    if 'athlete' in fields:
+                        fields['athlete'].read_only = True
+                    if 'parents' in fields:
+                        fields['parents'].read_only = True
+                elif user_role == 'coach':
+                    # Coach can change coaches only
+                    if 'athlete' in fields:
+                        fields['athlete'].read_only = True
+                    if 'parents' in fields:
+                        fields['parents'].read_only = True
+                else:
+                    # Unknown role - make all fields read-only
+                    for field_name in ['athlete', 'coaches', 'parents']:
+                        if field_name in fields:
+                            fields[field_name].read_only = True
+        
+        return fields
+    
+    def validate(self, data):
+        """
+        Add validation to check submission status and role-based permissions.
+        """
+        request = self.context.get('request')
+        instance = getattr(self, 'instance', None)
+        
+        if request and request.user.is_authenticated and instance:
+            # Check if any assessment is submitted
+            if instance.pre_assessment_submitted or instance.post_assessment_submitted:
+                raise serializers.ValidationError(
+                    "Cannot modify assignment after assessment submission"
+                )
+            
+            # Check role-based field permissions
+            user_role = self._get_user_role(request.user, instance)
+            updated_fields = set(data.keys())
+            
+            # Remove non-field updates
+            field_updates = updated_fields - {'created_at', 'modified_at', 'author', 'pre_assessment_submitted', 'post_assessment_submitted', 'pre_assessment_submitted_at', 'post_assessment_submitted_at'}
+            
+            if field_updates:
+                if user_role == 'payer':
+                    # Payer can change athlete, coaches, parents
+                    allowed_fields = {'athlete', 'coaches', 'parents'}
+                elif user_role == 'parent':
+                    # Parent can change coaches, athlete
+                    allowed_fields = {'athlete', 'coaches'}
+                elif user_role == 'athlete':
+                    # Athlete can change coaches only
+                    allowed_fields = {'coaches'}
+                elif user_role == 'coach':
+                    # Coach can change coaches only
+                    allowed_fields = {'coaches'}
+                else:
+                    allowed_fields = set()
+                
+                # Check if all field updates are allowed
+                if not field_updates.issubset(allowed_fields):
+                    disallowed_fields = field_updates - allowed_fields
+                    raise serializers.ValidationError(
+                        f"You don't have permission to modify these fields: {', '.join(disallowed_fields)}"
+                    )
+        
+        return data
+    
+    def _get_user_role(self, user, obj):
+        """Determine user's role in the PaymentAssignment"""
+        if obj.payment.author == user:
+            return 'payer'
+        elif obj.athlete == user:
+            return 'athlete'
+        elif user in obj.coaches.all():
+            return 'coach'
+        elif user in obj.parents.all():
+            return 'parent'
+        else:
+            return 'none'
 
 class OrganizationsSerializer(CustomSerializer):
     class Meta:

@@ -1102,6 +1102,10 @@ export interface UserPaymentAssignment {
   athlete?: RelEntity<'Users'> | null;
   coaches: RelEntity<'Users'>[];
   parents: RelEntity<'Users'>[];
+  pre_assessment_submitted: boolean;
+  pre_assessment_submitted_at?: string | null;
+  post_assessment_submitted: boolean;
+  post_assessment_submitted_at?: string | null;
   pre_assessment?: RelEntity<'Assessments'> | null;
   post_assessment?: RelEntity<'Assessments'> | null;
   payment: {
@@ -1109,6 +1113,7 @@ export interface UserPaymentAssignment {
     status: string;
     subscription_ends?: string | null;
     product?: RelEntity<'Products'> | null;
+    author: RelEntity<'Users'>;
   };
 }
 

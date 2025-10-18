@@ -37,12 +37,34 @@ class Users(AbstractUser, BumpParentsModelMixin):
 		parent = ("parent", " parent")
 		coach = ("coach", " coach")
 
+	class GenderChoices(models.TextChoices):
+		male = ("male", "Male")
+		female = ("female", "Female")
+		rather_not_say = ("rather_not_say", "Rather Not Say")
+
+	class EthnicityChoices(models.TextChoices):
+		african_american = ("african_american", "Black or African American")
+		caucasian = ("caucasian", "White")
+		american_native = ("american_native", "Native America")
+		south_asian = ("asian", "Asian")
+		hispanic_latino = ("hispanic_latino", "Hispanic or Latino")
+		other = ("other", "Other")
+		prefer_not_to_say = ("prefer_not_to_say", "Prefer Not to Say")
+
+
 	real_name = models.CharField(max_length=255, blank=True, null=True, verbose_name='Real Name')
 	bio = models.TextField(blank=True, null=True, verbose_name='Bio')
 	user_types = models.CharField(max_length=7, choices=User_typesChoices.choices, verbose_name='User Types', blank=True, null=True)
 	confidence_score = models.IntegerField(blank=True, null=True, verbose_name='Confidence Score')
 	avatar = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Avatar')
 	photo = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Photo')
+	
+	# New demographic fields
+	gender = models.CharField(max_length=15, choices=GenderChoices.choices, verbose_name='Gender', blank=True, null=True)
+	ethnicity = models.JSONField(blank=True, null=True, verbose_name='Ethnicity', 
+		help_text='Array of ethnicity choices - allows multiple selection')
+	birthdate = models.DateField(blank=True, null=True, verbose_name='Birthdate')
+	zip_code = models.CharField(max_length=10, blank=True, null=True, verbose_name='Zip Code')
 
 	def __str__(self):
 		if self.get_full_name().strip():
@@ -196,6 +218,17 @@ class Questions(SuperModel):
 	scale = models.CharField(max_length=10, choices=ScaleChoices.choices, verbose_name='Scale', blank=True, null=True)
 	scale_choice_labels = models.JSONField(blank=True, null=True, verbose_name='Scale Choice Labels')
 
+	@classmethod
+	def get_default_confidence_scale_labels(cls):
+		"""Returns the default confidence scale labels with emoji for onetofive scale"""
+		return {
+			'1': 'Most Confident',
+			'2': '2',
+			'3': '3',
+			'4': '4',
+			'5': 'Least Confident'
+		}
+
 class QuestionResponses(SuperModel):
 	class Meta:
 		abstract = False
@@ -245,6 +278,10 @@ class PaymentAssignments(SuperModel):
 	athlete = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Athlete')
 	coaches = models.ManyToManyField(get_user_model(), related_name='+', blank=True, verbose_name='Coaches')
 	parents = models.ManyToManyField(get_user_model(), related_name='+', blank=True, verbose_name='Parents')
+	
+	# Assessment submission tracking
+	pre_assessment_submitted_at = models.DateTimeField(null=True, blank=True, verbose_name='Pre-Assessment Submitted At')
+	post_assessment_submitted_at = models.DateTimeField(null=True, blank=True, verbose_name='Post-Assessment Submitted At')
 
 class PromptTemplates(SuperModel):
 	class Meta:

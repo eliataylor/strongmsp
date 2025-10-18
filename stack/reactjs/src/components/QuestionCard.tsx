@@ -72,11 +72,11 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     switch (scale) {
       case 'onetofive':
         return {
-          '1': 'Least Confident',
-          '2': '',
-          '3': '',
-          '4': '',
-          '5': 'Most Confident'
+          '1': 'Most Confident',
+          '2': '2',
+          '3': '3',
+          '4': '4',
+          '5': 'Least Confident'
         } as Record<string, string>;
       case 'onetoten':
         return {
@@ -108,6 +108,20 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           '5': '5'
         } as Record<string, string>;
     }
+  };
+
+  const getScaleColor = (value: number, scale?: string | null) => {
+    if (scale === 'onetofive') {
+      switch (value) {
+        case 1: return '#4CAF50'; // Green
+        case 2: return '#FFEB3B'; // Yellow
+        case 3: return '#2196F3'; // Blue
+        case 4: return '#9C27B0'; // Purple
+        case 5: return '#E91E63'; // Pink
+        default: return theme.palette.primary.main;
+      }
+    }
+    return theme.palette.primary.main;
   };
 
   // Prefer server-provided labels if available (e.g., QoR-40 or configured 1–10)
@@ -186,56 +200,61 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               alignItems: 'flex-start'
             }}
           >
-            {optionValues.map((value) => (
-              <FormControlLabel
-                key={`${value}-${question.id}`}
-                value={value}
-                control={
-                  <Radio
-                    key={`radio-${value}-${question.id}`}
-                    sx={{
-                      '&.Mui-checked': {
-                        color: theme.palette.primary.main,
-                      },
-                      '& .MuiRadio-root': {
-                        fontSize: '1.5rem',
-                      }
-                    }}
-                  />
-                }
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Typography variant="h6" fontWeight="bold" color="primary">
-                      {value}
-                    </Typography>
-                    {value.toString() !== effectiveLabels[String(value)] &&
-                      <Typography variant="body1" color="text.secondary">
-                        {effectiveLabels[String(value)]}
-                      </Typography>
-                    }
-                  </Box>
-                }
-                sx={{
-                  margin: 0,
-                  p: '.3',
-                  paddingRight: 1,
-                  borderRadius: 2,
-                  border: `2px solid ${selectedResponse === value ? theme.palette.primary.main : theme.palette.divider}`,
-                  background: selectedResponse === value
-                    ? `${theme.palette.primary.main}10`
-                    : theme.palette.background.default,
-                  transition: 'all 0.2s ease-in-out',
-                  '&:hover': {
-                    borderColor: theme.palette.primary.main,
-                    background: `${theme.palette.primary.main}05`,
-                  },
-                  '&.Mui-checked': {
-                    borderColor: theme.palette.primary.main,
-                    background: `${theme.palette.primary.main}15`,
+            {optionValues.map((value) => {
+              const scaleColor = getScaleColor(value, question.scale);
+              const isSelected = selectedResponse === value;
+
+              return (
+                <FormControlLabel
+                  key={`${value}-${question.id}`}
+                  value={value}
+                  control={
+                    <Radio
+                      key={`radio-${value}-${question.id}`}
+                      sx={{
+                        '&.Mui-checked': {
+                          color: scaleColor,
+                        },
+                        '& .MuiRadio-root': {
+                          fontSize: '1.5rem',
+                        }
+                      }}
+                    />
                   }
-                }}
-              />
-            ))}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Typography variant="h6" fontWeight="bold" color="primary">
+                        {value}
+                      </Typography>
+                      {value.toString() !== effectiveLabels[String(value)] &&
+                        <Typography variant="body1" color="text.secondary">
+                          {effectiveLabels[String(value)]}
+                        </Typography>
+                      }
+                    </Box>
+                  }
+                  sx={{
+                    margin: 0,
+                    p: '.3',
+                    paddingRight: 1,
+                    borderRadius: 2,
+                    border: `2px solid ${isSelected ? scaleColor : theme.palette.divider}`,
+                    background: isSelected
+                      ? `${scaleColor}15`
+                      : theme.palette.background.default,
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      borderColor: scaleColor,
+                      background: `${scaleColor}08`,
+                    },
+                    '&.Mui-checked': {
+                      borderColor: scaleColor,
+                      background: `${scaleColor}15`,
+                    }
+                  }}
+                />
+              );
+            })}
           </RadioGroup>
         </Box>
 

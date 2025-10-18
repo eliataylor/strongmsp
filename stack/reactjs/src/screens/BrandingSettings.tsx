@@ -19,8 +19,10 @@ import {
     TextField,
     Typography
 } from '@mui/material';
-import React, { useContext, useRef, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { useActiveRole } from '../context/ActiveRoleContext';
+import { useAppContext } from '../context/AppContext';
+import ImageUpload, { Upload } from '../object-actions/forming/ImageUpload';
 import FontSelector from '../theme/FontSelector';
 import Logo from '../theme/Logo';
 import { ThemeContext } from '../theme/ThemeContext';
@@ -29,9 +31,10 @@ import ThemeSwitcher from '../theme/ThemeSwitcher';
 const BrandingSettings: React.FC = () => {
     const { brandingSettings, updateBrandingSettings, resetBrandingSettings, updateLogo } = useContext(ThemeContext);
     const { hasRole } = useActiveRole();
+    const { organization } = useAppContext();
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
     // Check if user has admin role
     if (!hasRole('admin')) {
@@ -47,31 +50,26 @@ const BrandingSettings: React.FC = () => {
         );
     }
 
-    const convertToBase64 = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
+    const handleImageSelect = (selected: Upload, field_name: string, index: number) => {
+        if (selected && selected.file) {
+            setUploadedFile(selected.file as File);
+            // Convert to base64 for storage
             const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-    };
-
-    const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            try {
-                const base64 = await convertToBase64(file);
-                updateLogo(base64);
+            reader.onload = () => {
+                updateLogo(reader.result as string);
                 setSnackbarMessage('Logo updated successfully!');
                 setSnackbarOpen(true);
-            } catch (error) {
+            };
+            reader.onerror = () => {
                 setSnackbarMessage('Error uploading logo');
                 setSnackbarOpen(true);
-            }
+            };
+            reader.readAsDataURL(selected.file);
         }
     };
 
     const handleRemoveLogo = () => {
+        setUploadedFile(null);
         updateLogo(null);
         setSnackbarMessage('Logo removed successfully!');
         setSnackbarOpen(true);
@@ -80,7 +78,7 @@ const BrandingSettings: React.FC = () => {
     const handleColorChange = (path: string, value: string) => {
         const newSettings = { ...brandingSettings };
         const keys = path.split('.');
-        let current: any = newSettings;
+        let current: Record<string, any> = newSettings;
 
         for (let i = 0; i < keys.length - 1; i++) {
             current = current[keys[i]];
@@ -90,14 +88,6 @@ const BrandingSettings: React.FC = () => {
         updateBrandingSettings(newSettings);
     };
 
-    const handleFontChange = (fontFamily: string) => {
-        updateBrandingSettings({
-            typography: {
-                ...brandingSettings.typography,
-                fontFamily
-            }
-        });
-    };
 
     const handleSave = () => {
         setSnackbarMessage('Settings saved successfully!');
@@ -113,7 +103,7 @@ const BrandingSettings: React.FC = () => {
     return (
         <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
             <Typography variant="h4" gutterBottom>
-                Branding Settings
+                {organization?.name ? `${organization.name} - Branding Settings` : 'Branding Settings'}
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                 Customize your platform's appearance and branding.
@@ -127,7 +117,7 @@ const BrandingSettings: React.FC = () => {
                             title="Logo"
                             avatar={<UploadIcon />}
                             action={
-                                brandingSettings.customLogoBase64 && (
+                                (brandingSettings.customLogoBase64 || uploadedFile) && (
                                     <IconButton onClick={handleRemoveLogo} color="error">
                                         <DeleteIcon />
                                     </IconButton>
@@ -148,26 +138,30 @@ const BrandingSettings: React.FC = () => {
                                     alignItems: 'center',
                                     minHeight: 100
                                 }}>
-                                    <Logo height={80} />
+                                    {uploadedFile ? (
+                                        <img
+                                            src={URL.createObjectURL(uploadedFile)}
+                                            alt="Uploaded logo preview"
+                                            style={{ maxHeight: 80, maxWidth: 200, objectFit: 'contain' }}
+                                        />
+                                    ) : (
+                                        <Logo height={80} />
+                                    )}
                                 </Box>
                             </Box>
 
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleLogoUpload}
-                                accept="image/*"
-                                style={{ display: 'none' }}
+                            <ImageUpload
+                                mime_type="image"
+                                onSelect={handleImageSelect}
+                                field_name="logo"
+                                index={0}
+                                selected={brandingSettings.customLogoBase64}
+                                buttonProps={{
+                                    label: "Upload New Logo",
+                                    fullWidth: true,
+                                    variant: "outlined"
+                                }}
                             />
-
-                            <Button
-                                variant="outlined"
-                                startIcon={<UploadIcon />}
-                                onClick={() => fileInputRef.current?.click()}
-                                fullWidth
-                            >
-                                Upload New Logo
-                            </Button>
                         </CardContent>
                     </Card>
                 </Grid>

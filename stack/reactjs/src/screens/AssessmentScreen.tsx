@@ -227,7 +227,7 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
     return (
         <Container >
             {/* Header */}
-            <Box sx={{ mb: 4, textAlign: 'center' }}>
+            <Box sx={{ mb: 1, textAlign: 'center' }}>
                 <Typography variant="h3" gutterBottom fontWeight="bold" color="primary">
                     {title}
                 </Typography>
@@ -236,7 +236,7 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
                 </Typography>
 
                 {/* Progress Bar */}
-                <Box sx={{ mb: 3 }}>
+                <Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                         <Typography variant="body2" color="text.secondary">
                             Question {currentQuestionIndex + 1} of {totalQuestions}
@@ -262,75 +262,72 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
                 </Box>
             </Box>
 
-            {/* Question Navigation Pagination */}
-            {totalQuestions > 1 && (
-                <Box sx={{ mb: 3, width: '100%' }}>
-                    <Pagination
-                        count={totalQuestions}
-                        page={currentQuestionIndex + 1}
-                        onChange={(_: any, page: number) => goToQuestion(page - 1)}
-                        color="primary"
-                        variant="outlined"
-                        shape="rounded"
-                        size="small"
-                        sx={{
+            <Box sx={{ mb: 3, width: '100%' }}>
+                <Pagination
+                    count={totalQuestions}
+                    page={currentQuestionIndex + 1}
+                    onChange={(_: any, page: number) => goToQuestion(page - 1)}
+                    color="primary"
+                    variant="outlined"
+                    shape="rounded"
+                    size="small"
+                    sx={{
+                        width: '100%',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        '& .MuiPagination-ul': {
                             width: '100%',
                             display: 'flex',
                             justifyContent: 'space-between',
-                            '& .MuiPagination-ul': {
-                                width: '100%',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                flexWrap: 'nowrap',
-                                gap: 1,
-                            }
-                        }}
-                        renderItem={(item: any) => {
-                            const questionIndex = item.page - 1;
-                            const isAnswered = questionIndex >= 0 && questionIndex < questions.length
-                                ? responses.some(r => r.question === questions[questionIndex].id)
-                                : false;
-                            const isCompleted = questionIndex < currentQuestionIndex || isAnswered;
+                            flexWrap: 'nowrap',
+                            gap: 1,
+                        }
+                    }}
+                    renderItem={(item: any) => {
+                        const questionIndex = item.page - 1;
+                        const isAnswered = questionIndex >= 0 && questionIndex < questions.length
+                            ? responses.some(r => r.question === questions[questionIndex].id)
+                            : false;
+                        const isCompleted = questionIndex < currentQuestionIndex || isAnswered;
 
-                            return (
-                                <PaginationItem
-                                    {...item}
-                                    sx={{
-                                        ...item.sx,
-                                        '&.Mui-selected': {
+                        return (
+                            <PaginationItem
+                                {...item}
+                                sx={{
+                                    ...item.sx,
+                                    '&.Mui-selected': {
+                                        backgroundColor: isCompleted
+                                            ? theme.palette.success.main
+                                            : theme.palette.primary.main,
+                                        color: 'white',
+                                        '&:hover': {
+                                            backgroundColor: isCompleted
+                                                ? theme.palette.success.dark
+                                                : theme.palette.primary.dark,
+                                        },
+                                    },
+                                    '&:not(.Mui-selected)': {
+                                        backgroundColor: isCompleted
+                                            ? theme.palette.success.light
+                                            : theme.palette.background.default,
+                                        color: isCompleted
+                                            ? theme.palette.success.contrastText
+                                            : theme.palette.text.primary,
+                                        '&:hover': {
                                             backgroundColor: isCompleted
                                                 ? theme.palette.success.main
-                                                : theme.palette.primary.main,
-                                            color: 'white',
-                                            '&:hover': {
-                                                backgroundColor: isCompleted
-                                                    ? theme.palette.success.dark
-                                                    : theme.palette.primary.dark,
-                                            },
-                                        },
-                                        '&:not(.Mui-selected)': {
-                                            backgroundColor: isCompleted
-                                                ? theme.palette.success.light
-                                                : theme.palette.grey[100],
+                                                : theme.palette.grey[200],
                                             color: isCompleted
-                                                ? theme.palette.success.contrastText
+                                                ? 'white'
                                                 : theme.palette.text.primary,
-                                            '&:hover': {
-                                                backgroundColor: isCompleted
-                                                    ? theme.palette.success.main
-                                                    : theme.palette.grey[200],
-                                                color: isCompleted
-                                                    ? 'white'
-                                                    : theme.palette.text.primary,
-                                            },
                                         },
-                                    }}
-                                />
-                            );
-                        }}
-                    />
-                </Box>
-            )}
+                                    },
+                                }}
+                            />
+                        );
+                    }}
+                />
+            </Box>
 
             {/* Question Card */}
             <Fade in={true} timeout={300}>

@@ -47,6 +47,7 @@ from .models import Organizations, UserOrganizations
 from django.db.models import Count
 from .services.agent_orchestrator import AgentOrchestrator
 from urllib.parse import urlparse
+from .permissions import PaymentAssignmentPermission
 ####OBJECT-ACTIONS-VIEWSET-IMPORTS-ENDS####
 
 class AutoAuthorViewSet(viewsets.ModelViewSet):
@@ -230,6 +231,17 @@ class AssessmentsViewSet(AutoAuthorViewSet):
             # All questions answered - trigger agents
             orchestrator = AgentOrchestrator()
             agent_responses = orchestrator.trigger_assessment_agents(athlete.id, assessment_id)
+            
+            # Mark assessment as submitted in PaymentAssignment
+            now = timezone.now()
+            if assignment.payment.product and assignment.payment.product.pre_assessment_id == assessment_id:
+                assignment.pre_assessment_submitted = True
+                assignment.pre_assessment_submitted_at = now
+            elif assignment.payment.product and assignment.payment.product.post_assessment_id == assessment_id:
+                assignment.post_assessment_submitted = True
+                assignment.post_assessment_submitted_at = now
+            
+            assignment.save()
             
             return Response({
                 'success': True,
@@ -904,10 +916,112 @@ class PaymentsViewSet(AutoAuthorViewSet):
 class PaymentAssignmentsViewSet(AutoAuthorViewSet):
     queryset = PaymentAssignments.objects.all().order_by('-created_at')
     serializer_class = PaymentAssignmentsSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [PaymentAssignmentPermission]
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['athlete__username', 'athlete__email', 'payment__id']
     filterset_fields = ['athlete', 'coaches', 'parents']
+    
+    def get_queryset(self):
+        """
+        Filter assignments to only show those the user has access to.
+        """
+        if not self.request.user.is_authenticated:
+            return PaymentAssignments.objects.none()
+                        
+        # Regular users can only see assignments they're part of
+        return PaymentAssignments.objects.filter(
+            Q(athlete=self.request.user) |
+            Q(coaches=self.request.user) |
+            Q(parents=self.request.user) |
+            Q(payment__author=self.request.user)
+        ).distinct()
+    
+    def update(self, request, *args, **kwargs):
+        """
+        Override update to add submission status validation.
+        """
+        instance = self.get_object()
+        
+        # Check if any assessment is submitted
+        if instance.pre_assessment_submitted or instance.post_assessment_submitted:
+            return Response(
+                {'error': 'Cannot modify assignment after assessment submission'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        return super().update(request, *args, **kwargs)
+    
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Override partial_update to add submission status validation.
+        """
+        instance = self.get_object()
+        
+        # Check if any assessment is submitted
+        if instance.pre_assessment_submitted or instance.post_assessment_submitted:
+            return Response(
+                {'error': 'Cannot modify assignment after assessment submission'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        return super().partial_update(request, *args, **kwargs)
+    
+    def destroy(self, request, *args, **kwargs):
+        """
+        Override destroy to prevent deletion of entire assignments.
+        """
+        return Response(
+            {'error': 'Cannot delete payment assignments. Only field modifications are allowed.'}, 
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+
+class CoachSearchView(APIView):
+    """
+    Search for coaches by name or email within an organization.
+    Returns users with coach role that match the search term.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        search_term = request.query_params.get('q', '').strip()
+        organization_id = request.query_params.get('organization')
+        
+        if not search_term:
+            return Response({'results': []})
+        
+        # Base queryset for users with coach role
+        queryset = Users.objects.filter(
+            groups__name__in=['coach', 'Coach']  # Assuming coach role is in groups
+        ).distinct()
+        
+        # Filter by organization if provided
+        if organization_id:
+            # Assuming there's an organization relationship
+            # This might need adjustment based on your organization model
+            queryset = queryset.filter(
+                # Add organization filter here based on your model structure
+            )
+        
+        # Search in username, email, first_name, last_name
+        queryset = queryset.filter(
+            Q(username__icontains=search_term) |
+            Q(email__icontains=search_term) |
+            Q(first_name__icontains=search_term) |
+            Q(last_name__icontains=search_term)
+        )[:20]  # Limit results
+        
+        # Serialize results
+        results = []
+        for user in queryset:
+            results.append({
+                'id': user.id,
+                'str': user.get_full_name() or user.username,
+                '_type': 'Users',
+                'img': user.photo.url if user.photo else None
+            })
+        
+        return Response({'results': results})
 
 
 class CurrentContextView(APIView):
@@ -1043,12 +1157,22 @@ class CurrentContextView(APIView):
                     } for parent in assignment.parents.all()
                 ]
                 
+                # Build payer RelEntity from payment author
+                payer_relentity = {
+                    'id': assignment.payment.author.id,
+                    'str': str(assignment.payment.author),
+                    '_type': 'Users',
+                    'img': assignment.payment.author.photo.url if assignment.payment.author.photo else None
+                } if assignment.payment.author else None
+
                 all_assignments.append({
                     'id': assignment.id,
                     'user_role': user_role,
                     'athlete': athlete_relentity,
                     'coaches': coaches_relentities,
                     'parents': parents_relentities,
+                    'pre_assessment_submitted_at': assignment.pre_assessment_submitted_at.isoformat() if assignment.pre_assessment_submitted_at else None,
+                    'post_assessment_submitted_at': assignment.post_assessment_submitted_at.isoformat() if assignment.post_assessment_submitted_at else None,
                     'pre_assessment': {
                         'id': assignment.payment.product.pre_assessment.id,
                         'str': str(assignment.payment.product.pre_assessment),
@@ -1060,6 +1184,7 @@ class CurrentContextView(APIView):
                         '_type': 'Assessments'
                     } if assignment.payment.product and assignment.payment.product.post_assessment else None,
                     'payment': {
+                        'author': payer_relentity,
                         'id': assignment.payment.id,
                         'status': assignment.payment.status,
                         'subscription_ends': assignment.payment.subscription_ends.isoformat() if assignment.payment.subscription_ends else None,
