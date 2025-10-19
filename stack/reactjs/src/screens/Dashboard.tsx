@@ -8,6 +8,10 @@ import {
     Container,
     Grid,
     Pagination,
+    Step,
+    StepContent,
+    StepLabel,
+    Stepper,
     Typography
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
@@ -96,7 +100,7 @@ const Dashboard: React.FC = () => {
     }
 
     return (
-        <React.Fragment>
+        <Box p={2}>
             {/* Payment Assignments Section */}
             <Box sx={{ mb: 3 }}>
                 {paymentAssignments.length === 0 ? (
@@ -116,6 +120,69 @@ const Dashboard: React.FC = () => {
                         ))}
                     </Grid>
                 )}
+            </Box>
+
+            {/* Program Progress Stepper Section */}
+            <Box sx={{ mb: 4 }}>
+                <Typography variant="h5" component="h2" sx={{ mb: 3 }}>
+                    Program Progress
+                </Typography>
+                <Card>
+                    <CardContent>
+                        <Stepper orientation="vertical">
+                            <Step>
+                                <StepLabel>Pre Assessment</StepLabel>
+                                <StepContent>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Complete the initial assessment to evaluate current performance levels and identify areas for improvement.
+                                    </Typography>
+                                </StepContent>
+                            </Step>
+                            <Step>
+                                <StepLabel>Feedback Report</StepLabel>
+                                <StepContent>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Review detailed feedback and recommendations based on your assessment results.
+                                    </Typography>
+                                </StepContent>
+                            </Step>
+                            <Step>
+                                <StepLabel>Family Conversation</StepLabel>
+                                <StepContent>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Engage in meaningful discussions with family members about goals and expectations.
+                                    </Typography>
+                                </StepContent>
+                            </Step>
+                            <Step>
+                                <StepLabel>12 Session Curriculum</StepLabel>
+                                <StepContent>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Follow the structured 12-session program designed to enhance mental performance and resilience.
+                                    </Typography>
+                                </StepContent>
+                            </Step>
+
+                            <Step>
+                                <StepLabel>Lesson Plan</StepLabel>
+                                <StepContent>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Access detailed lesson plans and resources for each session to maximize your learning experience.
+                                    </Typography>
+                                </StepContent>
+                            </Step>
+
+                            <Step>
+                                <StepLabel>Post Assessment</StepLabel>
+                                <StepContent>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Post Assessment to evaluate the progress and effectiveness of the program.
+                                    </Typography>
+                                </StepContent>
+                            </Step>
+                        </Stepper>
+                    </CardContent>
+                </Card>
             </Box>
 
             {/* Notifications Section */}
@@ -174,7 +241,9 @@ const Dashboard: React.FC = () => {
                     </>
                 )}
             </Box>
-        </React.Fragment>
+
+
+        </Box>
     );
 };
 

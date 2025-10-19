@@ -34,7 +34,8 @@ const HeroImage: React.FC<HeroImageProps> = ({
     return (
         <Box
             sx={{
-                py: 1,
+                py: "5%",
+                minHeight: "calc(100vh - 200px)",
                 position: 'relative',
                 background: `linear-gradient(135deg, 
                     ${theme.palette.primary.light}15 0%, 

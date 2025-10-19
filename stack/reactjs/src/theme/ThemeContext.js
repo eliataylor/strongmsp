@@ -156,7 +156,7 @@ const ThemeProvider = ({ children }) => {
       mode: darkMode ? "dark" : "light",
       background: {
         default: darkMode ? "#32363F" : "#f4f4f4",
-        paper: darkMode ? "#32363F" : "#f4f4f4"
+        paper: darkMode ? "#1e2226" : "#f4f4f4"
       },
       contrastText: darkMode ? "#e1e1e1" : "#202020",
       text: {

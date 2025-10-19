@@ -1191,8 +1191,28 @@ class CurrentContextView(APIView):
                             'str': str(assignment.payment.product),
                             '_type': 'Products'
                         } if assignment.payment.product else None
+                    },
+                    'agent_progress': {
+                        "lessonplan": null, #null or created date of AgentResponse with purpose == lessonpackge
+                        "feedbackreport": null,  #null  or created date of AgentResponse with purpose == feedbackreport
+                        "familyconversation": null,  # null or created date of AgentResponse  with purpose == talkingpoints
+                        "curriculum": null,   #null or created date of AgentResponse with purpose == 12sessions
+                    },
+                    "coach_progress": {
+                        "lessonplan": null, # or created date of Coach Content with purpose == lessonpackge and coach_delivered > now
+                        "feedbackreport": null,  # or created date of Coach Content with purpose == feedbackreport and coach_delivered > now
+                        "familyconversation": null,  # or created date of Coach Content with purpose == talkingpoints and coach_delivered > now
+                        "curriculum": null,   # or created date of Coach Content with purpose == 12sessions and coach_delivered > now
+                    },
+                    "athlete_progress": {
+                        "lessonplan": null, # or created date of Coach Content with purpose == lessonpackge and athelete_received > now
+                        "feedbackreport": null,  # or created date of Coach Content with purpose == feedbackreport and athelete_received > now
+                        "familyconversation": null,  # or created date of Coach Content with purpose == talkingpoints and athelete_received > now
+                        "curriculum": null,   # or created date of Coach Content with purpose == 12sessions  and athelete_received > now
                     }
                 })
+
+                
             
             context_data['payment_assignments'] = all_assignments
         

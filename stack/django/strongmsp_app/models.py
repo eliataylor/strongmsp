@@ -358,6 +358,9 @@ class CoachContent(SuperModel):
 	cover_photo = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Cover Photo')
 	privacy = models.CharField(max_length=13, choices=PrivacyChoices.choices, verbose_name='Privacy', default="mentioned")
 	purpose = models.CharField(max_length=14, choices=PurposeChoices.choices, verbose_name='Purpose', blank=True, null=True)
+	coach_delivered = models.DateTimeField(blank=True, null=True, verbose_name='Coach Delivered At') # only coach can check
+	athlete_received = models.DateTimeField(blank=True, null=True, verbose_name='Athlete Received At') # any can check
+	parent_received = models.DateTimeField(blank=True, null=True, verbose_name='Parent Received At') # only parent can check
 
 class Shares(SuperModel):
 	class Meta:

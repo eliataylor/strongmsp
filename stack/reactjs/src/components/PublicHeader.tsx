@@ -14,7 +14,6 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { FadedPaper } from "src/theme/StyledFields";
 import Logo from "../theme/Logo";
-import LogoRadialGradient from "./LogoRadialGradient";
 import RoleBasedMenu from "./RoleBasedMenu";
 import PublicPagesMenu from "./menus/PublicPagesMenu";
 
@@ -59,14 +58,10 @@ const PublicHeader: React.FC = () => {
                 position="static"
                 elevation={0}
                 color="transparent"
-                sx={{
+                sx={(theme) => ({
                     borderBottom: 1,
-                    borderColor: 'divider',
-                    background: `linear-gradient(to right, rgba(244, 244, 244, 0.1), rgba(244, 244, 244, 0.3))`,
-                    '&[data-mui-color-scheme="dark"]': {
-                        background: `linear-gradient(to right, rgba(50, 54, 63, 0.1), rgba(50, 54, 63, 0.4))`
-                    }
-                }}
+                    borderColor: 'divider'
+                })}
             >
                 <Toolbar sx={{ justifyContent: 'space-between' }}>
                     {/* Logo */}
@@ -123,7 +118,6 @@ const PublicHeader: React.FC = () => {
                 <FadedPaper style={{ position: 'absolute', top: 0, left: 0, minHeight: '100vh', maxHeight: '100vh', width: '100%', padding: 0, margin: 0, zIndex: 0 }} />
             </Drawer>
 
-            <LogoRadialGradient />
 
         </>
     );
