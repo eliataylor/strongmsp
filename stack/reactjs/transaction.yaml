@@ -55,6 +55,18 @@ additions:
   - 34.8.79.67
   ttl: 300
   type: A
+- kind: dns#resourceRecordSet
+  name: strongmindstrongperformance.com.
+  rrdatas:
+  - 34.8.79.67
+  ttl: 300
+  type: A
+- kind: dns#resourceRecordSet
+  name: strongmindstrongperformance.com.
+  rrdatas:
+  - 34.8.79.67
+  ttl: 300
+  type: A
 deletions:
 - kind: dns#resourceRecordSet
   name: strongmindstrongperformance.com.

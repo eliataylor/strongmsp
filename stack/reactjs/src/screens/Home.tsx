@@ -29,10 +29,10 @@ const Home: React.FC<HomeProps> = ({ loading = false }) => {
   return (
     <Box>
       {/* Hero Section */}
-      <HeroImage height={700} showStats={true} />
+      <HeroImage showStats={true} />
 
       {/* Call to Action Buttons */}
-      <Container maxWidth="lg" sx={{ py: 6 }}>
+      <Container maxWidth="lg" >
         <Grid container spacing={2} justifyContent="center">
           <Grid item>
             <Button
@@ -71,7 +71,7 @@ const Home: React.FC<HomeProps> = ({ loading = false }) => {
       <Divider />
 
       {/* Start Assessment Card */}
-      <Container maxWidth="lg" sx={{ py: 8 }}>
+      <Container maxWidth="lg" sx={{ my: 8 }}>
         <Grid container justifyContent="center">
           <Grid item xs={12} md={8} lg={6}>
             <Card

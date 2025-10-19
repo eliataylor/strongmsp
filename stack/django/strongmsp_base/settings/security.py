@@ -47,6 +47,14 @@ CORS_ALLOWED_ORIGINS += [f"{APP_HOST_PARTS.scheme}://localhost:{DEV_PORT}",
                          f"https://webapp.strongmindstrongperformance.com",
                          f"http://webapp.strongmindstrongperformance.com"]
 
+# Add organization subdomain support
+# Since CORS doesn't support wildcards in origins, we'll add specific subdomains
+# and use CORS_ALLOW_ALL_ORIGINS=False with custom middleware for dynamic validation
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://[a-zA-Z0-9-]+\.strongmindstrongperformance\.com$",
+    r"^http://[a-zA-Z0-9-]+\.strongmindstrongperformance\.com$",
+]
+
 if DJANGO_ENV != 'production':
     # for docker networking
     ALLOWED_HOSTS += ["localhost", "127.0.0.1", "django-service"]
@@ -64,6 +72,9 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 logger.debug(f"Allowing Hosts: {", ".join(ALLOWED_HOSTS)}")
 
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+
+# Add regex support for CSRF trusted origins to match organization subdomains
+CSRF_TRUSTED_ORIGIN_REGEXES = CORS_ALLOWED_ORIGIN_REGEXES
 
 # CSRF Configuration
 CSRF_COOKIE_NAME = 'csrftoken'  # Explicitly set the cookie name

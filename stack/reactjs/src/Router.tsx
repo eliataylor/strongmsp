@@ -355,6 +355,38 @@ function createRouter() {
               <NotificationsScreen />
             </AuthenticatedRoute>
           )
+        },
+        {
+          path: "/agent-responses",
+          element: (
+            <AuthenticatedRoute>
+              <EntityList model="AgentResponses" showFab={true} />
+            </AuthenticatedRoute>
+          )
+        },
+        {
+          path: "/coach-content",
+          element: (
+            <AuthenticatedRoute>
+              <EntityList model="CoachContent" showFab={true} />
+            </AuthenticatedRoute>
+          )
+        },
+        {
+          path: "/users",
+          element: (
+            <AuthenticatedRoute>
+              <EntityList model="Users" showFab={true} />
+            </AuthenticatedRoute>
+          )
+        },
+        {
+          path: "/payments",
+          element: (
+            <AuthenticatedRoute>
+              <EntityList model="Payments" showFab={true} />
+            </AuthenticatedRoute>
+          )
         }
       ]
     }

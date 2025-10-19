@@ -45,7 +45,6 @@ const FAQs: React.FC = () => {
 
     return (
         <Box>
-            <PublicHeader />
 
             <Container maxWidth="md" sx={{ py: 8 }}>
                 <Typography variant="h2" component="h1" sx={{

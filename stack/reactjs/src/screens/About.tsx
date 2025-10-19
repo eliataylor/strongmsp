@@ -48,7 +48,6 @@ const About: React.FC = () => {
 
     return (
         <Box>
-            <PublicHeader />
 
             <Container maxWidth="lg" sx={{ py: 8 }}>
                 {/* Founder Story Section */}

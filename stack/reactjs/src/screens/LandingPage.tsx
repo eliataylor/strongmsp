@@ -11,16 +11,13 @@ import {
     Container,
     Fade,
     Grid,
-    Typography,
-    useTheme
+    Typography
 } from "@mui/material";
 import React, { useState } from "react";
 import HeroImage from "../components/HeroImage";
-import PublicHeader from "../components/PublicHeader";
 import SignupModal from "../components/SignupModal";
 
 const LandingPage: React.FC = () => {
-    const theme = useTheme();
     const [signupModalOpen, setSignupModalOpen] = useState(false);
 
     const scrollToHowItWorks = () => {
@@ -78,10 +75,9 @@ const LandingPage: React.FC = () => {
 
     return (
         <Box>
-            <PublicHeader />
 
             {/* Hero Section */}
-            <HeroImage height={700} showStats={true} />
+            <HeroImage showStats={true} />
 
             {/* Call to Action Buttons */}
             <Container maxWidth="lg" sx={{ py: 6 }}>

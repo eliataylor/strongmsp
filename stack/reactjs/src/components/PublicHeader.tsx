@@ -2,13 +2,9 @@ import { Close as CloseIcon, Menu as MenuIcon } from "@mui/icons-material";
 import {
     AppBar,
     Box,
-    Button,
+    Divider,
     Drawer,
     IconButton,
-    List,
-    ListItem,
-    ListItemButton,
-    ListItemText,
     Toolbar,
     Typography,
     useMediaQuery,
@@ -16,16 +12,14 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../allauth/auth";
+import { FadedPaper } from "src/theme/StyledFields";
 import Logo from "../theme/Logo";
-import LoginModal from "./LoginModal";
-import SignupModal from "./SignupModal";
+import LogoRadialGradient from "./LogoRadialGradient";
+import RoleBasedMenu from "./RoleBasedMenu";
+import PublicPagesMenu from "./menus/PublicPagesMenu";
 
 const PublicHeader: React.FC = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [loginModalOpen, setLoginModalOpen] = useState(false);
-    const [signupModalOpen, setSignupModalOpen] = useState(false);
-    const auth = useAuth();
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -34,86 +28,28 @@ const PublicHeader: React.FC = () => {
         setMobileOpen(!mobileOpen);
     };
 
-    const handleLoginClick = () => {
-        setLoginModalOpen(true);
-    };
-
-    const handleSignupClick = () => {
-        setSignupModalOpen(true);
-    };
-
-    const handleContactClick = () => {
-        window.location.href = 'mailto:info@strongmindstrongperformance.com';
-    };
-
-    const navigationItems = [
-        { label: 'Home', path: '/' },
-        { label: 'About', path: '/about' },
-        { label: 'FAQs', path: '/faqs' },
-    ];
-
-    const isLoggedIn = auth?.data?.user;
 
     const drawer = (
-        <Box sx={{ width: 250 }}>
+        <Box sx={{ zIndex: 250, minWidth: '150px' }}>
             <Box sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                p: 2
+                p: 1
             }}>
                 <Logo height={30} />
                 <IconButton onClick={handleDrawerToggle}>
                     <CloseIcon />
                 </IconButton>
             </Box>
-            <List>
-                {navigationItems.map((item) => (
-                    <ListItem key={item.label} disablePadding>
-                        <ListItemButton component={Link} to={item.path} onClick={handleDrawerToggle}>
-                            <ListItemText primary={item.label} />
-                        </ListItemButton>
-                    </ListItem>
-                ))}
-                <ListItem disablePadding>
-                    <ListItemButton onClick={handleContactClick}>
-                        <ListItemText primary="Contact" />
-                    </ListItemButton>
-                </ListItem>
-                <ListItem disablePadding>
-                    <Box sx={{ p: 2, display: 'flex', gap: 1, flexDirection: 'column' }}>
-                        {isLoggedIn ? (
-                            <Button
-                                component={Link}
-                                to="/dashboard"
-                                variant="contained"
-                                fullWidth
-                                sx={{ mb: 1 }}
-                            >
-                                Go to Dashboard
-                            </Button>
-                        ) : (
-                            <>
-                                <Button
-                                    variant="outlined"
-                                    fullWidth
-                                    onClick={handleLoginClick}
-                                    sx={{ mb: 1 }}
-                                >
-                                    Sign In
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    fullWidth
-                                    onClick={handleSignupClick}
-                                >
-                                    Sign Up
-                                </Button>
-                            </>
-                        )}
-                    </Box>
-                </ListItem>
-            </List>
+
+            <Box sx={{
+                p: 1
+            }}>
+                <RoleBasedMenu layout="drawer" />
+                <Divider sx={{ my: 1 }} />
+                <PublicPagesMenu layout="drawer" />
+            </Box>
         </Box>
     );
 
@@ -121,12 +57,15 @@ const PublicHeader: React.FC = () => {
         <>
             <AppBar
                 position="static"
-                color="default"
                 elevation={0}
+                color="transparent"
                 sx={{
                     borderBottom: 1,
                     borderColor: 'divider',
-                    backgroundColor: 'background.paper'
+                    background: `linear-gradient(to right, rgba(244, 244, 244, 0.1), rgba(244, 244, 244, 0.3))`,
+                    '&[data-mui-color-scheme="dark"]': {
+                        background: `linear-gradient(to right, rgba(50, 54, 63, 0.1), rgba(50, 54, 63, 0.4))`
+                    }
                 }}
             >
                 <Toolbar sx={{ justifyContent: 'space-between' }}>
@@ -151,85 +90,23 @@ const PublicHeader: React.FC = () => {
 
                     {/* Desktop Navigation */}
                     {!isMobile && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            {navigationItems.map((item) => (
-                                <Button
-                                    key={item.label}
-                                    component={Link}
-                                    to={item.path}
-                                    color="inherit"
-                                    sx={{
-                                        textTransform: 'none',
-                                        fontWeight: 500,
-                                        color: 'text.primary'
-                                    }}
-                                >
-                                    {item.label}
-                                </Button>
-                            ))}
-                            <Button
-                                onClick={handleContactClick}
-                                color="inherit"
-                                sx={{
-                                    textTransform: 'none',
-                                    fontWeight: 500,
-                                    color: 'text.primary'
-                                }}
-                            >
-                                Contact
-                            </Button>
-                            {isLoggedIn ? (
-                                <Button
-                                    component={Link}
-                                    to="/dashboard"
-                                    variant="contained"
-                                    sx={{
-                                        textTransform: 'none',
-                                        fontWeight: 500
-                                    }}
-                                >
-                                    Dashboard
-                                </Button>
-                            ) : (
-                                <>
-                                    <Button
-                                        variant="outlined"
-                                        onClick={handleLoginClick}
-                                        sx={{
-                                            textTransform: 'none',
-                                            fontWeight: 500
-                                        }}
-                                    >
-                                        Sign In
-                                    </Button>
-                                    <Button
-                                        variant="contained"
-                                        onClick={handleSignupClick}
-                                        sx={{
-                                            textTransform: 'none',
-                                            fontWeight: 500
-                                        }}
-                                    >
-                                        Sign Up
-                                    </Button>
-                                </>
-                            )}
+                        <Box sx={{ display: 'flex', flexGrow: 1, justifyContent: 'flex-end', gap: 2, mr: 3 }}>
+                            <PublicPagesMenu layout="header" />
+                            <RoleBasedMenu layout="header" />
                         </Box>
                     )}
 
-                    {/* Mobile Menu Button */}
-                    {isMobile && (
-                        <IconButton
-                            color="inherit"
-                            aria-label="open drawer"
-                            edge="start"
-                            onClick={handleDrawerToggle}
-                        >
-                            <MenuIcon />
-                        </IconButton>
-                    )}
+                    <IconButton
+                        color="inherit"
+                        aria-label="open drawer"
+                        edge="start"
+                        onClick={handleDrawerToggle}
+                    >
+                        <MenuIcon />
+                    </IconButton>
                 </Toolbar>
             </AppBar>
+
 
             {/* Mobile Drawer */}
             <Drawer
@@ -237,25 +114,17 @@ const PublicHeader: React.FC = () => {
                 anchor="right"
                 open={mobileOpen}
                 onClose={handleDrawerToggle}
+                color="transparent"
                 ModalProps={{
                     keepMounted: true, // Better open performance on mobile.
                 }}
-                sx={{
-                    '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 280 },
-                }}
             >
                 {drawer}
+                <FadedPaper style={{ position: 'absolute', top: 0, left: 0, minHeight: '100vh', maxHeight: '100vh', width: '100%', padding: 0, margin: 0, zIndex: 0 }} />
             </Drawer>
 
-            {/* Modals */}
-            <LoginModal
-                open={loginModalOpen}
-                onClose={() => setLoginModalOpen(false)}
-            />
-            <SignupModal
-                open={signupModalOpen}
-                onClose={() => setSignupModalOpen(false)}
-            />
+            <LogoRadialGradient />
+
         </>
     );
 };

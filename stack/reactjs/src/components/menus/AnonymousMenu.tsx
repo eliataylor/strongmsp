@@ -1,37 +1,66 @@
 import { AppRegistration, Login } from "@mui/icons-material";
-import { ListItemAvatar, ListItemButton, ListItemText } from "@mui/material";
-import React from "react";
+import { Box } from "@mui/material";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { MenuButton } from "src/theme/StyledFields";
+import LoginModal from "../LoginModal";
+import SignupModal from "../SignupModal";
+import { MenuProps } from "./PublicPagesMenu";
 
-const AnonymousMenu: React.FC = () => {
+const AnonymousMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
     const location = useLocation();
+    const [loginModalOpen, setLoginModalOpen] = useState(false);
+    const [signupModalOpen, setSignupModalOpen] = useState(false);
+
+    const handleLoginClick = () => {
+        setLoginModalOpen(true);
+    };
+
+    const handleSignupClick = () => {
+        setSignupModalOpen(true);
+    };
+
+    const menuItems = [
+        { path: "/account/login", icon: Login, label: "Sign In", action: handleLoginClick },
+        { path: "/account/signup", icon: AppRegistration, label: "Sign Up", action: handleSignupClick }
+    ];
+
+    const renderItems = () => {
+        return menuItems.map(({ path, icon: Icon, label, action }) => (
+            <MenuButton
+                key={path}
+                component={Link}
+                to={path}
+                startIcon={<Icon fontSize="small" color="secondary" />}
+                color={location.pathname === path ? "primary" : "inherit"}
+                onClick={action}
+                sx={{
+                    justifyContent: layout === 'drawer' ? 'flex-start' : 'center',
+                }}
+            >
+                {label}
+            </MenuButton>
+        ));
+    };
+
+    const wrapperStyles = {
+        display: 'flex',
+        gap: 1,
+        flexDirection: layout === 'drawer' ? 'column' : 'row'
+    }
 
     return (
-        <div id="AnonymousMenuListItems">
-            {/* Sign In */}
-            <ListItemButton
-                component={Link}
-                to="/account/login"
-                selected={location.pathname === "/account/login"}
-            >
-                <ListItemAvatar style={{ display: "flex" }}>
-                    <Login fontSize="small" color="secondary" />
-                </ListItemAvatar>
-                <ListItemText primary="Sign In" />
-            </ListItemButton>
-
-            {/* Sign Up */}
-            <ListItemButton
-                component={Link}
-                to="/account/signup"
-                selected={location.pathname === "/account/signup"}
-            >
-                <ListItemAvatar style={{ display: "flex" }}>
-                    <AppRegistration fontSize="small" color="secondary" />
-                </ListItemAvatar>
-                <ListItemText primary="Sign Up" />
-            </ListItemButton>
-        </div>
+        <>
+            <Box sx={wrapperStyles}>{renderItems()}</Box>
+            <LoginModal
+                open={loginModalOpen}
+                onClose={() => setLoginModalOpen(false)}
+            />
+            <SignupModal
+                open={signupModalOpen}
+                onClose={() => setSignupModalOpen(false)}
+            />
+        </>
     );
 };
 

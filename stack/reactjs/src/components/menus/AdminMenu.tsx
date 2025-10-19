@@ -6,16 +6,18 @@ import {
     Palette as PaletteIcon,
     Payment as PaymentIcon,
     Person as PersonIcon,
-    School as SchoolIcon,
-    Share as ShareIcon,
-    SmartToy as SmartToyIcon,
-    Sports as SportsIcon
+    SupportAgent as SportsIcon
 } from "@mui/icons-material";
 import { ListItemAvatar, ListItemButton, ListItemText } from "@mui/material";
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import RoleSwitchPrompt from "src/screens/RoleSwitchPrompt";
+export type MenuLayout = 'drawer' | 'footer' | 'header';
+export interface MenuProps {
+    layout?: MenuLayout;
+}
 
-const AdminMenu: React.FC = () => {
+const AdminMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
     const location = useLocation();
 
     return (
@@ -53,19 +55,7 @@ const AdminMenu: React.FC = () => {
                 <ListItemAvatar style={{ display: "flex" }}>
                     <PersonIcon fontSize="small" />
                 </ListItemAvatar>
-                <ListItemText primary="Users" />
-            </ListItemButton>
-
-            {/* Courses */}
-            <ListItemButton
-                component={Link}
-                to="/courses"
-                selected={location.pathname === "/courses"}
-            >
-                <ListItemAvatar style={{ display: "flex" }}>
-                    <SchoolIcon fontSize="small" />
-                </ListItemAvatar>
-                <ListItemText primary="Courses" />
+                <ListItemText primary="Coaches" />
             </ListItemButton>
 
             {/* Payments */}
@@ -92,18 +82,6 @@ const AdminMenu: React.FC = () => {
                 <ListItemText primary="Prompt Templates" />
             </ListItemButton>
 
-            {/* Agent Responses */}
-            <ListItemButton
-                component={Link}
-                to="/agent-responses"
-                selected={location.pathname === "/agent-responses"}
-            >
-                <ListItemAvatar style={{ display: "flex" }}>
-                    <SmartToyIcon fontSize="small" />
-                </ListItemAvatar>
-                <ListItemText primary="Agent Responses" />
-            </ListItemButton>
-
             {/* Coach Content */}
             <ListItemButton
                 component={Link}
@@ -114,18 +92,6 @@ const AdminMenu: React.FC = () => {
                     <SportsIcon fontSize="small" />
                 </ListItemAvatar>
                 <ListItemText primary="Coach Content" />
-            </ListItemButton>
-
-            {/* Shares */}
-            <ListItemButton
-                component={Link}
-                to="/shares"
-                selected={location.pathname === "/shares"}
-            >
-                <ListItemAvatar style={{ display: "flex" }}>
-                    <ShareIcon fontSize="small" />
-                </ListItemAvatar>
-                <ListItemText primary="Shares" />
             </ListItemButton>
 
             {/* Branding Settings - Admin Only */}
@@ -151,6 +117,8 @@ const AdminMenu: React.FC = () => {
                 </ListItemAvatar>
                 <ListItemText primary="Prompt Tester" />
             </ListItemButton>
+
+            <RoleSwitchPrompt />
 
             {/* My Account */}
             <ListItemButton

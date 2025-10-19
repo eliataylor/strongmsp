@@ -38,8 +38,7 @@ const PaymentAssignmentCard: React.FC<PaymentAssignmentCardProps> = ({ assignmen
                         onUpdate={handleUpdate}
                     />
                 }
-                title="Payment Assignment"
-                subheader={`ID: ${assignment.id}`}
+                title="Assignments"
             />
 
             <Box sx={{ padding: 2, flexGrow: 1 }}>

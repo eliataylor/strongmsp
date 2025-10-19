@@ -17,12 +17,10 @@ import React from 'react';
 import Logo from '../theme/Logo';
 
 interface HeroImageProps {
-    height?: number;
     showStats?: boolean;
 }
 
 const HeroImage: React.FC<HeroImageProps> = ({
-    height = 600,
     showStats = true
 }) => {
     const theme = useTheme();
@@ -36,8 +34,8 @@ const HeroImage: React.FC<HeroImageProps> = ({
     return (
         <Box
             sx={{
+                py: 1,
                 position: 'relative',
-                height: height,
                 background: `linear-gradient(135deg, 
                     ${theme.palette.primary.light}15 0%, 
                     ${theme.palette.secondary.light}15 50%, 

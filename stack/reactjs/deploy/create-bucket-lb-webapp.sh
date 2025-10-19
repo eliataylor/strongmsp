@@ -72,14 +72,17 @@ else
   printf "\e[33mExpected IP: $STATIC_IP\e[0m\n"
 fi
 
-# Create SSL Certificate for Load Balancer
-progress "Creating SSL certificate..."
+# Create SSL Certificate for Load Balancer with wildcard support
+progress "Creating SSL certificate with wildcard support..."
 if ! gcloud compute ssl-certificates describe "$SSL_CERT_NAME" --global > /dev/null 2>&1; then
+  # Create wildcard domain for the same domain
+  WILDCARD_DOMAIN="*.$DOMAIN_NAME"
+  
   gcloud compute ssl-certificates create "$SSL_CERT_NAME" \
-    --description="SSL Certificate for Load Balancer" \
-    --domains="$DOMAIN_NAME" \
+    --description="SSL Certificate for Load Balancer with Wildcard Support" \
+    --domains="$DOMAIN_NAME,$WILDCARD_DOMAIN" \
     --global
-  printf "\e[32mSSL certificate $SSL_CERT_NAME created\e[0m\n"
+  printf "\e[32mSSL certificate $SSL_CERT_NAME created with wildcard support for $WILDCARD_DOMAIN\e[0m\n"
 else
   printf "\e[31mSSL certificate $SSL_CERT_NAME already exists. Skipping creation.\e[0m\n"
 fi

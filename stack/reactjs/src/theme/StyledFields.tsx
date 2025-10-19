@@ -1,9 +1,8 @@
-import React from "react";
-import { alpha, darken, styled } from "@mui/material/styles";
-import {Box, Button, ButtonProps, Drawer} from "@mui/material";
-import Paper from "@mui/material/Paper";
+import { Box, Button, ButtonProps, Drawer } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
+import { alpha, darken, styled } from "@mui/material/styles";
 
 export const ButtonPill = styled((props: ButtonProps & { to?: string }) => {
   return <Button {...props} />;
@@ -13,6 +12,14 @@ export const ButtonPill = styled((props: ButtonProps & { to?: string }) => {
   margin: "auto",
   maxWidth: 600
 });
+
+export const MenuButton = styled(Button)({
+  textTransform: 'none',
+  fullWidth: true,
+  variant: "text",
+  size: "small"
+}) as typeof Button;
+
 
 export const TightButton = styled(Button)(({ theme }) => ({
   borderRadius: 4,

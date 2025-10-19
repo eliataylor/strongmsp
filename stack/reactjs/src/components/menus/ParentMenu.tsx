@@ -4,90 +4,51 @@ import {
     Notifications as NotificationsIcon,
     Payment as PaymentIcon,
     Person as PersonIcon,
-    Sports as SportsIcon
+    SupportAgent as SportsIcon
 } from "@mui/icons-material";
-import { ListItemAvatar, ListItemButton, ListItemText } from "@mui/material";
+import { Box } from "@mui/material";
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { MenuButton } from "src/theme/StyledFields";
+import { MenuProps } from "./PublicPagesMenu";
 
-const ParentMenu: React.FC = () => {
+const ParentMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
     const location = useLocation();
 
-    return (
-        <div id="ParentMenuListItems">
-            {/* Dashboard */}
-            <ListItemButton
-                component={Link}
-                to="/dashboard"
-                selected={location.pathname === "/dashboard"}
-            >
-                <ListItemAvatar style={{ display: "flex" }}>
-                    <DashboardIcon fontSize="small" />
-                </ListItemAvatar>
-                <ListItemText primary="Dashboard" />
-            </ListItemButton>
+    const menuItems = [
+        { path: "/dashboard", icon: DashboardIcon, label: "Dashboard", priority: true },
+        { path: "/notifications", icon: NotificationsIcon, label: "Notifications", priority: true },
+        { path: "/users", icon: PersonIcon, label: "Users", priority: false },
+        { path: "/payments", icon: PaymentIcon, label: "Payments", priority: false },
+        { path: "/coach-content", icon: SportsIcon, label: "Coach Content", priority: false },
+        { path: "/my-profile", icon: AccountCircleIcon, label: "My Account", priority: false }
+    ];
 
-            {/* Notifications */}
-            <ListItemButton
+    const renderItems = () => {
+        return menuItems.map(({ path, icon: Icon, label }) => (
+            <MenuButton
+                key={path}
                 component={Link}
-                to="/notifications"
-                selected={location.pathname === "/notifications"}
+                to={path}
+                startIcon={<Icon fontSize="small" />}
+                color={location.pathname === path ? "primary" : "inherit"}
+                sx={{
+                    justifyContent: layout === 'drawer' ? 'flex-start' : 'center',
+                }}
             >
-                <ListItemAvatar style={{ display: "flex" }}>
-                    <NotificationsIcon fontSize="small" />
-                </ListItemAvatar>
-                <ListItemText primary="Notifications" />
-            </ListItemButton>
+                {label}
+            </MenuButton>
+        ));
+    };
 
-            {/* Users */}
-            <ListItemButton
-                component={Link}
-                to="/users"
-                selected={location.pathname === "/users"}
-            >
-                <ListItemAvatar style={{ display: "flex" }}>
-                    <PersonIcon fontSize="small" />
-                </ListItemAvatar>
-                <ListItemText primary="Users" />
-            </ListItemButton>
+    const wrapperStyles = {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        flexDirection: layout === 'drawer' ? 'column' : 'row'
+    }
 
-            {/* Payments */}
-            <ListItemButton
-                component={Link}
-                to="/payments"
-                selected={location.pathname === "/payments"}
-            >
-                <ListItemAvatar style={{ display: "flex" }}>
-                    <PaymentIcon fontSize="small" />
-                </ListItemAvatar>
-                <ListItemText primary="Payments" />
-            </ListItemButton>
-
-            {/* Coach Content */}
-            <ListItemButton
-                component={Link}
-                to="/coach-content"
-                selected={location.pathname === "/coach-content"}
-            >
-                <ListItemAvatar style={{ display: "flex" }}>
-                    <SportsIcon fontSize="small" />
-                </ListItemAvatar>
-                <ListItemText primary="Coach Content" />
-            </ListItemButton>
-
-            {/* My Account */}
-            <ListItemButton
-                component={Link}
-                to="/my-profile"
-                selected={location.pathname === "/my-profile"}
-            >
-                <ListItemAvatar style={{ display: "flex" }}>
-                    <AccountCircleIcon fontSize="small" />
-                </ListItemAvatar>
-                <ListItemText primary="My Account" />
-            </ListItemButton>
-        </div>
-    );
+    return <Box sx={wrapperStyles}>{renderItems()}</Box>;
 };
 
 export default ParentMenu;

@@ -254,6 +254,7 @@ class Payments(SuperModel):
 	stripe_payment_intent_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='Stripe Payment Intent ID')
 	stripe_customer_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='Stripe Customer ID')
 	stripe_subscription_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='Stripe Subscription ID')
+	prompt_templates = models.ManyToManyField('PromptTemplates', related_name='payments', blank=True, verbose_name='Prompt Templates')
 	
 	# Organization and sign-up code fields
 	organization = models.ForeignKey('Organizations', on_delete=models.SET_NULL, related_name='payments', 
