@@ -674,27 +674,27 @@ export const TypeFieldSchema: ITypeFieldSchema = {
       "cardinality": 1,
       "default": "",
       "required": true,
-      "example": "lesson-package, 12-sessions, talking-points, feedback-report, parent-email",
+      "example": "lesson_plan, curriculum, talking_points, feedback_report, scheduling_email",
       "options": [
         {
-          "label": "Lesson-package",
-          "id": "lessonpackage"
+          "label": "Lesson Plan",
+          "id": "lesson_plan"
         },
         {
-          "label": "12-sessions",
-          "id": "12sessions"
+          "label": "Curriculum",
+          "id": "curriculum"
         },
         {
-          "label": "Talking-points",
-          "id": "talkingpoints"
+          "label": "Talking Points",
+          "id": "talking_points"
         },
         {
-          "label": "Feedback-report",
-          "id": "feedbackreport"
+          "label": "Feedback Report",
+          "id": "feedback_report"
         },
         {
-          "label": "Parent-email",
-          "id": "parentemail"
+          "label": "Scheduling Email",
+          "id": "scheduling_email"
         }
       ]
     },
@@ -754,27 +754,27 @@ export const TypeFieldSchema: ITypeFieldSchema = {
       "cardinality": 1,
       "default": "",
       "required": true,
-      "example": "lesson-package, 12-sessions, talking-points, feedback-report, parent-email",
+      "example": "lesson_plan, curriculum, talking_points, feedback_report, scheduling_email",
       "options": [
         {
-          "label": "Lesson-package",
-          "id": "lessonpackage"
+          "label": "Lesson Plan",
+          "id": "lesson_plan"
         },
         {
-          "label": "12-sessions",
-          "id": "12sessions"
+          "label": "Curriculum",
+          "id": "curriculum"
         },
         {
-          "label": "Talking-points",
-          "id": "talkingpoints"
+          "label": "Talking Points",
+          "id": "talking_points"
         },
         {
-          "label": "Feedback-report",
-          "id": "feedbackreport"
+          "label": "Feedback Report",
+          "id": "feedback_report"
         },
         {
-          "label": "Parent-email",
-          "id": "parentemail"
+          "label": "Scheduling Email",
+          "id": "scheduling_email"
         }
       ]
     },
@@ -809,6 +809,18 @@ export const TypeFieldSchema: ITypeFieldSchema = {
       "cardinality": 1,
       "default": "",
       "required": false,
+      "example": ""
+    },
+    "assignment": {
+      "machine": "assignment",
+      "singular": "Payment Assignment",
+      "plural": "Payment Assignments",
+      "relationship": "PaymentAssignments",
+      "field_type": "type_reference",
+      "data_type": "RelEntity",
+      "cardinality": 1,
+      "default": "",
+      "required": true,
       "example": ""
     }
   },
@@ -1286,6 +1298,7 @@ export interface AgentResponses extends SuperModel {
   message_body: string;
   ai_response: string;
   ai_reasoning?: string | null;
+  assignment: RelEntity<"PaymentAssignments">;
 }
 export interface CoachContent extends SuperModel {
   author: RelEntity<"Users">;

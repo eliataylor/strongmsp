@@ -273,12 +273,12 @@ class AgentResponsesSerializer(CustomSerializer):
     class Meta:
         model = AgentResponses
         fields = '__all__'
-        read_only_fields = ['author']
+        read_only_fields = ['author', 'assignment']
 class CoachContentSerializer(CustomSerializer):
     class Meta:
         model = CoachContent
         fields = '__all__'
-        read_only_fields = ['author']
+        read_only_fields = ['author', 'assignment']
 class SharesSerializer(CustomSerializer):
     class Meta:
         model = Shares

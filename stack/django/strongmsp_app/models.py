@@ -289,7 +289,7 @@ class PromptTemplates(SuperModel):
 
 	def save(self, *args, **kwargs):
 		if not self.purpose:
-			self.purpose = self.PurposeChoices.lessonpackage
+			self.purpose = self.PurposeChoices.feedback_report
 		super().save(*args, **kwargs)
 
 	class StatusChoices(models.TextChoices):
@@ -297,11 +297,11 @@ class PromptTemplates(SuperModel):
 		archived = ("archived", " archived")
 
 	class PurposeChoices(models.TextChoices):
-		lessonpackage = ("lessonpackage", "Lesson-package")
-		TwelveSessions = ("12sessions", " 12-sessions")
-		talkingpoints = ("talkingpoints", " talking-points")
-		feedbackreport = ("feedbackreport", " feedback-report")
-		parentemail = ("parentemail", " parent-email")
+		lesson_plan = ("lesson_plan", "Lesson Plan")
+		curriculum = ("curriculum", "Curriculum")
+		talking_points = ("talking_points", "Talking Points")
+		feedback_report = ("feedback_report", "Feedback Report")
+		scheduling_email = ("scheduling_email", "Scheduling Email")
 
 	class Response_formatChoices(models.TextChoices):
 		text = ("text", "Text")
@@ -310,7 +310,7 @@ class PromptTemplates(SuperModel):
 	instructions = models.TextField(blank=True, null=True, verbose_name='Instructions')
 	model = models.CharField(max_length=255, blank=True, null=True, verbose_name='Model')
 	status = models.CharField(max_length=8, choices=StatusChoices.choices, verbose_name='Status', default="active")
-	purpose = models.CharField(max_length=14, choices=PurposeChoices.choices, verbose_name='Purpose')
+	purpose = models.CharField(max_length=50, choices=PurposeChoices.choices, verbose_name='Purpose')
 	response_format = models.CharField(max_length=4, choices=Response_formatChoices.choices, verbose_name='Response Format', default="text", blank=True, null=True)
 
 class AgentResponses(SuperModel):
@@ -320,15 +320,16 @@ class AgentResponses(SuperModel):
 		verbose_name_plural = "Agent Responses"
 
 	class PurposeChoices(models.TextChoices):
-		lessonpackage = ("lessonpackage", "Lesson-package")
-		TwelveSessions = ("12sessions", " 12-sessions")
-		talkingpoints = ("talkingpoints", " talking-points")
-		feedbackreport = ("feedbackreport", " feedback-report")
-		parentemail = ("parentemail", " parent-email")
-	athlete = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Athlete')
+		lesson_plan = ("lesson_plan", "Lesson Plan")
+		curriculum = ("curriculum", "Curriculum")
+		talking_points = ("talking_points", "Talking Points")
+		feedback_report = ("feedback_report", "Feedback Report")
+		scheduling_email = ("scheduling_email", "Scheduling Email")
+	athlete = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='+', null=False, verbose_name='Athlete')
 	assessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Assessment')
+	assignment = models.ForeignKey('PaymentAssignments', on_delete=models.CASCADE, related_name='+', null=False, verbose_name='Payment Assignment')
 	prompt_template = models.ForeignKey('PromptTemplates', on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Prompt Template')
-	purpose = models.CharField(max_length=14, choices=PurposeChoices.choices, verbose_name='Purpose')
+	purpose = models.CharField(max_length=50, choices=PurposeChoices.choices, verbose_name='Purpose')
 	message_body = models.TextField(verbose_name='Message Body')
 	ai_response = models.TextField(verbose_name='AI Response')
 	ai_reasoning = models.TextField(blank=True, null=True, verbose_name='AI Reasoning')
@@ -345,19 +346,20 @@ class CoachContent(SuperModel):
 		mentioned = ("mentioned", " mentioned")
 
 	class PurposeChoices(models.TextChoices):
-		lessonpackage = ("lessonpackage", "Lesson-package")
-		TwelveSessions = ("12sessions", " 12-sessions")
-		talkingpoints = ("talkingpoints", " talking-points")
-		feedbackreport = ("feedbackreport", " feedback-report")
-		parentemail = ("parentemail", " parent-email")
+		lesson_plan = ("lesson_plan", "Lesson Plan")
+		curriculum = ("curriculum", "Curriculum")
+		talking_points = ("talking_points", "Talking Points")
+		feedback_report = ("feedback_report", "Feedback Report")
+		scheduling_email = ("scheduling_email", "Scheduling Email")
 
 	author = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Coach')
+	assignments = models.ForeignKey('PaymentAssignments', on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Payment Assignment')
 	title = models.TextField(verbose_name='Title')
 	body = models.TextField(verbose_name='Body')
 	icon = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Icon')
 	cover_photo = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Cover Photo')
 	privacy = models.CharField(max_length=13, choices=PrivacyChoices.choices, verbose_name='Privacy', default="mentioned")
-	purpose = models.CharField(max_length=14, choices=PurposeChoices.choices, verbose_name='Purpose', blank=True, null=True)
+	purpose = models.CharField(max_length=50, choices=PurposeChoices.choices, verbose_name='Purpose', blank=True, null=True)
 	coach_delivered = models.DateTimeField(blank=True, null=True, verbose_name='Coach Delivered At') # only coach can check
 	athlete_received = models.DateTimeField(blank=True, null=True, verbose_name='Athlete Received At') # any can check
 	parent_received = models.DateTimeField(blank=True, null=True, verbose_name='Parent Received At') # only parent can check

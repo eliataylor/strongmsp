@@ -1,34 +1,3 @@
-"""
-If own and others are both defined
-    If different
-        Check roles and ownership
-    Else if same:
-        Only check roles
-
-If only own is defined:
-    Check role and ownership.
-        Others falls back False
-
-If only others is defined:
-    Check role and ownership
-        Own falls back to False
-
-If neither is defined
-    Fallback on default permission
-
-——
-
-If verb has list or detail:
-    Apply named permission at retrieve and list actions separately.
-    Named permission just tests role and ownership.
-
-"""
-
-####OBJECT-ACTIONS-PERMISSIONS-IMPORTS-STARTS####
-# no permission matrix provided
-####OBJECT-ACTIONS-PERMISSIONS-IMPORTS-ENDS####
-
-####OBJECT-ACTIONS-PERMISSIONS-STARTS####
 from rest_framework import permissions
 from django.db.models import Q
 from .models import PaymentAssignments
@@ -148,4 +117,42 @@ class PaymentAssignmentPermission(permissions.BasePermission):
             return 'parent'
         else:
             return 'none'
-####OBJECT-ACTIONS-PERMISSIONS-ENDS####
+
+
+class AgentResponsePermission(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if not request.user.is_authenticated:
+            return False
+        
+        # If no assignment, fall back to checking athlete
+        if not obj.assignments:
+            return obj.athlete == request.user
+        
+        # Check if user is part of the assignment
+        return (
+            obj.assignment.athlete == request.user or
+            request.user in obj.assignment.coaches.all() or
+            request.user in obj.assignment.parents.all() or
+            obj.assignments.payment.author == request.user
+        )
+
+class CoachContentPermission(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if not request.user.is_authenticated:
+            return False
+        
+        # Check privacy setting first
+        if obj.privacy == 'public':
+            return True
+        
+        # If no assignment, fall back to author check
+        if not obj.assignments:
+            return obj.author == request.user
+        
+        # Check if user is part of the assignment
+        return (
+            obj.assignment.athlete == request.user or
+            request.user in obj.assignment.coaches.all() or
+            request.user in obj.assignment.parents.all() or
+            obj.assignments.payment.author == request.user
+        )

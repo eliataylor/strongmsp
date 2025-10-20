@@ -43,3 +43,34 @@ def fetch_dict_query(query, params=None):
         print(f"Database error: {e}")
 
     return results
+
+def get_subdomain_from_request(request):
+    """
+    Extract subdomain from request headers (Referer, Origin, or Host).
+    Returns organization slug derived from subdomain.
+    """
+    # Try Referer header first
+    referer = request.META.get('HTTP_REFERER', '')
+    if referer:
+        from urllib.parse import urlparse
+        parsed = urlparse(referer)
+        hostname = parsed.hostname or ''
+    else:
+        # Fallback to Origin or Host
+        origin = request.META.get('HTTP_ORIGIN', '')
+        if origin:
+            from urllib.parse import urlparse
+            parsed = urlparse(origin)
+            hostname = parsed.hostname or ''
+        else:
+            hostname = request.META.get('HTTP_HOST', '').split(':')[0]
+    
+    # Extract subdomain
+    parts = hostname.split('.')
+    if len(parts) >= 3:
+        subdomain = parts[0]
+        # Fallback for www or empty
+        if subdomain in ['www', 'webapp', 'api', 'localhost', 'localapi']:
+            return 'smsp'
+        return subdomain
+    return 'smsp'  # Default fallback

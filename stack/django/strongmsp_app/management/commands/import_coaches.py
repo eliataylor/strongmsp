@@ -283,7 +283,7 @@ class Command(BaseCommand):
                     'title': f"{title} - Coach Profile",
                     'body': description,
                     'privacy': 'public',
-                    'purpose': 'talkingpoints'
+                    'purpose': 'talking_points'
                 }
             )
             
@@ -292,7 +292,7 @@ class Command(BaseCommand):
                 coach_content.title = f"{title} - Coach Profile"
                 coach_content.body = description
                 coach_content.privacy = 'public'
-                coach_content.purpose = 'talkingpoints'
+                coach_content.purpose = 'talking_points'
                 coach_content.save()
                 self.stdout.write(f'Updated CoachContent for {title}')
             else:

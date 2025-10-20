@@ -455,19 +455,19 @@ class PromptTemplatesAdmin(BaseModelAdmin):
             # Fallback if import fails
             available_tokens = [
                 "assessment_aggregated", "assesment_responses", 
-                "lessonpackage", "12sessions", "talkingpoints", 
-                "feedbackreport", "parentemail"
+                "lesson_plan", "curriculum", "talking_points", 
+                "feedback_report", "scheduling_email"
             ]
         
         # Create token descriptions
         token_descriptions = {
             "assessment_aggregated": "Aggregated assessment results by category",
             "assesment_responses": "Detailed question responses",
-            "lessonpackage": "Most recent lesson package response",
-            "12sessions": "Most recent 12-sessions response",
-            "talkingpoints": "Most recent talking points response",
-            "feedbackreport": "Most recent feedback report response",
-            "parentemail": "Most recent parent email response"
+            "lesson_plan": "Most recent lesson plan response",
+            "curriculum": "Most recent curriculum response",
+            "talking_points": "Most recent talking points response",
+            "feedback_report": "Most recent feedback report response",
+            "scheduling_email": "Most recent scheduling email response"
         }
         
         # Build the HTML dynamically
@@ -549,13 +549,13 @@ class PromptTemplatesAdmin(BaseModelAdmin):
         if 'prompt' in form.base_fields:
             form.base_fields['prompt'].help_text = (
                 "Available tokens: {{athlete_name}}, {{assessment_aggregated}}, {{assesment_responses}}, "
-                "{{lessonpackage}}, {{12sessions}}, {{talkingpoints}}, {{feedbackreport}}, {{parentemail}}"
+                "{{lesson_plan}}, {{curriculum}}, {{talking_points}}, {{feedback_report}}, {{scheduling_email}}"
             )
         
         if 'instructions' in form.base_fields:
             form.base_fields['instructions'].help_text = (
                 "Available tokens: {{athlete_name}}, {{assessment_aggregated}}, {{assesment_responses}}, "
-                "{{lessonpackage}}, {{12sessions}}, {{talkingpoints}}, {{feedbackreport}}, {{parentemail}}"
+                "{{lesson_plan}}, {{curriculum}}, {{talking_points}}, {{feedback_report}}, {{scheduling_email}}"
             )
         
         return form

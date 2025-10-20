@@ -88,16 +88,16 @@ agent_responses = orchestrator.trigger_assessment_agents(athlete_id=1, assessmen
 
 ### Automatic Triggers (First 3 Agents)
 
-1. **Mr. Dwayne** (`feedbackreport`) - Generates < 600 word report
-2. **Ms. Sherly** (`talkingpoints`) - Generates talking points for family conversation
-3. **Mr. Bobby** (`parentemail`) - Generates < 120 word email to parents
+1. **Mr. Dwayne** (`feedback_report`) - Generates < 600 word report
+2. **Ms. Sherly** (`talking_points`) - Generates talking points for family conversation
+3. **Mr. Bobby** (`scheduling_email`) - Generates < 120 word email to parents
 
 These agents run in parallel when an assessment reaches 90% completion (45+ questions answered).
 
 ### Manual Triggers (Last 2 Agents)
 
-4. **Mr. Sam** (`12sessions`) - Generates 12-session curriculum (depends on Dwayne's report)
-5. **Mr. Patrick** (`lessonpackage`) - Generates lesson plan package (depends on Sam's output)
+4. **Mr. Sam** (`curriculum`) - Generates 12-session curriculum (depends on Dwayne's report)
+5. **Mr. Patrick** (`lesson_plan`) - Generates lesson plan package (depends on Sam's output)
 
 These agents are triggered manually via API and run sequentially.
 

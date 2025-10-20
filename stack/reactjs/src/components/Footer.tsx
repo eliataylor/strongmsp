@@ -24,13 +24,21 @@ const Footer: React.FC = () => {
                     borderTop: 1,
                     px: 2,
                     py: 1,
+                    display: 'flex',
+                    justifyContent: { xs: 'center', md: 'space-between' },
+                    alignItems: 'center',
                     borderColor: 'divider',
+                    flexWrap: 'wrap',
                     color: 'white',
                     background: `black`
                 }}
             >
                 {/* Logo */}
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: { xs: 'center', md: 'flex-start' }
+                }}>
                     <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
                         <Logo height={40} />
                         <Box sx={{
@@ -57,7 +65,13 @@ const Footer: React.FC = () => {
                 </Box>
 
                 {/* Desktop Navigation */}
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
+                <Box sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: 2,
+                    justifyContent: { xs: 'center', md: 'flex-end' }
+                }}>
                     <PublicPagesMenu layout="footer" />
                     <RoleBasedMenu layout="footer" />
 

@@ -68,18 +68,27 @@ const PublicHeader: React.FC = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
                             <Logo height={40} />
-                            <Typography
-                                variant="h6"
-                                component="div"
-                                sx={{
-                                    ml: 1,
-                                    fontWeight: 'bold',
-                                    color: 'text.primary',
-                                    display: { xs: 'none', sm: 'block' }
-                                }}
-                            >
-                                Strong Mind Strong Performance
-                            </Typography>
+                            <Box sx={{
+                                ml: 1,
+                                fontWeight: 'bold',
+                                lineHeight: "16px",
+                                color: 'text.primary',
+                            }}>
+                                <Typography
+                                    variant="h6"
+                                    component="div"
+                                    sx={{ m: 0, p: 0 }}
+                                >
+                                    <em><b>S</b></em>trong <em><b>M</b></em>ind
+                                </Typography>
+                                <Typography
+                                    variant="h6"
+                                    component="div"
+                                    sx={{ m: 0, p: 0 }}
+                                >
+                                    <em><b>S</b></em>trong  <em><b>P</b></em>erformance
+                                </Typography>
+                            </Box>
                         </Link>
                     </Box>
 

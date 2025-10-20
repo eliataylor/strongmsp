@@ -1,11 +1,11 @@
 //---OBJECT-ACTIONS-OAFORM-STARTS---//
-import React from "react";
 import { Button, CircularProgress, Grid, Typography } from "@mui/material";
+import { useSnackbar } from "notistack";
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { AlternatingList } from "../../../theme/StyledFields";
 import { TypeFieldSchema } from "../../types/types";
 import { OAFormProps, useForm } from "../FormProvider";
-import { useSnackbar } from "notistack";
-import { AlternatingList } from "../../../theme/StyledFields";
-import { useNavigate } from "react-router-dom";
 
 export const OAFormAgentResponses: React.FC<OAFormProps<"AgentResponses">> = ({ onSuccess }) => {
 
@@ -38,32 +38,35 @@ export const OAFormAgentResponses: React.FC<OAFormProps<"AgentResponses">> = ({ 
 
   return (
     <AlternatingList container spacing={4} p={1} justifyContent={'space-between'} wrap={"wrap"} >
-      			<Grid item xs={12} >
-				{renderField(TypeFieldSchema["AgentResponses"]["athlete"], 0, {fullWidth:true})}
-			</Grid>
-			<Grid item xs={12} >
-				{renderField(TypeFieldSchema["AgentResponses"]["prompt_template"], 0, {fullWidth:true})}
-			</Grid>
-			<Grid item xs={12} >
-				{renderField(TypeFieldSchema["AgentResponses"]["purpose"], 0, {fullWidth:true})}
-			</Grid>
-			<Grid item xs={12} >
-				{renderField(TypeFieldSchema["AgentResponses"]["message_body"], 0, {fullWidth:true})}
-			</Grid>
-			<Grid item xs={12} >
-				{renderField(TypeFieldSchema["AgentResponses"]["ai_response"], 0, {fullWidth:true})}
-			</Grid>
-			<Grid item xs={12} >
-				{renderField(TypeFieldSchema["AgentResponses"]["ai_reasoning"], 0, {fullWidth:true})}
-			</Grid>
+      <Grid item xs={12} >
+        {renderField(TypeFieldSchema["AgentResponses"]["athlete"], 0, { fullWidth: true })}
+      </Grid>
+      <Grid item xs={12} >
+        {renderField(TypeFieldSchema["AgentResponses"]["prompt_template"], 0, { fullWidth: true })}
+      </Grid>
+      <Grid item xs={12} >
+        {renderField(TypeFieldSchema["AgentResponses"]["purpose"], 0, { fullWidth: true })}
+      </Grid>
+      <Grid item xs={12} >
+        {renderField(TypeFieldSchema["AgentResponses"]["message_body"], 0, { fullWidth: true })}
+      </Grid>
+      <Grid item xs={12} >
+        {renderField(TypeFieldSchema["AgentResponses"]["ai_response"], 0, { fullWidth: true })}
+      </Grid>
+      <Grid item xs={12} >
+        {renderField(TypeFieldSchema["AgentResponses"]["ai_reasoning"], 0, { fullWidth: true })}
+      </Grid>
+      <Grid item xs={12} >
+        {renderField(TypeFieldSchema["AgentResponses"]["assignment"], 0, { fullWidth: true })}
+      </Grid>
 
       {errors["general"] && <Typography variant={"body1"} color={"error"}>{errors["general"]}</Typography>}
 
       <Grid container item xs={12} justifyContent="space-between">
         <Button startIcon={syncing ? <CircularProgress color={"inherit"} size={18} /> : null}
-                disabled={syncing}
-                aria-label={"Submit"}
-                variant="contained" color="primary" onClick={saveEntity}>
+          disabled={syncing}
+          aria-label={"Submit"}
+          variant="contained" color="primary" onClick={saveEntity}>
           Save
         </Button>
         {entity.id && entity.id !== "0" ? <Button

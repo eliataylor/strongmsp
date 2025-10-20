@@ -10,33 +10,33 @@ class TemplateMapper:
     
     # Purpose to template mapping configuration
     PURPOSE_MAPPING = {
-        'lessonpackage': {
+        'lesson_plan': {
             'priority': 1,
-            'description': 'Lesson Package Generation',
+            'description': 'Lesson Plan Generation',
             'response_format': 'json',
             'model': 'gpt-4o-mini'
         },
-        '12sessions': {
+        'curriculum': {
             'priority': 2,
-            'description': '12-Session Training Program',
+            'description': 'Curriculum Generation',
             'response_format': 'json',
             'model': 'gpt-4o-mini'
         },
-        'talkingpoints': {
+        'talking_points': {
             'priority': 3,
             'description': 'Parent Meeting Talking Points',
             'response_format': 'text',
             'model': 'gpt-4o-mini'
         },
-        'feedbackreport': {
+        'feedback_report': {
             'priority': 4,
             'description': 'Performance Feedback Report',
             'response_format': 'text',
             'model': 'gpt-4o-mini'
         },
-        'parentemail': {
+        'scheduling_email': {
             'priority': 5,
-            'description': 'Parent Communication Email',
+            'description': 'Scheduling Email',
             'response_format': 'text',
             'model': 'gpt-4o-mini'
         }
@@ -129,17 +129,17 @@ class TemplateMapper:
         # Simple context-based selection logic
         if context.get('type') == 'training_program':
             if context.get('duration') == '12_sessions':
-                return cls.get_template_by_purpose('12sessions')
+                return cls.get_template_by_purpose('curriculum')
             else:
-                return cls.get_template_by_purpose('lessonpackage')
+                return cls.get_template_by_purpose('lesson_plan')
         elif context.get('type') == 'communication':
             if context.get('audience') == 'parents':
                 if context.get('format') == 'email':
-                    return cls.get_template_by_purpose('parentemail')
+                    return cls.get_template_by_purpose('scheduling_email')
                 else:
-                    return cls.get_template_by_purpose('talkingpoints')
+                    return cls.get_template_by_purpose('talking_points')
         elif context.get('type') == 'feedback':
-            return cls.get_template_by_purpose('feedbackreport')
+            return cls.get_template_by_purpose('feedback_report')
             
         return None
     

@@ -17,22 +17,22 @@ import { PromptTemplates } from "../types/types";
 
 export const getPurposeColor = (purpose: string) => {
     const colors: { [key: string]: string } = {
-        "lessonpackage": "primary",
-        "12sessions": "secondary",
-        "talkingpoints": "success",
-        "feedbackreport": "warning",
-        "parentemail": "info"
+        "lesson_plan": "primary",
+        "curriculum": "secondary",
+        "talking_points": "success",
+        "feedback_report": "warning",
+        "scheduling_email": "info"
     };
     return colors[purpose] || "default";
 };
 
 export const getPurposeDisplay = (purpose: string) => {
     const colors: { [key: string]: string } = {
-        "lessonpackage": "Lesson Package",
-        "12sessions": "12-Sessions",
-        "talkingpoints": "Talking Points",
-        "feedbackreport": "Feedback Report",
-        "parentemail": "Parent Email"
+        "lesson_plan": "Lesson Plan",
+        "curriculum": "Curriculum",
+        "talking_points": "Talking Points",
+        "feedback_report": "Feedback Report",
+        "scheduling_email": "Scheduling Email"
     };
     return colors[purpose] || "Default";
 };

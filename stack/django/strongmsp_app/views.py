@@ -47,7 +47,8 @@ from .models import Organizations, UserOrganizations
 from django.db.models import Count
 from .services.agent_orchestrator import AgentOrchestrator
 from urllib.parse import urlparse
-from .permissions import PaymentAssignmentPermission
+from .permissions import AgentResponsePermission, CoachContentPermission, PaymentAssignmentPermission
+from utils.helpers import get_subdomain_from_request
 ####OBJECT-ACTIONS-VIEWSET-IMPORTS-ENDS####
 
 class AutoAuthorViewSet(viewsets.ModelViewSet):
@@ -322,22 +323,58 @@ class PromptTemplatesViewSet(AutoAuthorViewSet):
 
 
 class AgentResponsesViewSet(AutoAuthorViewSet):
-    queryset = AgentResponses.objects.all().order_by('id')
     serializer_class = AgentResponsesSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [AgentResponsePermission]
+
+    def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            return AgentResponses.objects.none()
+        
+        return AgentResponses.objects.filter(
+            Q(athlete=self.request.user) |
+            Q(assignment__athlete=self.request.user) |
+            Q(assignment__coaches=self.request.user) |
+            Q(assignment__parents=self.request.user) |
+            Q(assignment__payment__author=self.request.user)
+        ).distinct()
+    
+    def perform_create(self, serializer):
+        from utils.helpers import get_subdomain_from_request
+        
+        # Extract athlete from validated data
+        athlete = serializer.validated_data.get('athlete')
+        
+        # Get organization from subdomain
+        subdomain = get_subdomain_from_request(self.request)
+        
+        # Always query for valid PaymentAssignments - never trust payload
+        assignments = None
+        if athlete:
+            assignments = PaymentAssignments.objects.filter(
+                athlete=athlete,
+                payment__organization__slug=subdomain,
+                payment__status='succeeded',
+                payment__product__is_active=True
+            ).filter(
+                Q(payment__subscription_ends__isnull=True) | 
+                Q(payment__subscription_ends__gte=timezone.now().date())
+            ).order_by('-created_at').first()  # Get most recent assignment
+        
+        # Single save with author and assignment
+        serializer.save(author=self.request.user, assignment=assignments)
     
     @action(detail=True, methods=['post'])
     def regenerate(self, request, pk=None):
         """
         Regenerate an agent response.
         POST /api/agent-responses/{id}/regenerate/
-        Only for purposes: "12sessions", "lessonpackage"
+        Only for purposes: "curriculum", "lesson_plan"
         """
         try:
             agent_response = self.get_object()
             
             # Check if regeneration is allowed for this purpose
-            allowed_purposes = ['12sessions', 'lessonpackage']
+            allowed_purposes = ['curriculum', 'lesson_plan']
             if agent_response.purpose not in allowed_purposes:
                 return Response(
                     {'error': f'Regeneration not allowed for purpose: {agent_response.purpose}'}, 
@@ -368,14 +405,44 @@ class AgentResponsesViewSet(AutoAuthorViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
 class CoachContentViewSet(AutoAuthorViewSet):
-    queryset = CoachContent.objects.all().order_by('id')
     serializer_class = CoachContentSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [CoachContentPermission]
     filter_backends = [filters.SearchFilter]
     search_fields = ['title']
 
+    def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            return CoachContent.objects.none()
+        
+        return CoachContent.objects.filter(
+            Q(athlete=self.request.user) |
+            Q(assignment__athlete=self.request.user) |
+            Q(assignment__coaches=self.request.user) |
+            Q(assignment__parents=self.request.user) |
+            Q(assignment__payment__author=self.request.user)
+        ).distinct()
+    
+    def perform_create(self, serializer):
+        from utils.helpers import get_subdomain_from_request
+        
+        # Get organization from subdomain
+        subdomain = get_subdomain_from_request(self.request)
+        
+        # Always query for valid PaymentAssignments based on coach - never trust payload
+        # Note: coaches is a ManyToManyField, Django handles the lookup automatically
+        assignments = PaymentAssignments.objects.filter(
+            coaches=self.request.user,  # Django M2M lookup - finds assignments where user is in coaches
+            payment__organization__slug=subdomain,
+            payment__status='succeeded',
+            payment__product__is_active=True
+        ).filter(
+            Q(payment__subscription_ends__isnull=True) | 
+            Q(payment__subscription_ends__gte=timezone.now().date())
+        ).order_by('-created_at').first()  # Get most recent assignment
+        
+        # Single save with author and assignment
+        serializer.save(author=self.request.user, assignment=assignments)
 
 class SharesViewSet(AutoAuthorViewSet):
     queryset = Shares.objects.all().order_by('id')
@@ -1028,38 +1095,15 @@ class CurrentContextView(APIView):
     Accessible by authenticated and anonymous users.
     Organization data is always public; membership and payments require authentication.
     """
+
     permission_classes = []  # Allow anonymous access for organization data
     
-    def get_subdomain_from_request(self, request):
-        # Try Referer header first
-        referer = request.META.get('HTTP_REFERER', '')
-        if referer:
-            parsed = urlparse(referer)
-            hostname = parsed.hostname or ''
-        else:
-            # Fallback to Origin or Host
-            origin = request.META.get('HTTP_ORIGIN', '')
-            if origin:
-                parsed = urlparse(origin)
-                hostname = parsed.hostname or ''
-            else:
-                hostname = request.META.get('HTTP_HOST', '').split(':')[0]
-        
-        # Extract subdomain
-        parts = hostname.split('.')
-        if len(parts) >= 3:
-            subdomain = parts[0]
-            # Fallback for www or empty
-            if subdomain in ['www', 'webapp', 'api', 'localhost', 'localapi']:
-                return 'smsp'
-            return subdomain
-        return 'smsp'  # Default fallback
     
     def get(self, request):
         context_data = {}
         
         # Extract subdomain and get organization (public data)
-        subdomain = self.get_subdomain_from_request(request)
+        subdomain = get_subdomain_from_request(request)
         try:
             org = Organizations.objects.get(slug=subdomain, is_active=True)
             context_data['organization'] = {
@@ -1194,21 +1238,21 @@ class CurrentContextView(APIView):
                     },
                     'agent_progress': {
                         "lessonplan": null, #null or created date of AgentResponse with purpose == lessonpackge
-                        "feedbackreport": null,  #null  or created date of AgentResponse with purpose == feedbackreport
-                        "familyconversation": null,  # null or created date of AgentResponse  with purpose == talkingpoints
-                        "curriculum": null,   #null or created date of AgentResponse with purpose == 12sessions
+                        "feedbackreport": null,  #null  or created date of AgentResponse with purpose == feedback_report
+                        "familyconversation": null,  # null or created date of AgentResponse  with purpose == talking_points
+                        "curriculum": null,   #null or created date of AgentResponse with purpose == curriculum
                     },
                     "coach_progress": {
                         "lessonplan": null, # or created date of Coach Content with purpose == lessonpackge and coach_delivered > now
-                        "feedbackreport": null,  # or created date of Coach Content with purpose == feedbackreport and coach_delivered > now
-                        "familyconversation": null,  # or created date of Coach Content with purpose == talkingpoints and coach_delivered > now
-                        "curriculum": null,   # or created date of Coach Content with purpose == 12sessions and coach_delivered > now
+                        "feedbackreport": null,  # or created date of Coach Content with purpose == feedback_report and coach_delivered > now
+                        "familyconversation": null,  # or created date of Coach Content with purpose == talking_points and coach_delivered > now
+                        "curriculum": null,   # or created date of Coach Content with purpose == curriculum and coach_delivered > now
                     },
                     "athlete_progress": {
                         "lessonplan": null, # or created date of Coach Content with purpose == lessonpackge and athelete_received > now
-                        "feedbackreport": null,  # or created date of Coach Content with purpose == feedbackreport and athelete_received > now
-                        "familyconversation": null,  # or created date of Coach Content with purpose == talkingpoints and athelete_received > now
-                        "curriculum": null,   # or created date of Coach Content with purpose == 12sessions  and athelete_received > now
+                        "feedbackreport": null,  # or created date of Coach Content with purpose == feedback_report and athelete_received > now
+                        "familyconversation": null,  # or created date of Coach Content with purpose == talking_points and athelete_received > now
+                        "curriculum": null,   # or created date of Coach Content with purpose == curriculum  and athelete_received > now
                     }
                 })
 

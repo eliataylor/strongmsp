@@ -17,11 +17,11 @@ The system maps 5 predefined purposes to their corresponding templates:
 
 | Purpose | Description | Response Format | Model |
 |---------|-------------|-----------------|-------|
-| `lessonpackage` | Lesson Package Generation | JSON | gpt-4o-mini |
-| `12sessions` | 12-Session Training Program | JSON | gpt-4o-mini |
-| `talkingpoints` | Parent Meeting Talking Points | Text | gpt-4o-mini |
-| `feedbackreport` | Performance Feedback Report | Text | gpt-4o-mini |
-| `parentemail` | Parent Communication Email | Text | gpt-4o-mini |
+| `lesson_plan` | Lesson Plan Generation | JSON | gpt-4o-mini |
+| `curriculum` | Curriculum Generation | JSON | gpt-4o-mini |
+| `talking_points` | Parent Meeting Talking Points | Text | gpt-4o-mini |
+| `feedback_report` | Performance Feedback Report | Text | gpt-4o-mini |
+| `scheduling_email` | Scheduling Email | Text | gpt-4o-mini |
 
 ### Key Methods
 
@@ -29,7 +29,7 @@ The system maps 5 predefined purposes to their corresponding templates:
 Returns the most appropriate active template for a given purpose.
 
 ```python
-template = TemplateMapper.get_template_by_purpose('lessonpackage')
+template = TemplateMapper.get_template_by_purpose('lesson_plan')
 ```
 
 #### `get_all_available_purposes()`
@@ -58,7 +58,7 @@ template = TemplateMapper.get_recommended_template(context)
 Validates if a template is compatible with a given purpose.
 
 ```python
-is_compatible = TemplateMapper.validate_template_compatibility(template, 'lessonpackage')
+is_compatible = TemplateMapper.validate_template_compatibility(template, 'lesson_plan')
 ```
 
 #### `get_template_stats()`
@@ -79,7 +79,7 @@ Test a prompt template by purpose with streaming response.
 **Request Body:**
 ```json
 {
-    "purpose": "lessonpackage",
+    "purpose": "lesson_plan",
     "message_body": "Athlete is 15 years old, intermediate level, wants to improve technique",
     "athlete_id": 123
 }
@@ -157,8 +157,8 @@ python manage.py create_sample_prompt_templates
 # Backend
 from oasheets_app.services.template_mapper import TemplateMapper
 
-template = TemplateMapper.get_template_by_purpose('lessonpackage')
-tester = PromptTester.create_by_purpose('lessonpackage', user, athlete, message_body)
+template = TemplateMapper.get_template_by_purpose('lesson_plan')
+tester = PromptTester.create_by_purpose('lesson_plan', user, athlete, message_body)
 ```
 
 ```tsx
@@ -174,7 +174,7 @@ import { PurposeBasedTester } from './object-actions/prompt-tester';
 # Test by purpose
 curl -X POST /api/prompt-templates/test-by-purpose/ \
   -H "Content-Type: application/json" \
-  -d '{"purpose": "lessonpackage", "message_body": "Test message"}'
+  -d '{"purpose": "lesson_plan", "message_body": "Test message"}'
 
 # Test by template ID
 curl -X POST /api/prompt-templates/1/test/ \

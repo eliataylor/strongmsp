@@ -205,11 +205,11 @@ const PromptTester: React.FC = () => {
                                         • <strong>{`{{athlete_name}}`}</strong> - Selected athlete's full name<br />
                                         • <strong>{`{{assessment_aggregated}}`}</strong> - Aggregated assessment results<br />
                                         • <strong>{`{{assessment_responses}}`}</strong> - Detailed assessment responses<br />
-                                        • <strong>{`{{lessonpackage}}`}</strong> - Most recent lesson package response<br />
-                                        • <strong>{`{{12sessions}}`}</strong> - Most recent 12-sessions response<br />
-                                        • <strong>{`{{talkingpoints}}`}</strong> - Most recent talking points response<br />
-                                        • <strong>{`{{feedbackreport}}`}</strong> - Most recent feedback report response<br />
-                                        • <strong>{`{{parentemail}}`}</strong> - Most recent parent email response
+                                        • <strong>{`{{lesson_plan}}`}</strong> - Most recent lesson plan response<br />
+                                        • <strong>{`{{curriculum}}`}</strong> - Most recent curriculum response<br />
+                                        • <strong>{`{{talking_points}}`}</strong> - Most recent talking points response<br />
+                                        • <strong>{`{{feedback_report}}`}</strong> - Most recent feedback report response<br />
+                                        • <strong>{`{{scheduling_email}}`}</strong> - Most recent scheduling email response
                                     </Typography>
                                 </Alert>
 

@@ -153,7 +153,7 @@ def test_agentic_flow():
         print(f"Parents found: {len(parents)}")
         
         # Test prompt template lookup
-        template = orchestrator.get_prompt_template_by_purpose('feedbackreport')
+        template = orchestrator.get_prompt_template_by_purpose('feedback_report')
         print(f"Template found: {template.purpose if template else 'None'}")
         
     except Exception as e:
@@ -196,35 +196,35 @@ def create_sample_prompt_templates():
     # Sample templates for each agent
     templates_data = [
         {
-            'purpose': 'feedbackreport',
+            'purpose': 'feedback_report',
             'prompt': 'Generate a comprehensive feedback report for athlete {athlete_name} based on their assessment responses:\n\n{input_a}\n\nSpider chart data:\n{input_b}\n\nProvide insights and recommendations in under 600 words.',
             'instructions': 'You are an expert sports psychologist analyzing athlete performance data.',
             'model': 'gpt-4o-mini',
             'response_format': 'text'
         },
         {
-            'purpose': 'talkingpoints',
+            'purpose': 'talking_points',
             'prompt': 'Create talking points for a family conversation about {athlete_name}\'s assessment:\n\n{input_a}\n\nSpider chart data:\n{input_b}\n\nProvide 3-5 key talking points in short sentences.',
             'instructions': 'You are a family counselor helping parents understand their child\'s performance.',
             'model': 'gpt-4o-mini',
             'response_format': 'text'
         },
         {
-            'purpose': 'parentemail',
+            'purpose': 'scheduling_email',
             'prompt': 'Write a professional email to parents about {athlete_name}\'s assessment:\n\n{input_a}\n\nSpider chart data:\n{input_b}\n\nKeep it under 120 words and professional.',
             'instructions': 'You are a professional coach communicating with parents.',
             'model': 'gpt-4o-mini',
             'response_format': 'text'
         },
         {
-            'purpose': '12sessions',
+            'purpose': 'curriculum',
             'prompt': 'Create a 12-session curriculum based on this report:\n\n{input_a}\n\nDesign a structured program with clear objectives.',
             'instructions': 'You are a training program designer creating structured curricula.',
             'model': 'gpt-4o-mini',
             'response_format': 'json'
         },
         {
-            'purpose': 'lessonpackage',
+            'purpose': 'lesson_plan',
             'prompt': 'Create a lesson plan package based on this curriculum:\n\n{input_a}\n\nInclude lesson plan key, slide deck outline, and facilitator script with coaching tips.',
             'instructions': 'You are an educational content creator designing comprehensive lesson packages.',
             'model': 'gpt-4o-mini',

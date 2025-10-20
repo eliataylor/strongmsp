@@ -23,11 +23,11 @@ class TokenReplacer:
         self._token_map = {
             "assessment_aggregated": self._get_assessment_aggregated,
             "assessment_responses": self._get_assessment_responses,
-            "lessonpackage": lambda: self._get_agent_response_by_purpose("lessonpackage"),
-            "12sessions": lambda: self._get_agent_response_by_purpose("12sessions"),
-            "talkingpoints": lambda: self._get_agent_response_by_purpose("talkingpoints"),
-            "feedbackreport": lambda: self._get_agent_response_by_purpose("feedbackreport"),
-            "parentemail": lambda: self._get_agent_response_by_purpose("parentemail"),
+            "lesson_plan": lambda: self._get_agent_response_by_purpose("lesson_plan"),
+            "curriculum": lambda: self._get_agent_response_by_purpose("curriculum"),
+            "talking_points": lambda: self._get_agent_response_by_purpose("talking_points"),
+            "feedback_report": lambda: self._get_agent_response_by_purpose("feedback_report"),
+            "scheduling_email": lambda: self._get_agent_response_by_purpose("scheduling_email"),
             "athlete_name": lambda: self.athlete.get_full_name() if self.athlete else ""
         }
     

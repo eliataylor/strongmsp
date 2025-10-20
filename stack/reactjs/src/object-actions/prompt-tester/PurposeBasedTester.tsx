@@ -29,37 +29,37 @@ import { PurposeOption, StreamChunk } from "../types/types";
 
 const PURPOSE_OPTIONS: PurposeOption[] = [
     {
-        value: "lessonpackage",
-        label: "Lesson Package",
-        description: "Generate personalized lesson packages for athletes",
+        value: "lesson_plan",
+        label: "Lesson Plan",
+        description: "Generate personalized lesson plans for athletes",
         responseFormat: "JSON",
         model: "gpt-4o-mini"
     },
     {
-        value: "12sessions",
-        label: "12-Session Program",
-        description: "Create comprehensive 12-session training programs",
+        value: "curriculum",
+        label: "Curriculum",
+        description: "Create comprehensive curriculum training programs",
         responseFormat: "JSON",
         model: "gpt-4o-mini"
     },
     {
-        value: "talkingpoints",
+        value: "talking_points",
         label: "Talking Points",
         description: "Generate talking points for parent meetings",
         responseFormat: "Text",
         model: "gpt-4o-mini"
     },
     {
-        value: "feedbackreport",
+        value: "feedback_report",
         label: "Feedback Report",
         description: "Create performance feedback reports",
         responseFormat: "Text",
         model: "gpt-4o-mini"
     },
     {
-        value: "parentemail",
-        label: "Parent Email",
-        description: "Draft professional emails to parents",
+        value: "scheduling_email",
+        label: "Scheduling Email",
+        description: "Draft professional scheduling emails to parents",
         responseFormat: "Text",
         model: "gpt-4o-mini"
     }

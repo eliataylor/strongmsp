@@ -194,7 +194,7 @@ class AgentOrchestrator:
             coach = self.get_athlete_coach(athlete_id)
             
             # Agent purposes for first 3
-            purposes = ['feedbackreport', 'talkingpoints', 'parentemail']
+            purposes = ['feedback_report', 'talking_points', 'scheduling_email']
             agent_responses = []
             
             # Create threads for parallel execution
@@ -271,19 +271,19 @@ class AgentOrchestrator:
             
             # Find previous agent response
             previous_response = None
-            if agent_purpose == '12sessions':
-                # Sam depends on Dwayne (feedbackreport)
+            if agent_purpose == 'curriculum':
+                # Sam depends on Dwayne (feedback_report)
                 previous_response = AgentResponses.objects.filter(
                     athlete=athlete,
                     assessment=assessment,
-                    purpose='feedbackreport'
+                    purpose='feedback_report'
                 ).order_by('-created_at').first()
-            elif agent_purpose == 'lessonpackage':
-                # Patrick depends on Sam (12sessions)
+            elif agent_purpose == 'lesson_plan':
+                # Patrick depends on Sam (curriculum)
                 previous_response = AgentResponses.objects.filter(
                     athlete=athlete,
                     assessment=assessment,
-                    purpose='12sessions'
+                    purpose='curriculum'
                 ).order_by('-created_at').first()
             
             if not previous_response:
