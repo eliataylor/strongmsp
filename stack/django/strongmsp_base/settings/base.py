@@ -131,6 +131,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     #    'csp.middleware.CSPMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'strongmsp_app.middleware.AssignmentServiceMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',

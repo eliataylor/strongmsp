@@ -74,3 +74,14 @@ def get_subdomain_from_request(request):
             return 'smsp'
         return subdomain
     return 'smsp'  # Default fallback
+
+
+def get_assignment_service(request):
+    """
+    Get or create assignment service for request.
+    Provides backward compatibility for code that might run before middleware.
+    """
+    if not hasattr(request, 'assignment_service') or request.assignment_service is None:
+        from strongmsp_app.services.assignment_service import AssignmentService
+        request.assignment_service = AssignmentService(request)
+    return request.assignment_service

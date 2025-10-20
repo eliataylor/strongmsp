@@ -139,20 +139,15 @@ class AssessmentsViewSet(AutoAuthorViewSet):
             )
         
         # Validate user has access through PaymentAssignment
-        today = timezone.now().date()
-        assignment = PaymentAssignments.objects.filter(
-            Q(athlete=request.user) | Q(coaches=request.user) | Q(parents=request.user),
-            Q(payment__status='succeeded'),
-            Q(payment__product__is_active=True),
-            Q(payment__subscription_ends__isnull=True) | Q(payment__subscription_ends__gte=today),
-            Q(payment__product__pre_assessment_id=assessment_id) | Q(payment__product__post_assessment_id=assessment_id)
-        ).select_related('athlete', 'payment__product').first()
+        assignment_data = request.assignment_service.get_for_assessment(assessment_id)
         
-        if not assignment:
+        if not assignment_data:
             return Response(
                 {'detail': 'You do not have access to this assessment'}, 
                 status=status.HTTP_403_FORBIDDEN
             )
+        
+        assignment = assignment_data['assignment']
         
         # Serialize with athlete context for response inclusion
         serializer = self.get_serializer(assessment, context={
@@ -179,24 +174,15 @@ class AssessmentsViewSet(AutoAuthorViewSet):
                 )
             
             # Validate user has access to this assessment
-            from django.utils import timezone
-            from django.db.models import Q
+            assignment_data = request.assignment_service.get_for_assessment(assessment_id)
             
-            today = timezone.now().date()
-            assignment = PaymentAssignments.objects.filter(
-                Q(athlete=request.user) | Q(coaches=request.user) | Q(parents=request.user),
-                Q(payment__status='succeeded'),
-                Q(payment__product__is_active=True),
-                Q(payment__subscription_ends__isnull=True) | Q(payment__subscription_ends__gte=today),
-                Q(payment__product__pre_assessment_id=assessment_id) | Q(payment__product__post_assessment_id=assessment_id)
-            ).select_related('athlete', 'payment__product').first()
-            
-            if not assignment:
+            if not assignment_data:
                 return Response(
                     {'detail': 'You do not have access to this assessment'}, 
                     status=status.HTTP_403_FORBIDDEN
                 )
             
+            assignment = assignment_data['assignment']
             # Get the athlete (the person taking the assessment)
             athlete = assignment.athlete
             
@@ -339,26 +325,14 @@ class AgentResponsesViewSet(AutoAuthorViewSet):
         ).distinct()
     
     def perform_create(self, serializer):
-        from utils.helpers import get_subdomain_from_request
-        
         # Extract athlete from validated data
         athlete = serializer.validated_data.get('athlete')
-        
-        # Get organization from subdomain
-        subdomain = get_subdomain_from_request(self.request)
         
         # Always query for valid PaymentAssignments - never trust payload
         assignments = None
         if athlete:
-            assignments = PaymentAssignments.objects.filter(
-                athlete=athlete,
-                payment__organization__slug=subdomain,
-                payment__status='succeeded',
-                payment__product__is_active=True
-            ).filter(
-                Q(payment__subscription_ends__isnull=True) | 
-                Q(payment__subscription_ends__gte=timezone.now().date())
-            ).order_by('-created_at').first()  # Get most recent assignment
+            assignment_data = self.request.assignment_service.get_for_athlete(athlete.id)
+            assignments = assignment_data['assignment'] if assignment_data else None
         
         # Single save with author and assignment
         serializer.save(author=self.request.user, assignment=assignments)
@@ -424,22 +398,9 @@ class CoachContentViewSet(AutoAuthorViewSet):
         ).distinct()
     
     def perform_create(self, serializer):
-        from utils.helpers import get_subdomain_from_request
-        
-        # Get organization from subdomain
-        subdomain = get_subdomain_from_request(self.request)
-        
         # Always query for valid PaymentAssignments based on coach - never trust payload
-        # Note: coaches is a ManyToManyField, Django handles the lookup automatically
-        assignments = PaymentAssignments.objects.filter(
-            coaches=self.request.user,  # Django M2M lookup - finds assignments where user is in coaches
-            payment__organization__slug=subdomain,
-            payment__status='succeeded',
-            payment__product__is_active=True
-        ).filter(
-            Q(payment__subscription_ends__isnull=True) | 
-            Q(payment__subscription_ends__gte=timezone.now().date())
-        ).order_by('-created_at').first()  # Get most recent assignment
+        coach_assignments = self.request.assignment_service.get_by_role('coach')
+        assignments = coach_assignments[0]['assignment'] if coach_assignments else None
         
         # Single save with author and assignment
         serializer.save(author=self.request.user, assignment=assignments)
@@ -1123,55 +1084,38 @@ class CurrentContextView(APIView):
         # Get user's membership in this organization (user-specific)
         context_data['membership'] = None
         if request.user.is_authenticated and context_data.get('organization'):
-            try:
-                membership = UserOrganizations.objects.select_related('organization').prefetch_related('groups').get(
-                    user=request.user,
-                    organization_id=context_data['organization']['id'],
-                    is_active=True
-                )
-                context_data['membership'] = {
-                    'id': membership.id,
-                    'groups': list(membership.groups.values_list('name', flat=True)),
-                    'joined_at': membership.joined_at.isoformat(),
-                    'is_active': membership.is_active
-                }
-            except UserOrganizations.DoesNotExist:
-                pass
+            organization = context_data['organization']
+            if organization:  # Check if organization is not None
+                try:
+                    membership = UserOrganizations.objects.select_related('organization').prefetch_related('groups').get(
+                        user=request.user,
+                        organization_id=organization['id'],
+                        is_active=True
+                    )
+                    context_data['membership'] = {
+                        'id': membership.id,
+                        'groups': list(membership.groups.values_list('name', flat=True)),
+                        'joined_at': membership.joined_at.isoformat(),
+                        'is_active': membership.is_active
+                    }
+                except UserOrganizations.DoesNotExist:
+                    pass
         
         # Get payment assignments (user-specific, filtered by organization)
         context_data['payment_assignments'] = []
         if request.user.is_authenticated and context_data.get('organization'):
-            org_id = context_data['organization']['id']
-            now = timezone.now().date()
-            
-            # Single query using OR conditions for all user roles
-            assignments = PaymentAssignments.objects.filter(
-                Q(athlete=request.user) | Q(coaches=request.user) | Q(parents=request.user),
-                payment__organization_id=org_id,
-                payment__status='succeeded',
-                payment__product__is_active=True
-            ).filter(
-                Q(payment__subscription_ends__isnull=True) | 
-                Q(payment__subscription_ends__gte=now)
-            ).select_related(
-                'payment__product', 
-                'payment__product__pre_assessment', 
-                'payment__product__post_assessment',
-                'athlete'
-            ).prefetch_related('coaches', 'parents')
+            # Use assignment service to get all assignments
+            all_assignments_data = request.assignment_service.get_all()
             
             # Serialize assignments with user RelEntities
             all_assignments = []
             
-            for assignment in assignments:
-                # Determine user's role in this assignment
-                user_role = None
-                if assignment.athlete == request.user:
-                    user_role = 'athlete'
-                elif request.user in assignment.coaches.all():
-                    user_role = 'coach'
-                elif request.user in assignment.parents.all():
-                    user_role = 'parent'
+            for assignment_data in all_assignments_data:
+                assignment = assignment_data['assignment']
+                user_roles = assignment_data['roles']
+                
+                # Use the first role as the primary user role for backward compatibility
+                user_role = user_roles[0] if user_roles else None
                 
                 # Build RelEntity objects for all assigned users
                 athlete_relentity = {
@@ -1237,22 +1181,22 @@ class CurrentContextView(APIView):
                         } if assignment.payment.product else None
                     },
                     'agent_progress': {
-                        "lessonplan": null, #null or created date of AgentResponse with purpose == lessonpackge
-                        "feedbackreport": null,  #null  or created date of AgentResponse with purpose == feedback_report
-                        "familyconversation": null,  # null or created date of AgentResponse  with purpose == talking_points
-                        "curriculum": null,   #null or created date of AgentResponse with purpose == curriculum
+                        "lessonplan": None, #null or created date of AgentResponse with purpose == lessonpackge
+                        "feedbackreport": None,  #null  or created date of AgentResponse with purpose == feedback_report
+                        "familyconversation": None,  # null or created date of AgentResponse  with purpose == talking_points
+                        "curriculum": None,   #null or created date of AgentResponse with purpose == curriculum
                     },
                     "coach_progress": {
-                        "lessonplan": null, # or created date of Coach Content with purpose == lessonpackge and coach_delivered > now
-                        "feedbackreport": null,  # or created date of Coach Content with purpose == feedback_report and coach_delivered > now
-                        "familyconversation": null,  # or created date of Coach Content with purpose == talking_points and coach_delivered > now
-                        "curriculum": null,   # or created date of Coach Content with purpose == curriculum and coach_delivered > now
+                        "lessonplan": None, # or created date of Coach Content with purpose == lessonpackge and coach_delivered > now
+                        "feedbackreport": None,  # or created date of Coach Content with purpose == feedback_report and coach_delivered > now
+                        "familyconversation": None,  # or created date of Coach Content with purpose == talking_points and coach_delivered > now
+                        "curriculum": None,   # or created date of Coach Content with purpose == curriculum and coach_delivered > now
                     },
                     "athlete_progress": {
-                        "lessonplan": null, # or created date of Coach Content with purpose == lessonpackge and athelete_received > now
-                        "feedbackreport": null,  # or created date of Coach Content with purpose == feedback_report and athelete_received > now
-                        "familyconversation": null,  # or created date of Coach Content with purpose == talking_points and athelete_received > now
-                        "curriculum": null,   # or created date of Coach Content with purpose == curriculum  and athelete_received > now
+                        "lessonplan": None, # or created date of Coach Content with purpose == lessonpackge and athelete_received > now
+                        "feedbackreport": None,  # or created date of Coach Content with purpose == feedback_report and athelete_received > now
+                        "familyconversation": None,  # or created date of Coach Content with purpose == talking_points and athelete_received > now
+                        "curriculum": None,   # or created date of Coach Content with purpose == curriculum  and athelete_received > now
                     }
                 })
 

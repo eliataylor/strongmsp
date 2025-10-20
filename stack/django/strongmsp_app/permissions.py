@@ -125,16 +125,11 @@ class AgentResponsePermission(permissions.BasePermission):
             return False
         
         # If no assignment, fall back to checking athlete
-        if not obj.assignments:
+        if not obj.assignment:
             return obj.athlete == request.user
         
-        # Check if user is part of the assignment
-        return (
-            obj.assignment.athlete == request.user or
-            request.user in obj.assignment.coaches.all() or
-            request.user in obj.assignment.parents.all() or
-            obj.assignments.payment.author == request.user
-        )
+        # Use assignment service to check access
+        return request.assignment_service.has_access_to_assignment(obj.assignment.id)
 
 class CoachContentPermission(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
@@ -146,13 +141,8 @@ class CoachContentPermission(permissions.BasePermission):
             return True
         
         # If no assignment, fall back to author check
-        if not obj.assignments:
+        if not obj.assignment:
             return obj.author == request.user
         
-        # Check if user is part of the assignment
-        return (
-            obj.assignment.athlete == request.user or
-            request.user in obj.assignment.coaches.all() or
-            request.user in obj.assignment.parents.all() or
-            obj.assignments.payment.author == request.user
-        )
+        # Use assignment service to check access
+        return request.assignment_service.has_access_to_assignment(obj.assignment.id)

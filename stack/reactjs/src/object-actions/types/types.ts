@@ -1,10 +1,11 @@
 //---OBJECT-ACTIONS-API-RESP-STARTS---//
-export type ModelName = "Users" | "Courses" | "Assessments" | "AssessmentQuestions" | "Questions" | "QuestionResponses" | "Payments" | "Products" | "PromptTemplates" | "AgentResponses" | "CoachContent" | "Shares" | "Notifications";
+export type ModelName = "Users" | "Courses" | "Assessments" | "AssessmentQuestions" | "Questions" | "QuestionResponses" | "Payments" | "Products" | "PromptTemplates" | "AgentResponses" | "CoachContent" | "Shares" | "Notifications" | "PaymentAssignments";
 
 export type ModelType<T extends ModelName> = T extends 'Users' ? Users :
   T extends 'Courses' ? Courses :
   T extends 'Assessments' ? Assessments :
   T extends 'AssessmentQuestions' ? AssessmentQuestions :
+  T extends "PaymentAssignments" ? PaymentAssignments :
   T extends 'Questions' ? Questions :
   T extends 'QuestionResponses' ? QuestionResponses :
   T extends 'Payments' ? Payments :
@@ -603,6 +604,78 @@ export const TypeFieldSchema: ITypeFieldSchema = {
       "singular": "Subscription End",
       "plural": "Subscription Ends",
       "field_type": "date",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": ""
+    }
+  },
+  "PaymentAssignments": {
+    "payment": {
+      "machine": "payment",
+      "singular": "Payment",
+      "plural": "Payments",
+      "relationship": "Payments",
+      "field_type": "type_reference",
+      "data_type": "RelEntity",
+      "cardinality": 1,
+      "default": "",
+      "required": true,
+      "example": ""
+    },
+    "athlete": {
+      "machine": "athlete",
+      "singular": "Athlete",
+      "plural": "Athletes",
+      "relationship": "Users",
+      "field_type": "user_account",
+      "data_type": "RelEntity",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": ""
+    },
+    "coaches": {
+      "machine": "coaches",
+      "singular": "Coach",
+      "plural": "Coaches",
+      "relationship": "Users",
+      "field_type": "user_account",
+      "data_type": "RelEntity",
+      "cardinality": Infinity,
+      "default": "",
+      "required": false,
+      "example": ""
+    },
+    "parents": {
+      "machine": "parents",
+      "singular": "Parent",
+      "plural": "Parents",
+      "relationship": "Users",
+      "field_type": "user_account",
+      "data_type": "RelEntity",
+      "cardinality": Infinity,
+      "default": "",
+      "required": false,
+      "example": ""
+    },
+    "pre_assessment_submitted_at": {
+      "machine": "pre_assessment_submitted_at",
+      "singular": "Pre-Assessment Submitted At",
+      "plural": "Pre-Assessment Submitted At",
+      "field_type": "datetime",
+      "data_type": "string",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": ""
+    },
+    "post_assessment_submitted_at": {
+      "machine": "post_assessment_submitted_at",
+      "singular": "Post-Assessment Submitted At",
+      "plural": "Post-Assessment Submitted At",
+      "field_type": "datetime",
       "data_type": "string",
       "cardinality": 1,
       "default": "",
