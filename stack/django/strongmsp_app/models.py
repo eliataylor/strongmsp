@@ -1,4 +1,3 @@
-####OBJECT-ACTIONS-MODELS_IMPORTS-STARTS####
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth import get_user_model
@@ -10,9 +9,7 @@ from django.utils.timezone import now
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 import os
-####OBJECT-ACTIONS-MODELS_IMPORTS-ENDS####
 
-####OBJECT-ACTIONS-MODELS-STARTS####
 def upload_file_path(instance, filename):
 	ext = filename.split('.')[-1]  # e.g. "jpg"
 	# add datetime suffix to avoid collisions
@@ -31,8 +28,6 @@ class Users(AbstractUser, BumpParentsModelMixin):
 		verbose_name_plural = "Users"
 		ordering = ['last_login']
 
-
-
 	class GenderChoices(models.TextChoices):
 		male = ("male", "Male")
 		female = ("female", "Female")
@@ -46,7 +41,6 @@ class Users(AbstractUser, BumpParentsModelMixin):
 		hispanic_latino = ("hispanic_latino", "Hispanic or Latino")
 		other = ("other", "Other")
 		prefer_not_to_say = ("prefer_not_to_say", "Prefer Not to Say")
-
 
 	real_name = models.CharField(max_length=255, blank=True, null=True, verbose_name='Real Name')
 	bio = models.TextField(blank=True, null=True, verbose_name='Bio')
@@ -511,4 +505,3 @@ class UserOrganizations(SuperModel):
 	
 	joined_at = models.DateTimeField(auto_now_add=True, verbose_name='Joined At')
 	is_active = models.BooleanField(default=True, verbose_name='Is Active')
-####OBJECT-ACTIONS-MODELS-ENDS####

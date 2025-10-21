@@ -94,6 +94,8 @@ CSRF_TRUSTED_ORIGINS.extend([
     "http://strongmindstrongperformance.com",
     "https://localtestorg.strongmindstrongperformance.com:3008",  # Specific subdomain for testing
     "https://localhost.strongmindstrongperformance.com:3008",  # Specific subdomain for testing
+    "https://localwcc.strongmindstrongperformance.com:3008",  # Specific subdomain for testing
+    "https://locallakeshow.strongmindstrongperformance.com:3008",  # Specific subdomain for testing
 ])
 
 # CSRF Configuration
