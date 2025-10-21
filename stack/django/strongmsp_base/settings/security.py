@@ -48,16 +48,26 @@ CORS_ALLOWED_ORIGINS += [f"{APP_HOST_PARTS.scheme}://localhost:{DEV_PORT}",
                          f"http://webapp.strongmindstrongperformance.com"]
 
 # Add organization subdomain support
-# Since CORS doesn't support wildcards in origins, we'll add specific subdomains
-# and use CORS_ALLOW_ALL_ORIGINS=False with custom middleware for dynamic validation
+# Use regex patterns to allow any subdomain of strongmindstrongperformance.com
+# Include optional port numbers for development environments
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://[a-zA-Z0-9-]+\.strongmindstrongperformance\.com$",
     r"^http://[a-zA-Z0-9-]+\.strongmindstrongperformance\.com$",
+    r"^https://strongmindstrongperformance\.com$",  # Allow root domain too
+    r"^http://strongmindstrongperformance\.com$",   # Allow root domain too
+    r"^https://[a-zA-Z0-9-]+\.strongmindstrongperformance\.com(:\d+)?$",
+    r"^http://[a-zA-Z0-9-]+\.strongmindstrongperformance\.com(:\d+)?$",
+    r"^https://strongmindstrongperformance\.com(:\d+)?$",  # Allow root domain too
+    r"^http://strongmindstrongperformance\.com(:\d+)?$",   # Allow root domain too    
 ]
+
+# Explicitly disable wildcard origins for security
+CORS_ALLOW_ALL_ORIGINS = False
 
 if DJANGO_ENV != 'production':
     # for docker networking
-    ALLOWED_HOSTS += ["localhost", "127.0.0.1", "django-service"]
+    ALLOWED_HOSTS += ["localhost", "127.0.0.1", "django-service", "*.strongmindstrongperformance.com"]
+    # Don't add wildcard origins here as they conflict with regex patterns
 
 CORS_ALLOW_CREDENTIALS = True # using cookies
 CORS_ALLOW_HEADERS = list(default_headers) + [
@@ -75,6 +85,12 @@ CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 
 # Add regex support for CSRF trusted origins to match organization subdomains
 CSRF_TRUSTED_ORIGIN_REGEXES = CORS_ALLOWED_ORIGIN_REGEXES
+
+# Also add the specific origins to CSRF_TRUSTED_ORIGINS for better compatibility
+CSRF_TRUSTED_ORIGINS.extend([
+    "https://strongmindstrongperformance.com",
+    "http://strongmindstrongperformance.com",
+])
 
 # CSRF Configuration
 CSRF_COOKIE_NAME = 'csrftoken'  # Explicitly set the cookie name

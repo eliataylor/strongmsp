@@ -18,7 +18,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../allauth/auth';
 import EditAssignmentDialog from '../components/EditAssignmentDialog';
 import ApiClient from '../config/ApiClient';
-import { UserPaymentAssignment } from '../object-actions/types/types';
+import { AthletePaymentAssignment } from '../object-actions/types/types';
 import {
     canEditAssignment,
     canRemoveCoach,
@@ -26,7 +26,7 @@ import {
 } from '../utils/assignmentPermissions';
 
 interface AssignmentActionsProps {
-    assignment: UserPaymentAssignment;
+    assignment: AthletePaymentAssignment;
     onUpdate: () => void;
 }
 
@@ -43,10 +43,12 @@ const AssignmentActions: React.FC<AssignmentActionsProps> = ({ assignment, onUpd
 
     const currentUser = auth?.data?.user;
     const userId = currentUser?.id;
-    const userRole = assignment.user_role; // Get role from assignment context
+
+    // Determine user role based on their relationship to the assignment
+    const userRole = assignment.my_roles.length > 0 ? assignment.my_roles[0] : null;
 
     const canEdit = canEditAssignment(userId, assignment, userRole);
-    const isSubmitted = assignment.pre_assessment_submitted || assignment.post_assessment_submitted;
+    const isSubmitted = !!(assignment.pre_assessment_submitted_at || assignment.post_assessment_submitted_at);
 
     const handleEditClick = () => {
         if (!canEdit) {
@@ -88,7 +90,8 @@ const AssignmentActions: React.FC<AssignmentActionsProps> = ({ assignment, onUpd
             }
 
             // Make API call to update assignment using ApiClient
-            const response = await ApiClient.patch(`/api/payment-assignments/${assignment.id}/`, updateData);
+            const assignmentId = assignment.assignments[0].id;
+            const response = await ApiClient.patch(`/api/payment-assignments/${assignmentId}/`, updateData);
 
             if (response.success) {
                 enqueueSnackbar(`${itemToRemove.type} removed successfully`, { variant: 'success' });

@@ -77,14 +77,14 @@ const PublicHeader: React.FC = () => {
                                 <Typography
                                     variant="h6"
                                     component="div"
-                                    sx={{ m: 0, p: 0 }}
+                                    sx={{ m: 0, p: 0, lineHeight: "16px" }}
                                 >
                                     <em><b>S</b></em>trong <em><b>M</b></em>ind
                                 </Typography>
                                 <Typography
                                     variant="h6"
                                     component="div"
-                                    sx={{ m: 0, p: 0 }}
+                                    sx={{ m: 0, p: 0, lineHeight: "16px" }}
                                 >
                                     <em><b>S</b></em>trong  <em><b>P</b></em>erformance
                                 </Typography>

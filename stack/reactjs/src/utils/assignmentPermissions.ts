@@ -1,4 +1,4 @@
-import { UserPaymentAssignment } from '../object-actions/types/types';
+import { AthletePaymentAssignment } from '../object-actions/types/types';
 
 export type UserRole = 'payer' | 'parent' | 'athlete' | 'coach' | 'none';
 
@@ -9,18 +9,18 @@ export type EditableField = 'athlete' | 'coaches' | 'parents';
  */
 export function getUserRoleInAssignment(
     userId: number | string | null | undefined,
-    assignment: UserPaymentAssignment,
+    assignment: AthletePaymentAssignment,
     userRole?: string | null
 ): UserRole {
     if (!userId) return 'none';
 
-    // Check if user is the payer (payment author)
-    if (assignment.payment.author.id === userId) {
+    // Check if user is a payer
+    if (assignment.payers.some(payer => payer.id === userId)) {
         return 'payer';
     }
 
     // Check if user is the athlete
-    if (assignment.athlete?.id === userId) {
+    if (assignment.athlete.id === userId) {
         return 'athlete';
     }
 
@@ -89,11 +89,11 @@ export function getEditableFields(
  */
 export function canEditAssignment(
     userId: number | string | null | undefined,
-    assignment: UserPaymentAssignment,
+    assignment: AthletePaymentAssignment,
     userRole?: string | null
 ): boolean {
     const role = getUserRoleInAssignment(userId, assignment, userRole);
-    const isSubmitted = assignment.pre_assessment_submitted || assignment.post_assessment_submitted;
+    const isSubmitted = !!(assignment.pre_assessment_submitted_at || assignment.post_assessment_submitted_at);
 
     return getEditableFields(role, isSubmitted).length > 0;
 }
@@ -103,12 +103,12 @@ export function canEditAssignment(
  */
 export function canRemoveCoach(
     userId: number | string | null | undefined,
-    assignment: UserPaymentAssignment,
+    assignment: AthletePaymentAssignment,
     coachId: number | string,
     userRole?: string | null
 ): boolean {
     const role = getUserRoleInAssignment(userId, assignment, userRole);
-    const isSubmitted = assignment.pre_assessment_submitted || assignment.post_assessment_submitted;
+    const isSubmitted = !!(assignment.pre_assessment_submitted_at || assignment.post_assessment_submitted_at);
 
     // Can't remove if submitted
     if (isSubmitted) return false;
@@ -122,12 +122,12 @@ export function canRemoveCoach(
  */
 export function canRemoveParent(
     userId: number | string | null | undefined,
-    assignment: UserPaymentAssignment,
+    assignment: AthletePaymentAssignment,
     parentId: number | string,
     userRole?: string | null
 ): boolean {
     const role = getUserRoleInAssignment(userId, assignment, userRole);
-    const isSubmitted = assignment.pre_assessment_submitted || assignment.post_assessment_submitted;
+    const isSubmitted = !!(assignment.pre_assessment_submitted_at || assignment.post_assessment_submitted_at);
 
     // Can't remove if submitted
     if (isSubmitted) return false;
@@ -141,11 +141,11 @@ export function canRemoveParent(
  */
 export function canChangeAthlete(
     userId: number | string | null | undefined,
-    assignment: UserPaymentAssignment,
+    assignment: AthletePaymentAssignment,
     userRole?: string | null
 ): boolean {
     const role = getUserRoleInAssignment(userId, assignment, userRole);
-    const isSubmitted = assignment.pre_assessment_submitted || assignment.post_assessment_submitted;
+    const isSubmitted = !!(assignment.pre_assessment_submitted_at || assignment.post_assessment_submitted_at);
 
     return canEditField(role, 'athlete', isSubmitted);
 }

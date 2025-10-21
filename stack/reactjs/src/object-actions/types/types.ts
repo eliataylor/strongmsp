@@ -1259,32 +1259,52 @@ export interface UserOrganizationMembership {
   is_active: boolean;
 }
 
-export interface UserPaymentAssignment {
-  id: number;
-  user_role: 'athlete' | 'coach' | 'parent' | null;
-  athlete?: RelEntity<'Users'> | null;
+export type PurposeChoice = 'lesson_plan' | 'curriculum' | 'talking_points' | 'feedback_report' | 'scheduling_email';
+
+// Progress tracking interfaces - matches PurposeChoice
+export interface ProgressTracking {
+  lesson_plan: RelEntity<'AgentResponses'>[] | null;
+  curriculum: RelEntity<'AgentResponses'>[] | null;
+  talking_points: RelEntity<'AgentResponses'>[] | null;
+  feedback_report: RelEntity<'AgentResponses'>[] | null;
+  scheduling_email: RelEntity<'AgentResponses'>[] | null;
+}
+
+export interface ContentProgressTracking {
+  lesson_plan: RelEntity<'CoachContent'>[] | null;
+  curriculum: RelEntity<'CoachContent'>[] | null;
+  talking_points: RelEntity<'CoachContent'>[] | null;
+  feedback_report: RelEntity<'CoachContent'>[] | null;
+  scheduling_email: RelEntity<'CoachContent'>[] | null;
+}
+
+// Athlete-centric payment assignment structure
+export interface AthletePaymentAssignment {
+  assignments: RelEntity<'PaymentAssignments'>[];
+  my_roles: string[];
+  payers: RelEntity<'Users'>[];
+  athlete: RelEntity<'Users'>;
   coaches: RelEntity<'Users'>[];
   parents: RelEntity<'Users'>[];
-  pre_assessment_submitted: boolean;
-  pre_assessment_submitted_at?: string | null;
-  post_assessment_submitted: boolean;
-  post_assessment_submitted_at?: string | null;
-  pre_assessment?: RelEntity<'Assessments'> | null;
-  post_assessment?: RelEntity<'Assessments'> | null;
-  payment: {
+  pre_assessment_submitted_at: string | null;
+  post_assessment_submitted_at: string | null;
+  pre_assessment: RelEntity<'Assessments'> | null;
+  post_assessment: RelEntity<'Assessments'> | null;
+  payments: {
     id: number;
     status: string;
-    subscription_ends?: string | null;
-    product?: RelEntity<'Products'> | null;
-    author: RelEntity<'Users'>;
-  };
+    subscription_ends: string | null;
+    product: RelEntity<'Products'>;
+  }[];
+  agent_progress: ProgressTracking;
+  content_progress: ContentProgressTracking;
 }
 
 // Context API response type
 export interface ContextApiResponse {
   organization: OrganizationPublicData | null;
   membership: UserOrganizationMembership | null;
-  payment_assignments: UserPaymentAssignment[];
+  payment_assignments: AthletePaymentAssignment[];
 }
 export interface Courses extends SuperModel {
   title: string;
@@ -1380,6 +1400,11 @@ export interface CoachContent extends SuperModel {
   icon?: string | null;
   cover_photo?: string | null;
   privacy: string;
+  purpose: string;
+  coach_delivered: string | null;
+  athlete_received: string | null;
+  parent_received: string | null;
+  assignment: RelEntity<"PaymentAssignments">;
 }
 export interface Shares extends SuperModel {
   recipient: RelEntity<"Users">;

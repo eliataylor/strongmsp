@@ -8,14 +8,11 @@ import {
     Container,
     Grid,
     Pagination,
-    Step,
-    StepContent,
-    StepLabel,
-    Stepper,
     Typography
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import ProgramProgressStepper from 'src/components/ProgramProgressStepper';
 import NotificationSummaryCard from '../components/NotificationSummaryCard';
 import PaymentAssignmentCard from '../components/PaymentAssignmentCard';
 import ApiClient, { HttpResponse } from '../config/ApiClient';
@@ -113,9 +110,9 @@ const Dashboard: React.FC = () => {
                     </Card>
                 ) : (
                     <Grid container spacing={3}>
-                        {paymentAssignments.map((assignment) => (
-                            <Grid item xs={12} md={6} lg={4} key={assignment.id}>
-                                <PaymentAssignmentCard assignment={assignment} />
+                        {paymentAssignments.map((athleteAssignment, index) => (
+                            <Grid item xs={12} md={6} lg={4} key={athleteAssignment.athlete.id}>
+                                <PaymentAssignmentCard assignment={athleteAssignment} />
                             </Grid>
                         ))}
                     </Grid>
@@ -129,58 +126,9 @@ const Dashboard: React.FC = () => {
                 </Typography>
                 <Card>
                     <CardContent>
-                        <Stepper orientation="vertical">
-                            <Step>
-                                <StepLabel>Pre Assessment</StepLabel>
-                                <StepContent>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Complete the initial assessment to evaluate current performance levels and identify areas for improvement.
-                                    </Typography>
-                                </StepContent>
-                            </Step>
-                            <Step>
-                                <StepLabel>Feedback Report</StepLabel>
-                                <StepContent>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Review detailed feedback and recommendations based on your assessment results.
-                                    </Typography>
-                                </StepContent>
-                            </Step>
-                            <Step>
-                                <StepLabel>Family Conversation</StepLabel>
-                                <StepContent>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Engage in meaningful discussions with family members about goals and expectations.
-                                    </Typography>
-                                </StepContent>
-                            </Step>
-                            <Step>
-                                <StepLabel>12 Session Curriculum</StepLabel>
-                                <StepContent>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Follow the structured 12-session program designed to enhance mental performance and resilience.
-                                    </Typography>
-                                </StepContent>
-                            </Step>
-
-                            <Step>
-                                <StepLabel>Lesson Plan</StepLabel>
-                                <StepContent>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Access detailed lesson plans and resources for each session to maximize your learning experience.
-                                    </Typography>
-                                </StepContent>
-                            </Step>
-
-                            <Step>
-                                <StepLabel>Post Assessment</StepLabel>
-                                <StepContent>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Post Assessment to evaluate the progress and effectiveness of the program.
-                                    </Typography>
-                                </StepContent>
-                            </Step>
-                        </Stepper>
+                        {paymentAssignments.map((athleteAssignment, index) => (
+                            <ProgramProgressStepper assignment={athleteAssignment} key={index} />
+                        ))}
                     </CardContent>
                 </Card>
             </Box>

@@ -1,0 +1,4 @@
+email,first_name,last_name,gender,birthdate,zip_code
+coach1@test.com,Coach,Anderson,male,1985-03-15,90210
+coach2@test.com,Coach,Thompson,female,1982-07-22,10001
+coach3@test.com,Coach,White,male,1988-11-08,60601

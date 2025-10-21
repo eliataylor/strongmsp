@@ -353,7 +353,7 @@ class CoachContent(SuperModel):
 		scheduling_email = ("scheduling_email", "Scheduling Email")
 
 	author = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Coach')
-	assignments = models.ForeignKey('PaymentAssignments', on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Payment Assignment')
+	assignment = models.ForeignKey('PaymentAssignments', on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Payment Assignment')
 	title = models.TextField(verbose_name='Title')
 	body = models.TextField(verbose_name='Body')
 	icon = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Icon')

@@ -1,12 +1,12 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import { useAuth } from "../allauth/auth/hooks";
 import ApiClient, { HttpResponse } from "../config/ApiClient";
-import { ContextApiResponse, OrganizationPublicData, UserOrganizationMembership, UserPaymentAssignment } from "../object-actions/types/types";
+import { AthletePaymentAssignment, ContextApiResponse, OrganizationPublicData, UserOrganizationMembership } from "../object-actions/types/types";
 
 interface AppContextType {
     organization: OrganizationPublicData | null;
     membership: UserOrganizationMembership | null;
-    paymentAssignments: UserPaymentAssignment[];
+    paymentAssignments: AthletePaymentAssignment[];
     loading: boolean;
     error: string | null;
     refresh: () => Promise<void>;
@@ -29,7 +29,7 @@ interface Props {
 export function AppContextProvider({ children }: Props) {
     const [organization, setOrganization] = useState<OrganizationPublicData | null>(null);
     const [membership, setMembership] = useState<UserOrganizationMembership | null>(null);
-    const [paymentAssignments, setPaymentAssignments] = useState<UserPaymentAssignment[]>([]);
+    const [paymentAssignments, setPaymentAssignments] = useState<AthletePaymentAssignment[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const auth = useAuth();

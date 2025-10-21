@@ -16,7 +16,7 @@ import { useSnackbar } from 'notistack';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../allauth/auth';
 import ApiClient from '../config/ApiClient';
-import { UserPaymentAssignment } from '../object-actions/types/types';
+import { AthletePaymentAssignment } from '../object-actions/types/types';
 import {
     getEditableFields,
     getUserRoleInAssignment
@@ -37,7 +37,7 @@ interface EditAssignmentDialogProps {
     open: boolean;
     onClose: () => void;
     onSuccess: () => void;
-    assignment: UserPaymentAssignment;
+    assignment: AthletePaymentAssignment;
 }
 
 const EditAssignmentDialog: React.FC<EditAssignmentDialogProps> = ({
@@ -63,16 +63,16 @@ const EditAssignmentDialog: React.FC<EditAssignmentDialogProps> = ({
     const auth = useAuth();
     const currentUser = auth?.data?.user;
     const userId = currentUser?.id;
-    const userRole = assignment.user_role; // Get role from assignment context
+    const userRole = assignment.my_roles.length > 0 ? assignment.my_roles[0] : null;
 
     const role = getUserRoleInAssignment(userId, assignment, userRole);
-    const editableFields = getEditableFields(role, assignment.pre_assessment_submitted || assignment.post_assessment_submitted);
+    const editableFields = getEditableFields(role, !!(assignment.pre_assessment_submitted_at || assignment.post_assessment_submitted_at));
 
     // Initialize form data when dialog opens
     useEffect(() => {
         if (open) {
             // For RelEntity objects, we need to get email from the entity property or use str as fallback
-            setAthleteEmail(assignment.athlete?.entity?.email || assignment.athlete?.str || '');
+            setAthleteEmail(assignment.athlete.entity?.email || assignment.athlete.str || '');
             setParentEmails(assignment.parents.map(p => p.entity?.email || p.str || ''));
             setSelectedCoaches([]); // Will be populated from search
             setError(null);
@@ -136,14 +136,24 @@ const EditAssignmentDialog: React.FC<EditAssignmentDialogProps> = ({
                 updateData.parents = parentEmails.filter(email => email.trim()).map(email => email.trim());
             }
 
-            const response = await ApiClient.patch(`/api/payment-assignments/${assignment.id}/`, updateData);
+            // Update all assignments for this athlete
+            const updatePromises = assignment.assignments.map(async (assignmentEntity) => {
+                const response = await ApiClient.patch(`/api/payment-assignments/${assignmentEntity.id}/`, updateData);
+                return response;
+            });
 
-            if (response.success) {
+            const responses = await Promise.all(updatePromises);
+
+            // Check if all updates were successful
+            const allSuccessful = responses.every(response => response.success);
+
+            if (allSuccessful) {
                 enqueueSnackbar('Assignment updated successfully', { variant: 'success' });
                 onSuccess();
             } else {
-                setError(response.error || 'Failed to update assignment');
-                enqueueSnackbar(response.error || 'Failed to update assignment', { variant: 'error' });
+                const failedCount = responses.filter(response => !response.success).length;
+                setError(`Failed to update ${failedCount} assignment(s)`);
+                enqueueSnackbar(`Failed to update ${failedCount} assignment(s)`, { variant: 'error' });
             }
         } catch (error) {
             console.error('Error updating assignment:', error);

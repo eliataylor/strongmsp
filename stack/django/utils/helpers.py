@@ -72,6 +72,10 @@ def get_subdomain_from_request(request):
         # Fallback for www or empty
         if subdomain in ['www', 'webapp', 'api', 'localhost', 'localapi']:
             return 'smsp'
+
+        if subdomain.startswith('local'):
+            return subdomain[len('local'):]
+            
         return subdomain
     return 'smsp'  # Default fallback
 
