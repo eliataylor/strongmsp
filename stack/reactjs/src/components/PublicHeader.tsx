@@ -13,12 +13,14 @@ import {
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { FadedPaper } from "src/theme/StyledFields";
+import { useUser } from "../allauth/auth/hooks";
 import Logo from "../theme/Logo";
 import RoleBasedMenu from "./RoleBasedMenu";
 import PublicPagesMenu from "./menus/PublicPagesMenu";
 
 const PublicHeader: React.FC = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
+    const user = useUser();
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -95,8 +97,7 @@ const PublicHeader: React.FC = () => {
                     {/* Desktop Navigation */}
                     {!isMobile && (
                         <Box sx={{ display: 'flex', flexGrow: 1, justifyContent: 'flex-end', gap: 2, mr: 3 }}>
-                            <PublicPagesMenu layout="header" />
-                            <RoleBasedMenu layout="header" />
+                            {user?.id ? <RoleBasedMenu layout="header" /> : <PublicPagesMenu layout="header" />}
                         </Box>
                     )}
 

@@ -176,10 +176,31 @@ class PromptTester:
         # Initialize OpenAI client
         self.client = openai.OpenAI(api_key=settings.OPENAI_API_KEY, max_retries=5, timeout=300)
         
+        # Get assignment for the athlete (for testing purposes)
+        assignment = None
+        if athlete:
+            from strongmsp_app.models import PaymentAssignments
+            from django.db.models import Q
+            from django.utils import timezone
+            
+            try:
+                now = timezone.now().date()
+                assignment = PaymentAssignments.objects.filter(
+                    athlete=athlete,
+                    payment__status='succeeded',
+                    payment__product__is_active=True
+                ).filter(
+                    Q(payment__subscription_ends__isnull=True) |
+                    Q(payment__subscription_ends__gte=now)
+                ).first()
+            except Exception as e:
+                print(f"Warning: Could not get assignment for athlete {athlete.id}: {e}")
+        
         # Create AgentResponse record
         self.agent_response = AgentResponses.objects.create(
             author=user if user.is_authenticated else None,
             athlete=athlete,
+            assignment=assignment,
             prompt_template=prompt_template,
             purpose=prompt_template.purpose,
             message_body=message_body,

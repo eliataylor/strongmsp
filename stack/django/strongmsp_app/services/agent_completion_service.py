@@ -9,7 +9,7 @@ from django.conf import settings
 from openai import OpenAIError
 import logging
 
-from ..models import AgentResponses, PromptTemplates
+from ..models import AgentResponses, PromptTemplates, PaymentAssignments
 from .confidence_analyzer import ConfidenceAnalyzer
 from .agentic_context_builder import AgenticContextBuilder
 
@@ -28,6 +28,42 @@ class AgentCompletionService:
             timeout=300
         )
     
+    def get_assignment_for_assessment(self, athlete, assessment):
+        """
+        Get the PaymentAssignment for the given athlete and assessment.
+        
+        Args:
+            athlete: User instance (athlete)
+            assessment: Assessments instance
+            
+        Returns:
+            PaymentAssignments instance or None
+        """
+        try:
+            from django.db.models import Q
+            from django.utils import timezone
+            
+            now = timezone.now().date()
+            
+            # Query for assignment where athlete has access to this assessment
+            assignment = PaymentAssignments.objects.filter(
+                athlete=athlete,
+                payment__status='succeeded',
+                payment__product__is_active=True
+            ).filter(
+                Q(payment__subscription_ends__isnull=True) |
+                Q(payment__subscription_ends__gte=now)
+            ).filter(
+                Q(payment__product__pre_assessment_id=assessment.id) |
+                Q(payment__product__post_assessment_id=assessment.id)
+            ).first()
+            
+            return assignment
+            
+        except Exception as e:
+            logger.error(f"Error getting assignment for athlete {athlete.id} and assessment {assessment.id}: {e}")
+            return None
+    
     def run_completion(self, prompt_template, athlete, assessment, input_data):
         """
         Run OpenAI completion for an agent response using AgenticContextBuilder.
@@ -42,6 +78,11 @@ class AgentCompletionService:
             AgentResponses instance
         """
         try:
+            # Get the assignment for this athlete and assessment
+            assignment = self.get_assignment_for_assessment(athlete, assessment)
+            if not assignment:
+                raise ValueError(f"No valid assignment found for athlete {athlete.id} and assessment {assessment.id}")
+            
             # Initialize context builder
             context_builder = AgenticContextBuilder()
             
@@ -95,6 +136,7 @@ class AgentCompletionService:
                 author=athlete,
                 athlete=athlete,
                 assessment=assessment,
+                assignment=assignment,
                 prompt_template=prompt_template,
                 purpose=prompt_template.purpose,
                 message_body=processed_prompt,
@@ -118,10 +160,14 @@ class AgentCompletionService:
             except:
                 pass  # Use original prompt if context building fails
             
+            # Get assignment for error response
+            assignment = self.get_assignment_for_assessment(athlete, assessment)
+            
             agent_response = AgentResponses.objects.create(
                 author=athlete,
                 athlete=athlete,
                 assessment=assessment,
+                assignment=assignment,
                 prompt_template=prompt_template,
                 purpose=prompt_template.purpose,
                 message_body=processed_prompt,
@@ -133,10 +179,14 @@ class AgentCompletionService:
         except Exception as e:
             logger.error(f"Unexpected error in completion: {e}")
             # Create error response
+            # Get assignment for error response
+            assignment = self.get_assignment_for_assessment(athlete, assessment)
+            
             agent_response = AgentResponses.objects.create(
                 author=athlete,
                 athlete=athlete,
                 assessment=assessment,
+                assignment=assignment,
                 prompt_template=prompt_template,
                 purpose=prompt_template.purpose,
                 message_body=prompt_template.prompt,

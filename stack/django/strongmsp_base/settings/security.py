@@ -51,14 +51,10 @@ CORS_ALLOWED_ORIGINS += [f"{APP_HOST_PARTS.scheme}://localhost:{DEV_PORT}",
 # Use regex patterns to allow any subdomain of strongmindstrongperformance.com
 # Include optional port numbers for development environments
 CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^https://[a-zA-Z0-9-]+\.strongmindstrongperformance\.com$",
-    r"^http://[a-zA-Z0-9-]+\.strongmindstrongperformance\.com$",
-    r"^https://strongmindstrongperformance\.com$",  # Allow root domain too
-    r"^http://strongmindstrongperformance\.com$",   # Allow root domain too
     r"^https://[a-zA-Z0-9-]+\.strongmindstrongperformance\.com(:\d+)?$",
     r"^http://[a-zA-Z0-9-]+\.strongmindstrongperformance\.com(:\d+)?$",
     r"^https://strongmindstrongperformance\.com(:\d+)?$",  # Allow root domain too
-    r"^http://strongmindstrongperformance\.com(:\d+)?$",   # Allow root domain too    
+    r"^http://strongmindstrongperformance\.com(:\d+)?$",   # Allow root domain too
 ]
 
 # Explicitly disable wildcard origins for security
@@ -84,12 +80,20 @@ logger.debug(f"Allowing Hosts: {", ".join(ALLOWED_HOSTS)}")
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 
 # Add regex support for CSRF trusted origins to match organization subdomains
-CSRF_TRUSTED_ORIGIN_REGEXES = CORS_ALLOWED_ORIGIN_REGEXES
+# Fixed regex patterns to properly handle subdomains with optional port numbers
+CSRF_TRUSTED_ORIGIN_REGEXES = [
+    r"^https://[a-zA-Z0-9-]+\.strongmindstrongperformance\.com(:\d+)?$",
+    r"^http://[a-zA-Z0-9-]+\.strongmindstrongperformance\.com(:\d+)?$",
+    r"^https://strongmindstrongperformance\.com(:\d+)?$",  # Allow root domain too
+    r"^http://strongmindstrongperformance\.com(:\d+)?$",   # Allow root domain too
+]
 
 # Also add the specific origins to CSRF_TRUSTED_ORIGINS for better compatibility
 CSRF_TRUSTED_ORIGINS.extend([
     "https://strongmindstrongperformance.com",
     "http://strongmindstrongperformance.com",
+    "https://localtestorg.strongmindstrongperformance.com:3008",  # Specific subdomain for testing
+    "https://localhost.strongmindstrongperformance.com:3008",  # Specific subdomain for testing
 ])
 
 # CSRF Configuration

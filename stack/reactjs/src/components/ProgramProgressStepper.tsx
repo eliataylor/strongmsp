@@ -52,6 +52,7 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
                 || (item.entity?.parent_received && new Date(item.entity?.parent_received) < new Date())
             );
             if (beenSeen) {
+                console.log("Agent response not shown because it has been seen by the athlete or parent");
                 return false;
             }
         }
@@ -80,13 +81,11 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
         return null;
     };
 
-
-
     return (
 
         <Stepper orientation="vertical">
             {assignment.pre_assessment &&
-                <Step>
+                <Step expanded={true}>
                     <StepLabel>Pre Assessment</StepLabel>
                     <StepContent>
                         <Typography variant="body2" color="text.secondary">
@@ -109,7 +108,7 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
                     </StepContent>
                 </Step>
             }
-            <Step completed={shouldShowCoachContent('feedback_report') || shouldShowAgentResponse('feedback_report')}>
+            <Step expanded={shouldShowCoachContent('feedback_report') || shouldShowAgentResponse('feedback_report')}>
                 <StepLabel>Feedback Report</StepLabel>
                 <StepContent>
                     {(() => {
@@ -131,7 +130,7 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
                     })()}
                 </StepContent>
             </Step>
-            <Step completed={shouldShowCoachContent('talking_points') || shouldShowAgentResponse('talking_points')}>
+            <Step expanded={shouldShowCoachContent('talking_points') || shouldShowAgentResponse('talking_points')}>
                 <StepLabel>Talking Points</StepLabel>
                 <StepContent>
                     {(() => {
@@ -153,7 +152,7 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
                     })()}
                 </StepContent>
             </Step>
-            <Step completed={shouldShowCoachContent('curriculum') || shouldShowAgentResponse('curriculum')}>
+            <Step expanded={shouldShowCoachContent('curriculum') || shouldShowAgentResponse('curriculum')}>
                 <StepLabel>12 Session Curriculum</StepLabel>
                 <StepContent>
                     {(() => {
@@ -176,7 +175,7 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
                 </StepContent>
             </Step>
 
-            <Step completed={shouldShowCoachContent('lesson_plan') || shouldShowAgentResponse('lesson_plan')}>
+            <Step expanded={shouldShowCoachContent('lesson_plan') || shouldShowAgentResponse('lesson_plan')}>
                 <StepLabel>Lesson Plan</StepLabel>
                 <StepContent>
                     {(() => {
@@ -200,7 +199,7 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
             </Step>
 
             {assignment.post_assessment &&
-                <Step>
+                <Step expanded={true}>
                     <StepLabel>Post Assessment</StepLabel>
                     <StepContent>
                         <Typography variant="body2" color="text.secondary">

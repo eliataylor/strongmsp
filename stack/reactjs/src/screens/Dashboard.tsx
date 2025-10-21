@@ -120,18 +120,18 @@ const Dashboard: React.FC = () => {
             </Box>
 
             {/* Program Progress Stepper Section */}
-            <Box sx={{ mb: 4 }}>
-                <Typography variant="h5" component="h2" sx={{ mb: 3 }}>
-                    Program Progress
-                </Typography>
-                <Card>
-                    <CardContent>
-                        {paymentAssignments.map((athleteAssignment, index) => (
+            {paymentAssignments.map((athleteAssignment, index) => (
+                <Box sx={{ mb: 4 }}>
+                    <Typography variant="h5" component="h2" sx={{ mb: 3 }}>
+                        Program Progress: {athleteAssignment.athlete.str}
+                    </Typography>
+                    <Card>
+                        <CardContent>
                             <ProgramProgressStepper assignment={athleteAssignment} key={index} />
-                        ))}
-                    </CardContent>
-                </Card>
-            </Box>
+                        </CardContent>
+                    </Card>
+                </Box>
+            ))}
 
             {/* Notifications Section */}
             <Box sx={{ mb: 4 }}>

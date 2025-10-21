@@ -588,6 +588,12 @@ class AgentResponsesAdmin(BaseModelAdmin):
         return "No template"
     display_template.short_description = "Template"
 
+    def display_assignment(self, obj):
+        if obj.assignment:
+            return f"Assignment #{obj.assignment.id} - {obj.assignment.athlete.get_full_name() if obj.assignment.athlete else 'No Athlete'}"
+        return "No assignment"
+    display_assignment.short_description = "Assignment"
+
     def display_message_preview(self, obj):
         if obj.message_body:
             return obj.message_body[:100] + "..." if len(obj.message_body) > 100 else obj.message_body
@@ -625,16 +631,16 @@ class AgentResponsesAdmin(BaseModelAdmin):
     token_usage_info.short_description = "Token Usage"
     token_usage_info.help_text = "Shows which tokens were used in the prompt template for this response"
 
-    list_display = ('id', 'display_athlete', 'display_purpose', 'display_template', 'display_message_preview', 'display_ai_response_preview', 'created_at', 'modified_at')
-    list_filter = ('purpose', 'created_at', 'modified_at', 'athlete', 'prompt_template')
-    search_fields = ('message_body', 'ai_response', 'ai_reasoning', 'athlete__username', 'athlete__email', 'athlete__first_name', 'athlete__last_name')
+    list_display = ('id', 'display_athlete', 'display_purpose', 'display_template', 'display_assignment', 'display_message_preview', 'display_ai_response_preview', 'created_at', 'modified_at')
+    list_filter = ('purpose', 'created_at', 'modified_at', 'athlete', 'prompt_template', 'assignment')
+    search_fields = ('message_body', 'ai_response', 'ai_reasoning', 'athlete__username', 'athlete__email', 'athlete__first_name', 'athlete__last_name', 'assignment__id')
     readonly_fields = ('id', 'created_at', 'modified_at', 'token_usage_info')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
 
     fieldsets = (
         ('Response Information', {
-            'fields': ('athlete', 'purpose', 'prompt_template', 'message_body')
+            'fields': ('athlete', 'assignment', 'purpose', 'prompt_template', 'message_body')
         }),
         ('AI Response', {
             'fields': ('ai_response', 'ai_reasoning')
@@ -697,13 +703,55 @@ class CoachContentAdmin(SummernoteModelAdmin, BaseModelAdmin):
         return "No content"
     display_body_preview.short_description = "Content Preview"
 
-    list_display = ('id', 'display_title_preview', 'display_coach', 'privacy', 'image_tag', 'cover_photo_tag', 'created_at', 'modified_at')
-    list_filter = ('privacy', 'created_at', 'modified_at', CoachFilter)
-    search_fields = ('title', 'body', 'author__username', 'author__email', 'author__first_name', 'author__last_name')
+    def display_assignment(self, obj):
+        if obj.assignment:
+            return f"Assignment #{obj.assignment.id} - {obj.assignment.athlete.get_full_name() if obj.assignment.athlete else 'No Athlete'}"
+        return "No assignment"
+    display_assignment.short_description = "Assignment"
+
+    def display_coach_delivered(self, obj):
+        if obj.coach_delivered:
+            return obj.coach_delivered.strftime("%Y-%m-%d %H:%M")
+        return "Not delivered"
+    display_coach_delivered.short_description = "Coach Delivered"
+
+    def display_athlete_received(self, obj):
+        if obj.athlete_received:
+            return obj.athlete_received.strftime("%Y-%m-%d %H:%M")
+        return "Not received"
+    display_athlete_received.short_description = "Athlete Received"
+
+    def display_parent_received(self, obj):
+        if obj.parent_received:
+            return obj.parent_received.strftime("%Y-%m-%d %H:%M")
+        return "Not received"
+    display_parent_received.short_description = "Parent Received"
+
+    list_display = ('id', 'display_title_preview', 'display_coach', 'display_assignment', 'privacy', 'display_coach_delivered', 'display_athlete_received', 'display_parent_received', 'image_tag', 'cover_photo_tag', 'created_at', 'modified_at')
+    list_filter = ('privacy', 'coach_delivered', 'athlete_received', 'parent_received', 'created_at', 'modified_at', 'assignment', CoachFilter)
+    search_fields = ('title', 'body', 'author__username', 'author__email', 'author__first_name', 'author__last_name', 'assignment__id')
     readonly_fields = ('id', 'created_at', 'modified_at')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
     list_editable = ('privacy',)
+
+    fieldsets = (
+        ('Content Information', {
+            'fields': ('author', 'assignment', 'title', 'body', 'purpose', 'privacy')
+        }),
+        ('Media', {
+            'fields': ('icon', 'cover_photo'),
+            'classes': ('collapse',)
+        }),
+        ('Delivery Status', {
+            'fields': ('coach_delivered', 'athlete_received', 'parent_received'),
+            'description': 'Track when content was delivered and received by different parties'
+        }),
+        ('Timestamps', {
+            'fields': ('id', 'created_at', 'modified_at'),
+            'classes': ('collapse',)
+        })
+    )
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "author":

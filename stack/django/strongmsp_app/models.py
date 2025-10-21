@@ -278,6 +278,9 @@ class PaymentAssignments(SuperModel):
 	pre_assessment_submitted_at = models.DateTimeField(null=True, blank=True, verbose_name='Pre-Assessment Submitted At')
 	post_assessment_submitted_at = models.DateTimeField(null=True, blank=True, verbose_name='Post-Assessment Submitted At')
 
+	def __str__(self):
+		return f"Assignment #{self.id} for {self.athlete.get_full_name()} on {self.payment.product.title}"
+
 class PromptTemplates(SuperModel):
 	class Meta:
 		abstract = False
@@ -334,6 +337,9 @@ class AgentResponses(SuperModel):
 	ai_response = models.TextField(verbose_name='AI Response')
 	ai_reasoning = models.TextField(blank=True, null=True, verbose_name='AI Reasoning')
 
+	def __str__(self):
+		return f"{self.purpose} for {self.athlete.get_full_name()}"
+
 class CoachContent(SuperModel):
 	class Meta:
 		abstract = False
@@ -363,6 +369,9 @@ class CoachContent(SuperModel):
 	coach_delivered = models.DateTimeField(blank=True, null=True, verbose_name='Coach Delivered At') # only coach can check
 	athlete_received = models.DateTimeField(blank=True, null=True, verbose_name='Athlete Received At') # any can check
 	parent_received = models.DateTimeField(blank=True, null=True, verbose_name='Parent Received At') # only parent can check
+
+	def __str__(self):
+		return f"{self.purpose} for {self.athlete.get_full_name()}"
 
 class Shares(SuperModel):
 	class Meta:
