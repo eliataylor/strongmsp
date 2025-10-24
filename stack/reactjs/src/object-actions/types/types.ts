@@ -1284,7 +1284,6 @@ export interface ContentProgressTracking {
 export interface AthletePaymentAssignment {
   assignments: RelEntity<'PaymentAssignments'>[];
   my_roles: string[];
-  payers: RelEntity<'Users'>[];
   athlete: RelEntity<'Users'>;
   coaches: RelEntity<'Users'>[];
   parents: RelEntity<'Users'>[];
@@ -1297,6 +1296,7 @@ export interface AthletePaymentAssignment {
     status: string;
     subscription_ends: string | null;
     product: RelEntity<'Products'>;
+    author?: RelEntity<'Users'>;
   }[];
   agent_progress: ProgressTracking;
   content_progress: ContentProgressTracking;
@@ -1446,6 +1446,14 @@ export interface PurposeOption {
   description: string;
   responseFormat: string;
   model: string;
+}
+
+export const PurposeNames = {
+  lesson_plan: "Lesson Plan",
+  curriculum: "Curriculum",
+  talking_points: "Talking Points",
+  feedback_report: "Feedback Report",
+  scheduling_email: "Scheduling Email"
 }
 
 //---OBJECT-ACTIONS-TYPE-SCHEMA-ENDS---//

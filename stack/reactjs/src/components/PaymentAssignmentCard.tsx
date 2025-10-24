@@ -28,15 +28,15 @@ const PaymentAssignmentCard: React.FC<PaymentAssignmentCardProps> = ({ assignmen
 
     return (
         <Grid container spacing={2}>
-            <Grid size={12} mb={2}>
-                <RelEntityHead rel={assignment.athlete} label="Athlete" />
+            <Grid size={12} >
+                <RelEntityHead rel={assignment.athlete} label="Athlete" titleVariant="h5" />
             </Grid>
 
             {/* Parents */}
             {assignment.parents.length > 0 && (
-                <Grid container size={12} mb={2}>
+                <Grid container justifyContent="flex-start" size={12} >
                     {assignment.parents.map((parent) => (
-                        <Grid size={{ xs: 12, md: 6, lg: 4 }} mb={1} key={parent.id}>
+                        <Grid key={parent.id}>
                             <RelEntityHead rel={parent as RelEntity<'Users'>} label="Parent" />
                         </Grid>
                     ))}
@@ -45,25 +45,15 @@ const PaymentAssignmentCard: React.FC<PaymentAssignmentCardProps> = ({ assignmen
 
             {/* Coaches */}
             {assignment.coaches.length > 0 && (
-                <Grid container size={12} mb={2}>
+                <Grid container justifyContent="flex-start" size={12} >
                     {assignment.coaches.map((coach) => (
-                        <Grid size={{ xs: 12, md: 6, lg: 4 }} mb={1} key={coach.id}>
+                        <Grid key={coach.id}>
                             <RelEntityHead rel={coach as RelEntity<'Users'>} label="Coach" />
                         </Grid>
                     ))}
                 </Grid>
             )}
 
-            {/* Payers */}
-            {assignment.payers.length > 0 && (
-                <Grid container size={12} mb={2}>
-                    {assignment.payers.map((payer) => (
-                        <Grid mb={1} key={payer.id}>
-                            <RelEntityHead rel={payer as RelEntity<'Users'>} label="Payer" />
-                        </Grid>
-                    ))}
-                </Grid>
-            )}
 
             {/* Payment Info */}
             {assignment.payments.length > 0 && (
@@ -72,14 +62,17 @@ const PaymentAssignmentCard: React.FC<PaymentAssignmentCardProps> = ({ assignmen
                     {assignment.payments.map((payment, index) => (
                         <Box key={payment.id} mb={1} sx={{ pl: 1, borderLeft: '2px solid', borderColor: 'divider' }}>
                             <Typography variant="body2" color="text.secondary">
-                                Payment #{index + 1}: {payment.product.str}
+                                Payment for {payment.product.str}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                Status: {payment.status}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
+                                {payment.status !== 'succeeded' ? `Status: ${payment.status}. ` : ''}
                                 Expiration: {formatDate(payment.subscription_ends)}
                             </Typography>
+                            {payment.author && (
+                                <Typography variant="body2" color="text.secondary">
+                                    Paid by: {payment.author?.str}
+                                </Typography>
+                            )}
                         </Box>
                     ))}
                 </Grid>

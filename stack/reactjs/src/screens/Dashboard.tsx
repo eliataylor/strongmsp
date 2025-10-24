@@ -8,10 +8,12 @@ import {
     Container,
     Grid,
     Pagination,
+    Paper,
     Typography
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useUser } from 'src/allauth/auth';
 import ProgramProgressStepper from 'src/components/ProgramProgressStepper';
 import NotificationSummaryCard from '../components/NotificationSummaryCard';
 import PaymentAssignmentCard from '../components/PaymentAssignmentCard';
@@ -27,6 +29,7 @@ const Dashboard: React.FC = () => {
     const [notificationsPage, setNotificationsPage] = useState(1);
     const [notificationsTotal, setNotificationsTotal] = useState(0);
     const notificationsPerPage = 10;
+    const user = useUser();
 
     const fetchNotifications = async (page = 1) => {
         setNotificationsLoading(true);
@@ -98,7 +101,6 @@ const Dashboard: React.FC = () => {
 
     return (
         <Box p={2}>
-            {/* Payment Assignments Section */}
             <Box sx={{ mb: 3 }}>
                 {paymentAssignments.length === 0 ? (
                     <Card>
@@ -109,29 +111,17 @@ const Dashboard: React.FC = () => {
                         </CardContent>
                     </Card>
                 ) : (
-                    <Grid container spacing={3}>
-                        {paymentAssignments.map((athleteAssignment, index) => (
-                            <Grid item xs={12} md={6} lg={4} key={athleteAssignment.athlete.id}>
-                                <PaymentAssignmentCard assignment={athleteAssignment} />
-                            </Grid>
-                        ))}
-                    </Grid>
+                    paymentAssignments.map((athleteAssignment, index) => (
+                        <Paper elevation={3} sx={{ mb: 4, p: 2 }} key={athleteAssignment.athlete.id}>
+                            <PaymentAssignmentCard assignment={athleteAssignment} />
+                            <Typography variant="h5" component="h2" sx={{ mt: 3, mb: 1 }}>
+                                {athleteAssignment.athlete.id == user.id ? 'My Progress' : 'Program Progress: ' + athleteAssignment.athlete.str}
+                            </Typography>
+                            <ProgramProgressStepper assignment={athleteAssignment} key={index} />
+                        </Paper>
+                    ))
                 )}
             </Box>
-
-            {/* Program Progress Stepper Section */}
-            {paymentAssignments.map((athleteAssignment, index) => (
-                <Box sx={{ mb: 4 }}>
-                    <Typography variant="h5" component="h2" sx={{ mb: 3 }}>
-                        Program Progress: {athleteAssignment.athlete.str}
-                    </Typography>
-                    <Card>
-                        <CardContent>
-                            <ProgramProgressStepper assignment={athleteAssignment} key={index} />
-                        </CardContent>
-                    </Card>
-                </Box>
-            ))}
 
             {/* Notifications Section */}
             <Box sx={{ mb: 4 }}>

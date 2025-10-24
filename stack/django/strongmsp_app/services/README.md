@@ -28,8 +28,6 @@ spider_data = analyzer.get_spider_chart_data(athlete_id=1, assessment_id=1)
 
 ### 2. AgenticContextBuilder (`agentic_context_builder.py`)
 
-Structured context builder for OpenAI completions using MessageBuilder pattern.
-
 **Key Methods:**
 - `add_athlete_context(athlete)` - Add athlete profile information
 - `add_assessment_context(assessment)` - Add assessment metadata
@@ -162,7 +160,7 @@ POST /api/agent-responses/{id}/regenerate/
 
 ## Context Builder Pattern
 
-The system uses a structured context builder pattern (similar to MessageBuilder.ts) for constructing OpenAI completion context:
+The system uses a structured context builder pattern for constructing OpenAI completion context:
 
 ### Message Structure
 
@@ -203,19 +201,6 @@ Tokens are resolved using context data:
 - `{input_b}` → Spider chart data
 - `{assessment_title}` → Assessment title
 
-## Testing
-
-Use the test script to verify the implementation:
-
-```python
-from strongmsp_app.test_agentic_flow import test_agentic_flow, create_sample_prompt_templates
-
-# Create sample templates
-create_sample_prompt_templates()
-
-# Run tests
-test_agentic_flow()
-```
 
 ## Migration
 

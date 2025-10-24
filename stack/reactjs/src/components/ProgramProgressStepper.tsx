@@ -1,4 +1,5 @@
 import {
+    Box,
     Button,
     Step,
     StepContent,
@@ -8,9 +9,8 @@ import {
 } from '@mui/material';
 import React from 'react';
 import { Link } from 'react-router-dom';
-import RelEntityHead from 'src/object-actions/components/RelEntityHead';
 import { useAuth } from '../allauth/auth/hooks';
-import { AthletePaymentAssignment } from '../object-actions/types/types';
+import { AthletePaymentAssignment, PurposeNames } from '../object-actions/types/types';
 import { getUserRoleInAssignment } from '../utils/assignmentPermissions';
 
 const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }> = ({ assignment }) => {
@@ -81,6 +81,71 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
         return null;
     };
 
+    // Helper function to format date and time
+    const formatDateTime = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+    };
+
+    // Helper function to get delivery status for each party
+    const getDeliveryStatus = (item: any) => {
+        const now = new Date();
+        const status = {
+            athlete: 'Not yet received',
+            parent: 'Not yet received',
+            coach: 'Not delivered'
+        };
+
+        if (item.entity?.coach_delivered && new Date(item.entity.coach_delivered) < now) {
+            status.coach = `Delivered ${formatDateTime(item.entity.coach_delivered)}`;
+        }
+        if (item.entity?.athlete_received && new Date(item.entity.athlete_received) < now) {
+            status.athlete = `Received ${formatDateTime(item.entity.athlete_received)}`;
+        }
+        if (item.entity?.parent_received && new Date(item.entity.parent_received) < now) {
+            status.parent = `Received ${formatDateTime(item.entity.parent_received)}`;
+        }
+
+        return status;
+    };
+
+    // Helper function to render content items with delivery status
+    const renderContentItems = (content: any[], purpose: string) => {
+        return content.map((item, index) => {
+            const deliveryStatus = getDeliveryStatus(item);
+            let reportTitle = PurposeNames[purpose as keyof typeof PurposeNames];
+            if (content.length > 1) {
+                reportTitle += ` #${item.id}`;
+            }
+
+            const segment = item._type === 'CoachContent' ? 'coach-content' : 'agent-responses';
+
+            return (
+                <Box key={`${purpose}-${index}`} mb={2} >
+                    <Typography variant="h6" >
+                        <Link to={`/${segment}/${item.id}`}>View {reportTitle}</Link>
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" >
+                        <strong>Athlete:</strong> {deliveryStatus.athlete}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" >
+                        <strong>Parent:</strong> {deliveryStatus.parent}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        <strong>Coach:</strong> {deliveryStatus.coach}
+                    </Typography>
+                </Box>
+            );
+        });
+    };
+
     return (
 
         <Stepper orientation="vertical">
@@ -114,13 +179,7 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
                     {(() => {
                         const content = getContentForPurpose('feedback_report');
                         if (content && content.length > 0) {
-                            return (
-                                <div>
-                                    {content.map((item, index) => (
-                                        <RelEntityHead key={`feedback-${index}`} rel={item} />
-                                    ))}
-                                </div>
-                            );
+                            return renderContentItems(content, 'feedback_report');
                         }
                         return (
                             <Typography variant="body2" color="text.secondary">
@@ -130,41 +189,52 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
                     })()}
                 </StepContent>
             </Step>
-            <Step expanded={shouldShowCoachContent('talking_points') || shouldShowAgentResponse('talking_points')}>
-                <StepLabel>Talking Points</StepLabel>
-                <StepContent>
-                    {(() => {
-                        const content = getContentForPurpose('talking_points');
-                        if (content && content.length > 0) {
+
+            {userRole === 'coach' && (
+                <Step expanded={shouldShowCoachContent('talking_points') || shouldShowAgentResponse('talking_points')}>
+                    <StepLabel>Talking Points</StepLabel>
+                    <StepContent>
+                        {(() => {
+                            const content = getContentForPurpose('talking_points');
+                            if (content && content.length > 0) {
+                                return renderContentItems(content, 'talking_points');
+                            }
                             return (
-                                <div>
-                                    {content.map((item, index) => (
-                                        <RelEntityHead key={`talking-${index}`} rel={item} />
-                                    ))}
-                                </div>
+                                <Typography variant="body2" color="text.secondary">
+                                    Key discussion points and conversation starters for meaningful family discussions.
+                                </Typography>
                             );
-                        }
-                        return (
-                            <Typography variant="body2" color="text.secondary">
-                                Key discussion points and conversation starters for meaningful family discussions.
-                            </Typography>
-                        );
-                    })()}
-                </StepContent>
-            </Step>
+                        })()}
+                    </StepContent>
+                </Step>
+            )}
+
+            {userRole === 'coach' && (
+                <Step expanded={shouldShowCoachContent('scheduling_email') || shouldShowAgentResponse('scheduling_email')}>
+                    <StepLabel>Scheduling Email</StepLabel>
+                    <StepContent>
+                        {(() => {
+                            const content = getContentForPurpose('scheduling_email');
+                            if (content && content.length > 0) {
+                                return renderContentItems(content, 'scheduling_email');
+                            }
+                            return (
+                                <Typography variant="body2" color="text.secondary">
+                                    Scheduling email for the coach to send to the parent.
+                                </Typography>
+                            );
+                        })()}
+                    </StepContent>
+                </Step>
+            )}
+
             <Step expanded={shouldShowCoachContent('curriculum') || shouldShowAgentResponse('curriculum')}>
                 <StepLabel>12 Session Curriculum</StepLabel>
                 <StepContent>
                     {(() => {
                         const content = getContentForPurpose('curriculum');
                         if (content && content.length > 0) {
-                            return (
-                                <div>
-                                    {content.map((item, index) => (
-                                        <RelEntityHead key={`curriculum-${index}`} rel={item} />
-                                    ))}
-                                </div>
-                            );
+                            return renderContentItems(content, 'curriculum');
                         }
                         return (
                             <Typography variant="body2" color="text.secondary">
@@ -181,13 +251,7 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
                     {(() => {
                         const content = getContentForPurpose('lesson_plan');
                         if (content && content.length > 0) {
-                            return (
-                                <div>
-                                    {content.map((item, index) => (
-                                        <RelEntityHead key={`lesson-${index}`} rel={item} />
-                                    ))}
-                                </div>
-                            );
+                            return renderContentItems(content, 'lesson_plan');
                         }
                         return (
                             <Typography variant="body2" color="text.secondary">
@@ -207,7 +271,7 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
                                 <Typography variant="body2" color="text.secondary">
                                     Post-Assessment: Completed
                                 </Typography>
-                            ) : (
+                            ) : (userRole === 'athlete' ? (
                                 <Button
                                     component={Link}
                                     to={`/assessments/${assignment.post_assessment.id}`}
@@ -217,7 +281,7 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
                                 >
                                     Start Post-Assessment
                                 </Button>
-                            )}
+                            ) : null)}
                         </Typography>
                     </StepContent>
                 </Step>

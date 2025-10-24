@@ -445,6 +445,12 @@ class PromptTemplatesAdmin(BaseModelAdmin):
         return "No prompt"
     display_prompt_preview.short_description = "Prompt Preview"
 
+    def display_author(self, obj):
+        if obj.author:
+            return obj.author.get_full_name() or obj.author.username
+        return "No author"
+    display_author.short_description = "Author"
+
     def available_tokens_info(self, obj):
         """Display available token options for prompt templates"""
         # Import here to avoid circular imports
@@ -517,7 +523,7 @@ class PromptTemplatesAdmin(BaseModelAdmin):
     available_tokens_info.short_description = "Available Tokens"
     available_tokens_info.help_text = "Documentation of available token replacements for prompts and instructions"
 
-    list_display = ('id', 'author', 'purpose', 'display_prompt_preview','modified_at')
+    list_display = ('id', 'display_author', 'purpose', 'display_prompt_preview','modified_at')
     list_filter = ('status', 'purpose', 'response_format', 'model', 'created_at', 'modified_at', 'author')
     search_fields = ('prompt', 'instructions', 'model', 'author__username', 'author__email')
     readonly_fields = ('id', 'created_at', 'modified_at', 'available_tokens_info')
@@ -543,20 +549,79 @@ class PromptTemplatesAdmin(BaseModelAdmin):
         })
     )
 
+
+    def save_model(self, request, obj, form, change):
+        """Automatically set the author to the current user when creating a new object if not already set"""
+        if not change and not obj.author:  # Only for new objects without an author
+            obj.author = request.user
+        super().save_model(request, obj, form, change)
+
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
+        
+        # Set default author to current user when creating new objects
+        if not obj:  # Creating a new object
+            if 'author' in form.base_fields:
+                form.base_fields['author'].initial = request.user
+                form.base_fields['author'].help_text = "Author will default to current user if not specified"
         
         # Add help text to prompt and instructions fields
         if 'prompt' in form.base_fields:
             form.base_fields['prompt'].help_text = (
-                "Available tokens: {{athlete_name}}, {{assessment_aggregated}}, {{assesment_responses}}, "
-                "{{lesson_plan}}, {{curriculum}}, {{talking_points}}, {{feedback_report}}, {{scheduling_email}}"
+                "Available context tokens (use in prompts/instructions):\n\n"
+                "People:\n"
+                "  {ATHLETE_NAME} - Athlete's full name\n"
+                "  {ATHLETE_AGE} - Athlete's age (calculated from birthdate)\n"
+                "  {ATHLETE_GENDER} - Athlete's gender\n"
+                "  {ATHLETE_PRONOUN} - Athlete's preferred pronouns\n"
+                "  {ATHLETE_CITY} - Athlete's city\n"
+                "  {ATHLETE_ORG} - Athlete's organization\n"
+                "  {ATHLETE_ETHNICITY} - Athlete's ethnicity\n"
+                "  {ATHLETE_IMAGE} - Athlete's image URL\n"
+                "  {ATHLETE_AVATAR} - Athlete's avatar URL\n"
+                "  {COACH_NAME} - Coach's full name\n\n"
+                "Assessment Data:\n"
+                "  {ASSESSMENT_INFO} - Assessment metadata\n"
+                "  {ASSESSMENT_RESPONSES} - Individual question responses\n"
+                "  {ASSESSMENT_AGGREGATED} - Spider chart statistics\n\n"
+                "Published Content (for sequential agents):\n"
+                "  {PUBLISHED_FEEDBACK_REPORT}\n"
+                "  {PUBLISHED_CURRICULUM}\n"
+                "  {PUBLISHED_LESSON_PLAN}\n"
+                "  {PUBLISHED_TALKING_POINTS}\n"
+                "  {PUBLISHED_SCHEDULING_EMAIL}\n\n"
+                "Regeneration:\n"
+                "  {VERSION_HISTORY} - Previous versions\n"
+                "  {CHANGE_REQUEST} - Coach's change request\n"
             )
         
         if 'instructions' in form.base_fields:
             form.base_fields['instructions'].help_text = (
-                "Available tokens: {{athlete_name}}, {{assessment_aggregated}}, {{assesment_responses}}, "
-                "{{lesson_plan}}, {{curriculum}}, {{talking_points}}, {{feedback_report}}, {{scheduling_email}}"
+                "Available context tokens (use in prompts/instructions):\n\n"
+                "People:\n"
+                "  {ATHLETE_NAME} - Athlete's full name\n"
+                "  {ATHLETE_AGE} - Athlete's age (calculated from birthdate)\n"
+                "  {ATHLETE_GENDER} - Athlete's gender\n"
+                "  {ATHLETE_PRONOUN} - Athlete's preferred pronouns\n"
+                "  {ATHLETE_CITY} - Athlete's city\n"
+                "  {ATHLETE_ORG} - Athlete's organization\n"
+                "  {ATHLETE_ETHNICITY} - Athlete's ethnicity\n"
+                "  {ATHLETE_IMAGE} - Athlete's image URL\n"
+                "  {ATHLETE_AVATAR} - Athlete's avatar URL\n"
+                "  {COACH_NAME} - Coach's full name\n\n"
+                "Assessment Data:\n"
+                "  {ASSESSMENT_INFO} - Assessment metadata\n"
+                "  {ASSESSMENT_RESPONSES} - Individual question responses\n"
+                "  {ASSESSMENT_AGGREGATED} - Spider chart statistics\n\n"
+                "Published Content (for sequential agents):\n"
+                "  {PUBLISHED_FEEDBACK_REPORT}\n"
+                "  {PUBLISHED_CURRICULUM}\n"
+                "  {PUBLISHED_LESSON_PLAN}\n"
+                "  {PUBLISHED_TALKING_POINTS}\n"
+                "  {PUBLISHED_SCHEDULING_EMAIL}\n\n"
+                "Regeneration:\n"
+                "  {VERSION_HISTORY} - Previous versions\n"
+                "  {CHANGE_REQUEST} - Coach's change request\n"
             )
         
         return form

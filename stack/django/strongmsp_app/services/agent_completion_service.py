@@ -64,15 +64,15 @@ class AgentCompletionService:
             logger.error(f"Error getting assignment for athlete {athlete.id} and assessment {assessment.id}: {e}")
             return None
     
-    def run_completion(self, prompt_template, athlete, assessment, input_data):
+    def run_completion(self, prompt_template, athlete, assessment, context_data):
         """
-        Run OpenAI completion for an agent response using AgenticContextBuilder.
+        Run OpenAI completion using AgenticContextBuilder.
         
         Args:
             prompt_template: PromptTemplates instance
             athlete: User instance (athlete)
             assessment: Assessments instance
-            input_data: Dict containing 'input_a' and 'input_b' data
+            context_data: Dict with context information
             
         Returns:
             AgentResponses instance
@@ -86,21 +86,26 @@ class AgentCompletionService:
             # Initialize context builder
             context_builder = AgenticContextBuilder()
             
-            # Add contexts
+            # Add core contexts
             context_builder.add_athlete_context(athlete)
             context_builder.add_assessment_context(assessment)
             context_builder.add_template_instructions(prompt_template)
             
-            # Add input data based on type
-            if isinstance(input_data.get('input_a'), list):
-                # Question responses
-                context_builder.add_question_responses(input_data['input_a'])
-            elif isinstance(input_data.get('input_a'), str):
-                # Previous agent output
-                context_builder.add_previous_agent_output(input_data['input_a'])
+            # Add coach context
+            if context_data.get('coach'):
+                context_builder.add_coach_context(context_data['coach'])
             
-            if input_data.get('input_b'):
-                context_builder.add_spider_chart_data(input_data['input_b'])
+            # Add assessment data for initial agents
+            if context_data.get('assessment_responses'):
+                context_builder.add_assessment_responses(context_data['assessment_responses'])
+            
+            if context_data.get('assessment_aggregated'):
+                context_builder.add_assessment_aggregated(context_data['assessment_aggregated'])
+            
+            # Add published content for sequential agents
+            if context_data.get('published_content'):
+                published = context_data['published_content']
+                context_builder.add_published_coach_content(published)
             
             # Build messages
             messages = context_builder.build_messages()
@@ -195,44 +200,62 @@ class AgentCompletionService:
             )
             return agent_response
     
-    def prepare_input_data(self, athlete, assessment, purpose, previous_response=None):
+    def prepare_context_data(self, athlete, assessment, purpose, coach=None, published_content=None):
         """
-        Prepare input data for agent completion.
+        Prepare context data for agent completion based on purpose.
         
         Args:
             athlete: User instance (athlete)
             assessment: Assessments instance
-            purpose: Agent purpose (feedbackreport, talkingpoints, etc.)
-            previous_response: Previous AgentResponse for sequential agents
+            purpose: Agent purpose (feedback_report, curriculum, lesson_plan, etc.)
+            coach: User instance (coach) - optional, will be queried if not provided
+            published_content: CoachContent instance - for sequential agents
             
         Returns:
-            Dict with 'input_a' and 'input_b' data
+            Dict with semantic keys for context builder
         """
-        input_data = {}
+        context_data = {}
         
-        if previous_response:
-            # Sequential agent - use previous response as input A
-            input_data['input_a'] = previous_response.ai_response
-            input_data['input_b'] = None
-        else:
-            # Initial agents - use question responses and spider chart
-            # Input A: Question responses
-            question_responses = ConfidenceAnalyzer.get_question_responses_data(
-                athlete.id, 
-                assessment.id if assessment else None
-            )
-            input_data['input_a'] = question_responses
-            
-            # Input B: Spider chart data
-            spider_data = ConfidenceAnalyzer.get_spider_chart_data(
-                athlete.id, 
-                assessment.id if assessment else None
-            )
-            input_data['input_b'] = spider_data
+        # Query coach from assignment if not provided
+        if not coach:
+            assignment = self.get_assignment_for_assessment(athlete, assessment)
+            if assignment and assignment.coaches.exists():
+                coach = assignment.coaches.first()
         
-        return input_data
+        context_data['coach'] = coach
+        
+        # Initial agents need assessment data
+        if purpose in ['feedback_report', 'talking_points', 'scheduling_email']:
+            context_data['assessment_responses'] = ConfidenceAnalyzer.get_question_responses_data(
+                athlete.id, assessment.id if assessment else None
+            )
+            context_data['assessment_aggregated'] = ConfidenceAnalyzer.get_spider_chart_data(
+                athlete.id, assessment.id if assessment else None
+            )
+        
+        # Sequential agents need published content
+        elif purpose in ['curriculum', 'lesson_plan']:
+            if published_content:
+                context_data['published_content'] = published_content
+            else:
+                # Query most recent published content for the required purpose
+                from ..models import CoachContent
+                required_purpose_map = {
+                    'curriculum': 'feedback_report',
+                    'lesson_plan': 'curriculum',
+                }
+                required_purpose = required_purpose_map.get(purpose)
+                if required_purpose:
+                    published = CoachContent.objects.filter(
+                        athlete=athlete,
+                        purpose=required_purpose,
+                        coach_delivered__isnull=False
+                    ).order_by('-coach_delivered').first()
+                    context_data['published_content'] = published
+        
+        return context_data
     
-    def run_iterative_completion(self, prompt_template, athlete, assessment, input_data, previous_versions=None, change_request=None, coach=None):
+    def run_iterative_completion(self, prompt_template, athlete, assessment, context_data, previous_versions=None, change_request=None, coach=None):
         """
         Run OpenAI completion with version history and change request context.
         
@@ -240,7 +263,7 @@ class AgentCompletionService:
             prompt_template: PromptTemplates instance
             athlete: User instance (athlete)
             assessment: Assessments instance
-            input_data: Dict containing 'input_a' and 'input_b' data
+            context_data: Dict with context information
             previous_versions: List of AgentResponses instances (optional)
             change_request: String with coach's change request (optional)
             coach: User instance (coach) (optional)
@@ -262,16 +285,21 @@ class AgentCompletionService:
             context_builder.add_assessment_context(assessment)
             context_builder.add_template_instructions(prompt_template)
             
-            # Add input data based on type
-            if isinstance(input_data.get('input_a'), list):
-                # Question responses
-                context_builder.add_question_responses(input_data['input_a'])
-            elif isinstance(input_data.get('input_a'), str):
-                # Previous agent output
-                context_builder.add_previous_agent_output(input_data['input_a'])
+            # Add coach context
+            if coach or context_data.get('coach'):
+                context_builder.add_coach_context(coach or context_data['coach'])
             
-            if input_data.get('input_b'):
-                context_builder.add_spider_chart_data(input_data['input_b'])
+            # Add assessment data for initial agents
+            if context_data.get('assessment_responses'):
+                context_builder.add_assessment_responses(context_data['assessment_responses'])
+            
+            if context_data.get('assessment_aggregated'):
+                context_builder.add_assessment_aggregated(context_data['assessment_aggregated'])
+            
+            # Add published content for sequential agents
+            if context_data.get('published_content'):
+                published = context_data['published_content']
+                context_builder.add_published_coach_content(published)
             
             # Add iterative contexts
             if previous_versions:
@@ -279,9 +307,6 @@ class AgentCompletionService:
             
             if change_request:
                 context_builder.add_change_request(change_request)
-            
-            if coach:
-                context_builder.add_coach_context(coach)
             
             # Build messages
             messages = context_builder.build_messages()

@@ -1,10 +1,6 @@
 import {
     AccountCircle as AccountCircleIcon,
-    Dashboard as DashboardIcon,
-    Notifications as NotificationsIcon,
-    Payment as PaymentIcon,
-    Person as PersonIcon,
-    SupportAgent as SportsIcon
+    Dashboard as DashboardIcon
 } from "@mui/icons-material";
 import { Box } from "@mui/material";
 import React from "react";
@@ -17,10 +13,10 @@ const ParentMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
 
     const menuItems = [
         { path: "/dashboard", icon: DashboardIcon, label: "Dashboard", priority: true },
-        { path: "/notifications", icon: NotificationsIcon, label: "Notifications", priority: true },
-        { path: "/users", icon: PersonIcon, label: "Users", priority: false },
-        { path: "/payments", icon: PaymentIcon, label: "Payments", priority: false },
-        { path: "/coach-content", icon: SportsIcon, label: "Coach Content", priority: false },
+        // { path: "/notifications", icon: NotificationsIcon, label: "Notifications", priority: true },
+        //        { path: "/users", icon: PersonIcon, label: "Users", priority: false },
+        //        { path: "/payments", icon: PaymentIcon, label: "Payments", priority: false },
+        //        { path: "/coach-content", icon: SportsIcon, label: "Coach Content", priority: false },
         { path: "/my-profile", icon: AccountCircleIcon, label: "My Account", priority: false }
     ];
 

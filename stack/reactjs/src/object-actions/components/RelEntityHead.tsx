@@ -1,4 +1,4 @@
-import { Typography } from "@mui/material";
+import { Typography, TypographyVariant } from "@mui/material";
 import Avatar from "@mui/material/Avatar";
 import CardHeader, { CardHeaderProps } from "@mui/material/CardHeader";
 import React from "react";
@@ -8,9 +8,16 @@ import { NAVITEMS, RelEntity } from "../types/types";
 interface RelEntityHeadProps {
   rel: RelEntity;
   label?: string;
+  titleVariant?: TypographyVariant;
+  subheaderVariant?: TypographyVariant;
 }
 
-const RelEntityHead: React.FC<RelEntityHeadProps> = ({ rel, label }) => {
+const RelEntityHead: React.FC<RelEntityHeadProps> = ({
+  rel,
+  label,
+  titleVariant = "body1",
+  subheaderVariant = "body2"
+}) => {
   const headerProps: Partial<CardHeaderProps> = {};
   if (rel.img) {
     headerProps.avatar = (
@@ -21,12 +28,12 @@ const RelEntityHead: React.FC<RelEntityHeadProps> = ({ rel, label }) => {
   const hasUrl = NAVITEMS.find((nav) => nav.type === rel["_type"]);
 
   headerProps.subheader = (
-    <Typography variant={"body2"}>
+    <Typography variant={subheaderVariant}>
       {label ? label : !hasUrl ? rel["_type"] : hasUrl.singular}{" "}
     </Typography>
   );
   headerProps.title = (
-    <Typography variant={"body1"}>
+    <Typography variant={titleVariant}>
       {!hasUrl ? (
         rel.str
       ) : (

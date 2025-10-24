@@ -266,14 +266,14 @@ class AgentOrchestrator:
                         logger.error(f"No template found for purpose: {purpose}")
                         return
                     
-                    # Prepare input data
-                    input_data = self.completion_service.prepare_input_data(
-                        athlete, assessment, purpose
+                    # Prepare context data
+                    context_data = self.completion_service.prepare_context_data(
+                        athlete, assessment, purpose, coach
                     )
                     
                     # Run completion
                     agent_response = self.completion_service.run_completion(
-                        template, athlete, assessment, input_data
+                        template, athlete, assessment, context_data
                     )
                     
                     agent_responses.append(agent_response)
@@ -305,6 +305,59 @@ class AgentOrchestrator:
             logger.error(f"Error triggering assessment agents: {e}")
             return []
     
+    def trigger_sequential_agent_from_published_content(self, coach_content, skip_trigger=False):
+        """
+        Trigger next sequential agent when CoachContent is published.
+        
+        Args:
+            coach_content: CoachContent instance that was just published
+            skip_trigger: If True, skip triggering (default False)
+            
+        Returns:
+            AgentResponses instance or None
+        """
+        if skip_trigger:
+            return None
+        
+        # Map: current purpose → next agent purpose
+        SEQUENTIAL_AGENT_MAP = {
+            'feedback_report': 'curriculum',
+            'curriculum': 'lesson_plan',
+        }
+        
+        next_purpose = SEQUENTIAL_AGENT_MAP.get(coach_content.purpose)
+        if not next_purpose:
+            return None
+        
+        template = self.get_prompt_template_by_purpose(next_purpose)
+        if not template:
+            logger.error(f"No template for {next_purpose}")
+            return None
+        
+        # Prepare context with published content
+        context_data = self.completion_service.prepare_context_data(
+            athlete=coach_content.athlete,
+            assessment=coach_content.source_draft.assessment if coach_content.source_draft else None,
+            purpose=next_purpose,
+            coach=coach_content.author,
+            published_content=coach_content
+        )
+        
+        # Run completion
+        agent_response = self.completion_service.run_completion(
+            prompt_template=template,
+            athlete=coach_content.athlete,
+            assessment=coach_content.source_draft.assessment if coach_content.source_draft else None,
+            context_data=context_data
+        )
+        
+        # Notify coach
+        if coach_content.author:
+            self.notify_coach(agent_response, coach_content.author)
+        
+        logger.info(f"Triggered {next_purpose} from published {coach_content.purpose}")
+        return agent_response
+
     def trigger_sequential_agent(self, agent_purpose, athlete_id, assessment_id):
         """
         Trigger sequential agents (Sam, Patrick) synchronously.
@@ -349,14 +402,14 @@ class AgentOrchestrator:
                 logger.error(f"No previous response found for {agent_purpose}")
                 return None
             
-            # Prepare input data
-            input_data = self.completion_service.prepare_input_data(
-                athlete, assessment, agent_purpose, previous_response
+            # Prepare context data
+            context_data = self.completion_service.prepare_context_data(
+                athlete, assessment, agent_purpose, coach
             )
             
             # Run completion
             agent_response = self.completion_service.run_completion(
-                template, athlete, assessment, input_data
+                template, athlete, assessment, context_data
             )
             
             # Notify coach

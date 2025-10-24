@@ -408,13 +408,14 @@ class AgentResponsesViewSet(AutoAuthorViewSet):
             if agent_response.assignment and agent_response.assignment.coaches.exists():
                 coach = agent_response.assignment.coaches.first()
 
-            # Prepare input data
+            # Prepare context data
             from .services.agent_completion_service import AgentCompletionService
-            completion_service = AgentCompletionService();
-            input_data = completion_service.prepare_input_data(
+            completion_service = AgentCompletionService()
+            context_data = completion_service.prepare_context_data(
                 agent_response.athlete,
                 agent_response.assessment,
-                agent_response.purpose
+                agent_response.purpose,
+                coach=coach
             )
 
             # Run iterative completion
@@ -422,7 +423,7 @@ class AgentResponsesViewSet(AutoAuthorViewSet):
                 agent_response.prompt_template,
                 agent_response.athlete,
                 agent_response.assessment,
-                input_data,
+                context_data,
                 previous_versions=list(previous_versions),
                 change_request=change_request,
                 coach=coach
@@ -511,11 +512,13 @@ class CoachContentViewSet(AutoAuthorViewSet):
     @action(detail=True, methods=['post'])
     def publish(self, request, pk=None):
         """
-        Publish CoachContent (mark as delivered).
+        Publish CoachContent and optionally trigger next sequential agent.
         POST /api/coach-content/{id}/publish/
+        Body: {"skip_trigger": false}  # optional, defaults to false
         """
         try:
             coach_content = self.get_object()
+            skip_trigger = request.data.get('skip_trigger', False)
             
             # Set coach_delivered timestamp
             from django.utils import timezone
@@ -526,10 +529,21 @@ class CoachContentViewSet(AutoAuthorViewSet):
             from .services.agent_orchestrator import AgentOrchestrator
             orchestrator = AgentOrchestrator()
             orchestrator.notify_content_published(coach_content)
-
-            # Serialize and return updated content
-            serializer = CoachContentSerializer(coach_content)
-            return Response(serializer.data)
+            
+            # Trigger next sequential agent if applicable
+            next_agent_response = orchestrator.trigger_sequential_agent_from_published_content(
+                coach_content, 
+                skip_trigger=skip_trigger
+            )
+            
+            # Return response
+            response_data = {
+                'content': CoachContentSerializer(coach_content).data
+            }
+            if next_agent_response:
+                response_data['triggered_agent'] = AgentResponsesSerializer(next_agent_response).data
+            
+            return Response(response_data)
 
         except Exception as e:
             return Response(
@@ -572,13 +586,14 @@ class CoachContentViewSet(AutoAuthorViewSet):
             if coach_content.assignment and coach_content.assignment.coaches.exists():
                 coach = coach_content.assignment.coaches.first()
 
-            # Prepare input data
+            # Prepare context data
             from .services.agent_completion_service import AgentCompletionService
             completion_service = AgentCompletionService()
-            input_data = completion_service.prepare_input_data(
+            context_data = completion_service.prepare_context_data(
                 coach_content.athlete,
                 coach_content.source_draft.assessment,
-                coach_content.purpose
+                coach_content.purpose,
+                coach=coach
             )
 
             # Run iterative completion
@@ -586,7 +601,7 @@ class CoachContentViewSet(AutoAuthorViewSet):
                 coach_content.source_draft.prompt_template,
                 coach_content.athlete,
                 coach_content.source_draft.assessment,
-                input_data,
+                context_data,
                 previous_versions=list(previous_versions),
                 change_request=change_request,
                 coach=coach
@@ -1391,7 +1406,6 @@ class CurrentContextView(APIView):
                     by_athlete[athlete_id] = {
                         'assignments': [],
                         'my_roles': assignment_data['my_roles'],
-                        'payers':[],
                         'athlete': athlete_relentity,
                         'coaches': [],
                         'parents': [],
@@ -1403,7 +1417,6 @@ class CurrentContextView(APIView):
                         # Track IDs for efficient deduplication
                         '_coach_ids': set(),
                         '_parent_ids': set(),
-                        '_payer_ids': set(),
                         'agent_progress': {
                             "lesson_plan": None,  # null or RelEntity<AgentResponses> where purpose == lesson_plan and matching org + AgentResponses.payment_assignment.athelete 
                             "feedback_report": None, # null  or RelEntity<AgentResponses> where purpose == feedback_report  and matching org + AgentResponses.payment_assignment.athelete 
@@ -1427,16 +1440,6 @@ class CurrentContextView(APIView):
                     '_type': 'PaymentAssignments'
                 })
 
-                # Add payer with deduplication
-                if assignment.payment.author and assignment.payment.author.id not in by_athlete[athlete_id]['_payer_ids']:
-                    payer_relentity = {
-                        'id': assignment.payment.author.id,
-                        'str': str(assignment.payment.author),
-                        '_type': 'Users',
-                        'img': assignment.payment.author.photo.url if assignment.payment.author.photo else None
-                    }
-                    by_athlete[athlete_id]['payers'].append(payer_relentity)
-                    by_athlete[athlete_id]['_payer_ids'].add(assignment.payment.author.id)
                 
                 # Add coaches with deduplication
                 for coach in assignment.coaches.all():
@@ -1525,7 +1528,7 @@ class CurrentContextView(APIView):
 
                     
                 if assignment.payment.product:
-                    by_athlete[athlete_id]['payments'].append({
+                    payment_data = {
                         'id': assignment.payment.id,
                         'status': assignment.payment.status,
                         'subscription_ends': assignment.payment.subscription_ends.isoformat() if assignment.payment.subscription_ends else None,
@@ -1534,13 +1537,23 @@ class CurrentContextView(APIView):
                             'str': str(assignment.payment.product),
                             '_type': 'Products'
                         }
-                    })
+                    }
+                    
+                    # Add author if available
+                    if assignment.payment.author:
+                        payment_data['author'] = {
+                            'id': assignment.payment.author.id,
+                            'str': str(assignment.payment.author),
+                            '_type': 'Users',
+                            'img': assignment.payment.author.photo.url if assignment.payment.author.photo else None
+                        }
+                    
+                    by_athlete[athlete_id]['payments'].append(payment_data)
 
             # Clean up tracking sets before returning data
             for athlete_data in by_athlete.values():
                 athlete_data.pop('_coach_ids', None)
                 athlete_data.pop('_parent_ids', None)
-                athlete_data.pop('_payer_ids', None)
             
             context_data['payment_assignments'] = by_athlete.values()
 

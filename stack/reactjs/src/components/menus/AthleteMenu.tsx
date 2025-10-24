@@ -1,7 +1,6 @@
 import {
     AccountCircle as AccountCircleIcon,
-    Dashboard as DashboardIcon,
-    Notifications as NotificationsIcon
+    Dashboard as DashboardIcon
 } from "@mui/icons-material";
 import { Box } from "@mui/material";
 import React from "react";
@@ -14,7 +13,7 @@ const AthleteMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
 
     const menuItems = [
         { path: "/dashboard", icon: DashboardIcon, label: "Dashboard", priority: true },
-        { path: "/notifications", icon: NotificationsIcon, label: "Notifications", priority: true },
+        // { path: "/notifications", icon: NotificationsIcon, label: "Notifications", priority: true },
         { path: "/my-profile", icon: AccountCircleIcon, label: "My Account", priority: false }
     ];
 

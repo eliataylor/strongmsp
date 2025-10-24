@@ -1,6 +1,6 @@
 import { AthletePaymentAssignment } from '../object-actions/types/types';
 
-export type UserRole = 'payer' | 'parent' | 'athlete' | 'coach' | 'none';
+export type UserRole = 'author' | 'parent' | 'athlete' | 'coach' | 'none';
 
 export type EditableField = 'athlete' | 'coaches' | 'parents';
 
@@ -14,9 +14,9 @@ export function getUserRoleInAssignment(
 ): UserRole {
     if (!userId) return 'none';
 
-    // Check if user is a payer
-    if (assignment.payers.some(payer => payer.id === userId)) {
-        return 'payer';
+    // Check if user is an author (payer) of any payment
+    if (assignment.payments.some(payment => payment.author && payment.author.id === userId)) {
+        return 'author';
     }
 
     // Check if user is the athlete
@@ -52,7 +52,7 @@ export function canEditField(
 
     // Define field permissions by role
     const rolePermissions: Record<UserRole, EditableField[]> = {
-        'payer': ['athlete', 'coaches', 'parents'],
+        'author': [], // No special content access permissions
         'parent': ['athlete', 'coaches'], // Cannot edit parents
         'athlete': ['coaches'], // Can only edit coaches
         'coach': ['coaches'], // Can only edit coaches
@@ -74,7 +74,7 @@ export function getEditableFields(
     }
 
     const rolePermissions: Record<UserRole, EditableField[]> = {
-        'payer': ['athlete', 'coaches', 'parents'],
+        'author': [], // No special content access permissions
         'parent': ['athlete', 'coaches'],
         'athlete': ['coaches'],
         'coach': ['coaches'],

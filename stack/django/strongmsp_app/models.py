@@ -71,6 +71,25 @@ class Users(AbstractUser, BumpParentsModelMixin):
 		# Add a new email address for the user, and send email confirmation.
 		# Old email will remain the primary until the new one is confirmed.
 		return EmailAddress.objects.add_email(request, request.user, new_email, confirm=True)
+	
+	def calculate_age(self):
+		"""
+		Calculate age from birthdate.
+		
+		Returns:
+			int: Age in years, or None if birthdate is not set
+		"""
+		if not self.birthdate:
+			return None
+		
+		today = timezone.now().date()
+		age = today.year - self.birthdate.year
+		
+		# Adjust if birthday hasn't occurred this year
+		if today.month < self.birthdate.month or (today.month == self.birthdate.month and today.day < self.birthdate.day):
+			age -= 1
+		
+		return age
 
 
 	@receiver(email_confirmed)
@@ -282,7 +301,9 @@ class PromptTemplates(SuperModel):
 		verbose_name_plural = "Prompt Templates"
 
 	def __str__(self):
-		return self.author.get_full_name()
+		if self.author:
+			return self.author.get_full_name()
+		return f"Prompt Template #{self.id or 'New'}"
 
 	def save(self, *args, **kwargs):
 		if not self.purpose:
