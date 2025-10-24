@@ -55,10 +55,12 @@ class Users(AbstractUser, BumpParentsModelMixin):
 	zip_code = models.CharField(max_length=10, blank=True, null=True, verbose_name='Zip Code')
 
 	def __str__(self):
-		if self.get_full_name().strip():
-			return self.get_full_name()
-		elif self.get_short_name().strip():
-			return self.get_short_name()
+		full_name = self.get_full_name()
+		if full_name and full_name.strip():
+			return full_name
+		short_name = self.get_short_name()
+		if short_name and short_name.strip():
+			return short_name
 		elif self.username.strip():
 			return self.username
 		else:
@@ -109,9 +111,57 @@ class SuperModel(models.Model):
 		abstract = True
 		ordering = ['modified_at']
 
+	@classmethod
+	def get_default_author(cls):
+		"""
+		Get a default admin user for records that don't have an author.
+		This prevents NULL author issues in admin interface.
+		"""
+		try:
+			# Try to get the first superuser
+			User = get_user_model()
+			admin_user = User.objects.filter(is_superuser=True).first()
+			if admin_user:
+				return admin_user
+			
+			# If no superuser, get the first staff user
+			staff_user = User.objects.filter(is_staff=True).first()
+			if staff_user:
+				return staff_user
+			
+			# If no staff user, get the first user
+			first_user = User.objects.first()
+			if first_user:
+				return first_user
+			
+			# If no users exist, return None (this shouldn't happen in normal operation)
+			return None
+		except Exception:
+			return None
+
 	def save(self, *args, **kwargs):
+		# Set default author if none is provided
+		if not self.author:
+			self.author = self.get_default_author()
+		
 		self.modified_at = now()
 		super().save(*args, **kwargs)
+
+	@property
+	def author_display_name(self):
+		"""
+		Safely get the author's display name, handling None authors.
+		"""
+		if not self.author:
+			return "Unknown Author"
+		
+		full_name = self.author.get_full_name()
+		if full_name and full_name.strip():
+			return full_name
+		elif self.author.username:
+			return self.author.username
+		else:
+			return f"User #{self.author.id}"
 
 	def __str__(self):
 		if hasattr(self, "title"):
@@ -292,7 +342,9 @@ class PaymentAssignments(SuperModel):
 	post_assessment_submitted_at = models.DateTimeField(null=True, blank=True, verbose_name='Post-Assessment Submitted At')
 
 	def __str__(self):
-		return f"Assignment #{self.id} for {self.athlete.get_full_name()} on {self.payment.product.title}"
+		athlete_name = self.athlete.get_full_name() if self.athlete and self.athlete.get_full_name() else (self.athlete.username if self.athlete else 'No Athlete')
+		product_title = self.payment.product.title if self.payment and self.payment.product else 'No Product'
+		return f"Assignment #{self.id} for {athlete_name} on {product_title}"
 
 class PromptTemplates(SuperModel):
 	class Meta:
@@ -302,7 +354,8 @@ class PromptTemplates(SuperModel):
 
 	def __str__(self):
 		if self.author:
-			return self.author.get_full_name()
+			full_name = self.author.get_full_name()
+			return full_name if full_name and full_name.strip() else self.author.username
 		return f"Prompt Template #{self.id or 'New'}"
 
 	def save(self, *args, **kwargs):
@@ -353,7 +406,8 @@ class AgentResponses(SuperModel):
 	ai_reasoning = models.TextField(blank=True, null=True, verbose_name='AI Reasoning')
 
 	def __str__(self):
-		return f"{self.purpose} for {self.athlete.get_full_name()}"
+		athlete_name = self.athlete.get_full_name() if self.athlete and self.athlete.get_full_name() else (self.athlete.username if self.athlete else 'Unknown Athlete')
+		return f"{self.purpose} for {athlete_name}"
 
 class CoachContent(SuperModel):
 	class Meta:
@@ -388,7 +442,8 @@ class CoachContent(SuperModel):
 	parent_received = models.DateTimeField(blank=True, null=True, verbose_name='Parent Received At') # only parent can check
 
 	def __str__(self):
-		return f"{self.purpose} for {self.athlete.get_full_name()}"
+		athlete_name = self.athlete.get_full_name() if self.athlete and self.athlete.get_full_name() else (self.athlete.username if self.athlete else 'Unknown Athlete')
+		return f"{self.purpose} for {athlete_name}"
 
 class Shares(SuperModel):
 	class Meta:

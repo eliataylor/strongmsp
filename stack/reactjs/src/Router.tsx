@@ -436,7 +436,7 @@ function createRouter() {
   allRoutes[0].children.push({
     path: `/prompt-tester`,
     element: (
-      <RoleProtectedRoute requiredRoles={['coach', 'admin']}>
+      <RoleProtectedRoute requiredRoles={['coach', 'admin', 'agent']} requireAll={false}>
         <PromptTesterScreen />
       </RoleProtectedRoute>
     )
@@ -445,7 +445,7 @@ function createRouter() {
   allRoutes[0].children.push({
     path: `/admin/branding`,
     element: (
-      <RoleProtectedRoute requiredRoles={['admin']}>
+      <RoleProtectedRoute requiredRoles={['admin', 'agent']} requireAll={false}>
         <BrandingSettings />
       </RoleProtectedRoute>
     )

@@ -140,7 +140,7 @@ class AgentOrchestrator:
             for parent in parents:
                 parent_notifications = create_notification_group(
                     recipient=parent,
-                    message=f"Assessment completed for {athlete.get_full_name() or athlete.username}. Coach will reach out soon.",
+                    message=f"Assessment completed for {athlete.author_display_name}. Coach will reach out soon.",
                     channels=['email'],
                     notification_type='assessment-submitted',
                     priority='normal',
@@ -192,7 +192,7 @@ class AgentOrchestrator:
             
             # Notify parents
             for parent in parents:
-                message = f"New content available for {athlete.get_full_name() if athlete else 'your athlete'}: {coach_content.title}"
+                message = f"New content available for {athlete.author_display_name if athlete else 'your athlete'}: {coach_content.title}"
                 
                 parent_notifications = create_notification_group(
                     recipient=parent,

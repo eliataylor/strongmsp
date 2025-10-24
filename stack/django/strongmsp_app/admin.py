@@ -42,6 +42,31 @@ admin.site.site_title = "Strong Mind Strong Performance"
 admin.site.index_title = "Welcome Coach!"
 
 
+def safe_display_name(obj):
+    """
+    Safely get display name for both Users and SuperModel objects.
+    """
+    if not obj:
+        return "Unknown"
+    
+    # If it's a SuperModel object, use author_display_name
+    if hasattr(obj, 'author_display_name'):
+        return obj.author_display_name
+    
+    # If it's a Users object, handle it safely
+    if hasattr(obj, 'get_full_name'):
+        full_name = obj.get_full_name()
+        if full_name and full_name.strip():
+            return full_name
+        elif obj.username:
+            return obj.username
+        else:
+            return f"User #{obj.id}"
+    
+    # Fallback
+    return str(obj)
+
+
 # Custom pagination for large datasets
 class LargeTablePaginator(admin.AdminSite):
     # Set higher page sizes with more options
@@ -85,7 +110,7 @@ class CoachFilter(SimpleListFilter):
             groups__name='Coaches'
         ).distinct().order_by('username')
         
-        return [(user.id, f"{user.get_full_name() or user.username} ({user.email})") for user in coach_users]
+        return [(user.id, f"{safe_display_name(user)} ({user.email})") for user in coach_users if user]
     
     def queryset(self, request, queryset):
         """Filter the queryset based on the selected coach"""
@@ -300,9 +325,7 @@ class QuestionResponsesAdmin(BaseModelAdmin):
     readonly_fields = ('id', 'created_at', 'modified_at')
 
     def display_athlete(self, obj):
-        if obj.author:
-            return obj.author.get_full_name() or obj.author.username
-        return "Unknown"
+        return safe_display_name(obj.author)
     display_athlete.short_description = "Athlete"
 
     def display_question(self, obj):
@@ -345,9 +368,7 @@ class PaymentsAdmin(BaseModelAdmin):
     readonly_fields = ('id', 'created_at', 'modified_at')
 
     def display_purchaser(self, obj):
-        if obj.author:
-            return obj.author.get_full_name() or obj.author.username
-        return "Unknown"
+        return safe_display_name(obj.author)
     display_purchaser.short_description = "Purchaser"
 
     def display_product(self, obj):
@@ -393,21 +414,21 @@ class PaymentAssignmentsAdmin(BaseModelAdmin):
     
     def display_athlete(self, obj):
         if obj.athlete:
-            return obj.athlete.get_full_name() or obj.athlete.username
+            return safe_display_name(obj.athlete)
         return "No athlete assigned"
     display_athlete.short_description = "Athlete"
     
     def display_coaches(self, obj):
         coaches = obj.coaches.all()
         if coaches:
-            return ", ".join([coach.get_full_name() or coach.username for coach in coaches])
+            return ", ".join([safe_display_name(coach) for coach in coaches])
         return "No coaches assigned"
     display_coaches.short_description = "Coaches"
     
     def display_parents(self, obj):
         parents = obj.parents.all()
         if parents:
-            return ", ".join([parent.get_full_name() or parent.username for parent in parents])
+            return ", ".join([safe_display_name(parent) for parent in parents])
         return "No parents assigned"
     display_parents.short_description = "Parents"
     
@@ -446,9 +467,7 @@ class PromptTemplatesAdmin(BaseModelAdmin):
     display_prompt_preview.short_description = "Prompt Preview"
 
     def display_author(self, obj):
-        if obj.author:
-            return obj.author.get_full_name() or obj.author.username
-        return "No author"
+        return safe_display_name(obj.author)
     display_author.short_description = "Author"
 
     def available_tokens_info(self, obj):
@@ -638,7 +657,7 @@ class AgentResponsesAdmin(BaseModelAdmin):
 
     def display_athlete(self, obj):
         if obj.athlete:
-            return obj.athlete.get_full_name() or obj.athlete.username
+            return safe_display_name(obj.athlete)
         return "Unknown"
     display_athlete.short_description = "Athlete"
 
@@ -656,7 +675,8 @@ class AgentResponsesAdmin(BaseModelAdmin):
 
     def display_assignment(self, obj):
         if obj.assignment:
-            return f"Assignment #{obj.assignment.id} - {obj.assignment.athlete.get_full_name() if obj.assignment.athlete else 'No Athlete'}"
+            athlete_name = safe_display_name(obj.assignment.athlete) if obj.assignment.athlete else 'No Athlete'
+            return f"Assignment #{obj.assignment.id} - {athlete_name}"
         return "No assignment"
     display_assignment.short_description = "Assignment"
 
@@ -752,9 +772,7 @@ class CoachContentAdmin(BaseModelAdmin):
     cover_photo_tag.short_description = "Cover Photo"
 
     def display_coach(self, obj):
-        if obj.author:
-            return obj.author.get_full_name() or obj.author.username
-        return "Unknown"
+        return safe_display_name(obj.author)
     display_coach.short_description = "Coach"
 
     def display_privacy(self, obj):
@@ -777,7 +795,8 @@ class CoachContentAdmin(BaseModelAdmin):
 
     def display_assignment(self, obj):
         if obj.assignment:
-            return f"Assignment #{obj.assignment.id} - {obj.assignment.athlete.get_full_name() if obj.assignment.athlete else 'No Athlete'}"
+            athlete_name = safe_display_name(obj.assignment.athlete) if obj.assignment.athlete else 'No Athlete'
+            return f"Assignment #{obj.assignment.id} - {athlete_name}"
         return "No assignment"
     display_assignment.short_description = "Assignment"
 
@@ -799,13 +818,12 @@ class CoachContentAdmin(BaseModelAdmin):
         return "Not received"
     display_parent_received.short_description = "Parent Received"
 
-    list_display = ('id', 'display_title_preview', 'display_coach', 'display_assignment', 'source_draft', 'privacy', 'display_coach_delivered', 'display_athlete_received', 'display_parent_received', 'image_tag', 'cover_photo_tag', 'created_at', 'modified_at')
-    list_filter = ('privacy', 'coach_delivered', 'athlete_received', 'parent_received', 'created_at', 'modified_at', 'assignment', CoachFilter)
+    list_display = ('id', 'display_title_preview', 'display_coach', 'display_assignment', 'source_draft', 'display_coach_delivered', 'display_athlete_received', 'display_parent_received', 'created_at', 'modified_at')
+    list_filter = ('coach_delivered', 'athlete_received', 'parent_received', 'created_at', 'modified_at', 'assignment', CoachFilter)
     search_fields = ('title', 'body', 'author__username', 'author__email', 'author__first_name', 'author__last_name', 'assignment__id')
     readonly_fields = ('id', 'created_at', 'modified_at')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
-    list_editable = ('privacy',)
 
     fieldsets = (
         ('Content Information', {
@@ -837,7 +855,7 @@ class SharesAdmin(BaseModelAdmin):
 
     def display_recipient(self, obj):
         if obj.recipient:
-            return obj.recipient.get_full_name() or obj.recipient.username
+            return safe_display_name(obj.recipient)
         return "Unknown"
     display_recipient.short_description = "Recipient"
 
@@ -881,7 +899,7 @@ class NotificationsAdmin(BaseModelAdmin):
 
     def display_recipient(self, obj):
         if obj.recipient:
-            return obj.recipient.get_full_name() or obj.recipient.username
+            return safe_display_name(obj.recipient)
         return "Unknown"
     display_recipient.short_description = "Recipient"
 

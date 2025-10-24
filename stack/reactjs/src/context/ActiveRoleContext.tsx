@@ -46,7 +46,8 @@ export const ActiveRoleProvider: React.FC<ActiveRoleProviderProps> = ({ children
     // Update available roles when user changes
     useEffect(() => {
         console.log("[USERTYPE] Auth data changed:", auth?.data?.user);
-        if (auth?.data?.user) {
+        console.log("[USERTYPE] Auth meta is_authenticated:", auth?.meta?.is_authenticated);
+        if (auth?.data?.user && auth?.meta?.is_authenticated) {
             const user = auth.data.user;
             const roles: USER_TYPE[] = [];
 
@@ -87,13 +88,13 @@ export const ActiveRoleProvider: React.FC<ActiveRoleProviderProps> = ({ children
                 console.log("[USERTYPE] Current active role is valid:", activeRole);
             }
         } else {
-            console.log("[USERTYPE] No user data, clearing roles");
+            console.log("[USERTYPE] No user data or not authenticated, clearing roles");
             // User not authenticated, clear roles
             setAvailableRoles([]);
             setActiveRoleState(null);
             localStorage.removeItem('smsp_active_role');
         }
-    }, [auth?.data?.user, activeRole]);
+    }, [auth?.data?.user, auth?.meta?.is_authenticated, activeRole]);
 
     // Function to set active role
     const setActiveRole = (role: USER_TYPE) => {

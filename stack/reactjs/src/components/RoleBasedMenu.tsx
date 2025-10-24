@@ -1,6 +1,6 @@
 import { Divider } from "@mui/material";
 import React from "react";
-import { useUser } from "src/allauth/auth";
+import { useAuth } from "src/allauth/auth";
 import { useActiveRole } from "../context/ActiveRoleContext";
 import AnonymousMenu from "./menus/AnonymousMenu";
 import AthleteMenu from "./menus/AthleteMenu";
@@ -10,11 +10,18 @@ import { MenuProps } from "./menus/PublicPagesMenu";
 
 const RoleBasedMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
     const { activeRole, hasRole } = useActiveRole();
-    const user = useUser();
+    const auth = useAuth();
 
+    // Get user from auth context for consistent state
+    const user = auth?.data?.user;
+    const isAuthenticated = auth?.meta?.is_authenticated;
 
-    // Return AnonymousMenu if no active role is set
-    if (!activeRole || !user?.id) {
+    // Debug logging for menu state
+    console.log("[MENU] RoleBasedMenu render - isAuthenticated:", isAuthenticated, "user:", user?.id, "activeRole:", activeRole);
+
+    // Return AnonymousMenu if not authenticated or no active role is set
+    if (!isAuthenticated || !user?.id || !activeRole) {
+        console.log("[MENU] Showing AnonymousMenu - isAuthenticated:", isAuthenticated, "user:", user?.id, "activeRole:", activeRole);
         return <AnonymousMenu layout={layout} />;
     }
 
@@ -29,6 +36,8 @@ const RoleBasedMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
                 return hasRole('coach') ? <CoachMenu layout={layout} /> : null;
             case 'admin':
                 return hasRole('admin') ? <CoachMenu layout={layout} /> : null;
+            case 'agent':
+                return hasRole('agent') ? <CoachMenu layout={layout} /> : null;
             default:
                 return <AnonymousMenu layout={layout} />;
         }
