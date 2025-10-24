@@ -20,6 +20,9 @@ const ThemeProvider = ({ children }) => {
   // Branding settings state
   const [brandingSettings, setBrandingSettings] = useState({
     customLogoBase64: null,
+    organizationName: "",
+    organizationShortName: "",
+    logoUrl: null,
     palette: {
       light: {
         primary: { main: "#877010" },
@@ -43,6 +46,9 @@ const ThemeProvider = ({ children }) => {
 
       let settings = {
         customLogoBase64: null,
+        organizationName: "",
+        organizationShortName: "",
+        logoUrl: null,
         palette: {
           light: {
             primary: { main: "#877010" },
@@ -102,9 +108,24 @@ const ThemeProvider = ({ children }) => {
     updateBrandingSettings({ customLogoBase64: base64 });
   };
 
+  const updateOrganizationName = (name) => {
+    updateBrandingSettings({ organizationName: name });
+  };
+
+  const updateOrganizationShortName = (shortName) => {
+    updateBrandingSettings({ organizationShortName: shortName });
+  };
+
+  const updateLogoUrl = (url) => {
+    updateBrandingSettings({ logoUrl: url });
+  };
+
   const resetBrandingSettings = () => {
     const defaultSettings = {
       customLogoBase64: null,
+      organizationName: "",
+      organizationShortName: "",
+      logoUrl: null,
       palette: {
         light: {
           primary: { main: "#877010" },
@@ -261,6 +282,9 @@ const ThemeProvider = ({ children }) => {
       brandingSettings,
       updateBrandingSettings,
       updateLogo,
+      updateOrganizationName,
+      updateOrganizationShortName,
+      updateLogoUrl,
       resetBrandingSettings
     }}>
       <MuiThemeProvider theme={theme}>

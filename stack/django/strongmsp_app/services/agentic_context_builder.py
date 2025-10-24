@@ -18,6 +18,9 @@ CONTEXT_PREFIXES = {
     'QUESTION_RESPONSES': 'QUESTION_RESPONSES:',
     'SPIDER_CHART': 'SPIDER_CHART:',
     'PREVIOUS_AGENT_OUTPUT': 'PREVIOUS_AGENT_OUTPUT:',
+    'VERSION_HISTORY': 'VERSION_HISTORY:',
+    'CHANGE_REQUEST': 'CHANGE_REQUEST:',
+    'COACH_PROFILE': 'COACH_PROFILE:',
     'SYSTEM_INSTRUCTIONS': 'SYSTEM_INSTRUCTIONS:',
     'TEMPLATE_PROMPT': 'TEMPLATE_PROMPT:',
 }
@@ -109,6 +112,36 @@ class AgenticContextBuilder:
         self.prompt_template = prompt_template
         if prompt_template and prompt_template.instructions:
             self.context_parts['system_instructions'] = f"{CONTEXT_PREFIXES['SYSTEM_INSTRUCTIONS']}\n\n{prompt_template.instructions}"
+    
+    def add_previous_versions(self, version_list):
+        """
+        Store history of past AgentResponses for the same athlete/purpose.
+        
+        Args:
+            version_list: List of AgentResponses instances
+        """
+        if version_list:
+            self.context_parts['version_history'] = self.format_version_history_as_markdown(version_list)
+    
+    def add_change_request(self, change_request_text):
+        """
+        Store coach's requested changes.
+        
+        Args:
+            change_request_text: String with coach's change request
+        """
+        if change_request_text:
+            self.context_parts['change_request'] = f"{CONTEXT_PREFIXES['CHANGE_REQUEST']}\n\n{change_request_text}"
+    
+    def add_coach_context(self, coach):
+        """
+        Store coach profile information.
+        
+        Args:
+            coach: User instance (coach)
+        """
+        if coach:
+            self.context_parts['coach_profile'] = f"{CONTEXT_PREFIXES['COACH_PROFILE']}\n\n{self.format_coach_profile(coach)}"
     
     # Formatting Methods
     
@@ -251,6 +284,62 @@ class AgenticContextBuilder:
         
         return f"{CONTEXT_PREFIXES['SPIDER_CHART']}\n\n" + "\n".join(sections)
     
+    def format_version_history_as_markdown(self, version_list) -> str:
+        """
+        Format version history as markdown.
+        
+        Args:
+            version_list: List of AgentResponses instances
+            
+        Returns:
+            Formatted version history string
+        """
+        if not version_list:
+            return ""
+        
+        sections = []
+        
+        for i, version in enumerate(version_list, 1):
+            version_info = f"**Version {i}** (ID: {version.id}, {version.created_at.strftime('%Y-%m-%d %H:%M')})"
+            
+            # Truncate response for readability
+            response_preview = version.ai_response[:200] + "..." if len(version.ai_response) > 200 else version.ai_response
+            
+            sections.append(f"{version_info}\n```\n{response_preview}\n```")
+        
+        return f"{CONTEXT_PREFIXES['VERSION_HISTORY']}\n\n" + "\n\n".join(sections)
+    
+    def format_coach_profile(self, coach) -> str:
+        """
+        Format coach profile as markdown.
+        
+        Args:
+            coach: User instance (coach)
+            
+        Returns:
+            Formatted coach profile string
+        """
+        if not coach:
+            return ""
+        
+        sections = []
+        
+        # Basic info
+        if coach.get_full_name():
+            sections.append(f"**Name:** {coach.get_full_name()}")
+        elif coach.username:
+            sections.append(f"**Username:** {coach.username}")
+        
+        if coach.email:
+            sections.append(f"**Email:** {coach.email}")
+        
+        # User groups
+        if coach.groups.exists():
+            group_names = [group.name for group in coach.groups.all()]
+            sections.append(f"**User Groups:** {', '.join(group_names)}")
+        
+        return "\n".join(sections)
+    
     # Compilation Methods
     
     def get_context_value(self, key: str) -> str:
@@ -339,6 +428,27 @@ class AgenticContextBuilder:
             messages.append({
                 'role': 'system',
                 'content': f"{CONTEXT_PREFIXES['PREVIOUS_AGENT_OUTPUT']}\n\n{self.context_parts['previous_agent_output']}"
+            })
+        
+        # Version history
+        if 'version_history' in self.context_parts:
+            messages.append({
+                'role': 'system',
+                'content': self.context_parts['version_history']
+            })
+        
+        # Change request
+        if 'change_request' in self.context_parts:
+            messages.append({
+                'role': 'user',
+                'content': self.context_parts['change_request']
+            })
+        
+        # Coach profile
+        if 'coach_profile' in self.context_parts:
+            messages.append({
+                'role': 'system',
+                'content': self.context_parts['coach_profile']
             })
         
         # Template prompt (user message)

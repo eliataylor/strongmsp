@@ -3,6 +3,7 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 from django.utils.html import format_html
+from django import forms
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import Users
 from .models import Courses
@@ -31,7 +32,7 @@ from django.utils.safestring import mark_safe
 from django.db.models import Count, Q
 from django.contrib.admin import SimpleListFilter
 from .admin_mixins import SmartAdminMixin
-from django_summernote.admin import SummernoteModelAdmin
+# from django_summernote.admin import SummernoteModelAdmin  # Removed - using Markdown instead of HTML
 
 image_html = '<div style="width: 50px; height: 50px; background-image: url({}); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>'
 no_image_html = "No Image"
@@ -663,9 +664,15 @@ class AgentResponsesAdmin(BaseModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(CoachContent)
-class CoachContentAdmin(SummernoteModelAdmin, BaseModelAdmin):
+class CoachContentAdmin(BaseModelAdmin):
     readonly_fields = ('id', 'created_at', 'modified_at')
-    summernote_fields = ('body',)
+    
+    # Use a textarea for Markdown editing instead of Summernote
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if 'body' in form.base_fields:
+            form.base_fields['body'].widget = forms.Textarea(attrs={'rows': 20, 'cols': 80})
+        return form
 
     def image_tag(self, obj):
         if obj.icon:
@@ -727,7 +734,7 @@ class CoachContentAdmin(SummernoteModelAdmin, BaseModelAdmin):
         return "Not received"
     display_parent_received.short_description = "Parent Received"
 
-    list_display = ('id', 'display_title_preview', 'display_coach', 'display_assignment', 'privacy', 'display_coach_delivered', 'display_athlete_received', 'display_parent_received', 'image_tag', 'cover_photo_tag', 'created_at', 'modified_at')
+    list_display = ('id', 'display_title_preview', 'display_coach', 'display_assignment', 'source_draft', 'privacy', 'display_coach_delivered', 'display_athlete_received', 'display_parent_received', 'image_tag', 'cover_photo_tag', 'created_at', 'modified_at')
     list_filter = ('privacy', 'coach_delivered', 'athlete_received', 'parent_received', 'created_at', 'modified_at', 'assignment', CoachFilter)
     search_fields = ('title', 'body', 'author__username', 'author__email', 'author__first_name', 'author__last_name', 'assignment__id')
     readonly_fields = ('id', 'created_at', 'modified_at')
@@ -737,7 +744,7 @@ class CoachContentAdmin(SummernoteModelAdmin, BaseModelAdmin):
 
     fieldsets = (
         ('Content Information', {
-            'fields': ('author', 'assignment', 'title', 'body', 'purpose', 'privacy')
+            'fields': ('author', 'assignment', 'source_draft', 'athlete', 'title', 'body', 'purpose', 'privacy')
         }),
         ('Media', {
             'fields': ('icon', 'cover_photo'),
@@ -892,20 +899,20 @@ class OrganizationProductsInline(admin.TabularInline):
     fields = ('product', 'is_featured', 'display_order')
 
 class OrganizationsAdmin(BaseModelAdmin):
-    list_display = ('name', 'slug', 'is_active', 'contact_email', 'created_at')
+    list_display = ('name', 'short_name', 'slug', 'is_active', 'contact_email', 'created_at')
     list_filter = ('is_active', 'created_at')
-    search_fields = ('name', 'slug', 'contact_email')
+    search_fields = ('name', 'short_name', 'slug', 'contact_email')
     inlines = [OrganizationProductsInline]
     fieldsets = (
         (None, {
-            'fields': ('name', 'slug', 'is_active')
+            'fields': ('name', 'short_name', 'slug', 'is_active')
         }),
         ('Contact Information', {
             'fields': ('contact_email', 'contact_phone'),
             'classes': ('collapse',)
         }),
         ('Branding Settings', {
-            'fields': ('custom_logo_base64', 'branding_palette', 'branding_typography'),
+            'fields': ('logo', 'custom_logo_base64', 'branding_palette', 'branding_typography'),
             'classes': ('collapse',)
         }),
     )

@@ -1243,8 +1243,10 @@ export interface Users {
 export interface OrganizationPublicData {
   id: number;
   name: string;
+  short_name?: string | null;
   slug: string;
   is_active: boolean;
+  logo?: string | null;
   custom_logo_base64?: string | null;
   branding_palette?: any;
   branding_typography?: any;
@@ -1405,6 +1407,8 @@ export interface CoachContent extends SuperModel {
   athlete_received: string | null;
   parent_received: string | null;
   assignment: RelEntity<"PaymentAssignments">;
+  source_draft?: RelEntity<"AgentResponses"> | null;
+  athlete?: RelEntity<"Users"> | null;
 }
 export interface Shares extends SuperModel {
   recipient: RelEntity<"Users">;

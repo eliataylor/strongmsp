@@ -10,17 +10,21 @@ import {
     useMediaQuery,
     useTheme
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FadedPaper } from "src/theme/StyledFields";
 import { useUser } from "../allauth/auth/hooks";
+import { useAppContext } from "../context/AppContext";
 import Logo from "../theme/Logo";
+import { ThemeContext } from "../theme/ThemeContext";
 import RoleBasedMenu from "./RoleBasedMenu";
 import PublicPagesMenu from "./menus/PublicPagesMenu";
 
 const PublicHeader: React.FC = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
     const user = useUser();
+    const { organization } = useAppContext();
+    const { brandingSettings, updateOrganizationName, updateOrganizationShortName, updateLogoUrl } = useContext(ThemeContext);
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -28,6 +32,21 @@ const PublicHeader: React.FC = () => {
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
     };
+
+    // Sync organization data with branding settings
+    useEffect(() => {
+        if (organization) {
+            if (organization.name && !brandingSettings.organizationName) {
+                updateOrganizationName(organization.name);
+            }
+            if (organization.short_name && !brandingSettings.organizationShortName) {
+                updateOrganizationShortName(organization.short_name);
+            }
+            if (organization.logo && !brandingSettings.logoUrl) {
+                updateLogoUrl(organization.logo);
+            }
+        }
+    }, [organization, brandingSettings, updateOrganizationName, updateOrganizationShortName, updateLogoUrl]);
 
 
     const drawer = (
@@ -81,14 +100,9 @@ const PublicHeader: React.FC = () => {
                                     component="div"
                                     sx={{ m: 0, p: 0, lineHeight: "16px" }}
                                 >
-                                    <em><b>S</b></em>trong <em><b>M</b></em>ind
-                                </Typography>
-                                <Typography
-                                    variant="h6"
-                                    component="div"
-                                    sx={{ m: 0, p: 0, lineHeight: "16px" }}
-                                >
-                                    <em><b>S</b></em>trong  <em><b>P</b></em>erformance
+                                    {brandingSettings?.organizationShortName ||
+                                        brandingSettings?.organizationName ||
+                                        "Strong Mind Strong Performance"}
                                 </Typography>
                             </Box>
                         </Link>

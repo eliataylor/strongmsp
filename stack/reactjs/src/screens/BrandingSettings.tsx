@@ -29,7 +29,7 @@ import { ThemeContext } from '../theme/ThemeContext';
 import ThemeSwitcher from '../theme/ThemeSwitcher';
 
 const BrandingSettings: React.FC = () => {
-    const { brandingSettings, updateBrandingSettings, resetBrandingSettings, updateLogo } = useContext(ThemeContext);
+    const { brandingSettings, updateBrandingSettings, resetBrandingSettings, updateLogo, updateOrganizationName, updateOrganizationShortName, updateLogoUrl } = useContext(ThemeContext);
     const { hasRole } = useActiveRole();
     const { organization } = useAppContext();
     const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -86,6 +86,18 @@ const BrandingSettings: React.FC = () => {
         current[keys[keys.length - 1]] = value;
 
         updateBrandingSettings(newSettings);
+    };
+
+    const handleOrganizationNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        updateOrganizationName(event.target.value);
+    };
+
+    const handleOrganizationShortNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        updateOrganizationShortName(event.target.value);
+    };
+
+    const handleLogoUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        updateLogoUrl(event.target.value);
     };
 
 
@@ -162,6 +174,54 @@ const BrandingSettings: React.FC = () => {
                                     variant: "outlined"
                                 }}
                             />
+                        </CardContent>
+                    </Card>
+                </Grid>
+
+                {/* Organization Name Section */}
+                <Grid item xs={12} md={6}>
+                    <Card>
+                        <CardHeader
+                            title="Organization Details"
+                            avatar={<TypographyIcon />}
+                        />
+                        <CardContent>
+                            <Box sx={{ mb: 2 }}>
+                                <TextField
+                                    fullWidth
+                                    label="Organization Name"
+                                    value={brandingSettings.organizationName || organization?.name || ""}
+                                    onChange={handleOrganizationNameChange}
+                                    placeholder="Enter organization name"
+                                    variant="outlined"
+                                    size="small"
+                                    helperText="Full organization name"
+                                />
+                            </Box>
+                            <Box sx={{ mb: 2 }}>
+                                <TextField
+                                    fullWidth
+                                    label="Short Name"
+                                    value={brandingSettings.organizationShortName || organization?.short_name || ""}
+                                    onChange={handleOrganizationShortNameChange}
+                                    placeholder="Enter short name (e.g., SMSP)"
+                                    variant="outlined"
+                                    size="small"
+                                    helperText="Short name displayed in header"
+                                />
+                            </Box>
+                            <Box>
+                                <TextField
+                                    fullWidth
+                                    label="Logo URL"
+                                    value={brandingSettings.logoUrl || organization?.logo || ""}
+                                    onChange={handleLogoUrlChange}
+                                    placeholder="Enter logo URL"
+                                    variant="outlined"
+                                    size="small"
+                                    helperText="URL to organization logo image"
+                                />
+                            </Box>
                         </CardContent>
                     </Card>
                 </Grid>

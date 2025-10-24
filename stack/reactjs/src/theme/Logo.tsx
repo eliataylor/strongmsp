@@ -12,14 +12,15 @@ const Logo: React.FC<LogoProps> = (props) => {
   const { darkMode, brandingSettings } = useContext(ThemeContext);
   const { useCustom = true } = props;
 
-  // Get custom logo from branding settings
+  // Get custom logo from branding settings (prioritize new logo URL over base64)
+  const logoUrl = brandingSettings?.logoUrl;
   const customLogoBase64 = brandingSettings?.customLogoBase64;
 
   // If custom logo is requested and available, render image
-  if (useCustom && customLogoBase64) {
+  if (useCustom && (logoUrl || customLogoBase64)) {
     return (
       <img
-        src={customLogoBase64}
+        src={logoUrl || customLogoBase64}
         alt="Custom Logo"
         style={{
           height: props.height ? `${props.height}px` : '100%',

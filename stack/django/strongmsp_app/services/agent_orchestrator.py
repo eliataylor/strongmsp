@@ -152,6 +152,65 @@ class AgentOrchestrator:
         except Exception as e:
             logger.error(f"Error creating completion notifications: {e}")
     
+    def notify_content_published(self, coach_content):
+        """
+        Send notifications when CoachContent is published.
+        
+        Args:
+            coach_content: CoachContent instance
+        """
+        try:
+            athlete = coach_content.athlete
+            parents = self.get_athlete_parents(athlete.id) if athlete else []
+            
+            # Notify athlete
+            if athlete:
+                message = f"New content available: {coach_content.title}"
+                
+                # Create HTML message with content preview
+                content_preview = coach_content.body[:500] + "..." if len(coach_content.body) > 500 else coach_content.body
+                message_html = f"""
+                <h2>New Content Available</h2>
+                <p><strong>Title:</strong> {coach_content.title}</p>
+                <p><strong>Purpose:</strong> {coach_content.purpose.replace('_', ' ').title()}</p>
+                <hr>
+                <h3>Content Preview:</h3>
+                <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; white-space: pre-wrap;">{content_preview}</div>
+                """
+                
+                athlete_notifications = create_notification_group(
+                    recipient=athlete,
+                    message=message,
+                    channels=['dashboard', 'email'],
+                    notification_type='coach-content',
+                    priority='normal',
+                    message_html=message_html,
+                    auto_send=True
+                )
+                
+                logger.info(f"Created {len(athlete_notifications)} notifications for athlete {athlete.id}")
+            
+            # Notify parents
+            for parent in parents:
+                message = f"New content available for {athlete.get_full_name() if athlete else 'your athlete'}: {coach_content.title}"
+                
+                parent_notifications = create_notification_group(
+                    recipient=parent,
+                    message=message,
+                    channels=['email'],
+                    notification_type='coach-content',
+                    priority='normal',
+                    message_html=message_html,
+                    auto_send=True
+                )
+                
+                logger.info(f"Created {len(parent_notifications)} notifications for parent {parent.id}")
+            
+            logger.info(f"Created content published notifications for {coach_content.id}")
+            
+        except Exception as e:
+            logger.error(f"Error creating content published notifications: {e}")
+    
     def get_prompt_template_by_purpose(self, purpose):
         """
         Get active prompt template by purpose.

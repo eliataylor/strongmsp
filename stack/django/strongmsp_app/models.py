@@ -354,6 +354,8 @@ class CoachContent(SuperModel):
 
 	author = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Coach')
 	assignment = models.ForeignKey('PaymentAssignments', on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Payment Assignment')
+	source_draft = models.ForeignKey('AgentResponses', on_delete=models.SET_NULL, related_name='published_content', null=True, blank=True, verbose_name='Source Draft')
+	athlete = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='+', null=True, verbose_name='Athlete')
 	title = models.TextField(verbose_name='Title')
 	body = models.TextField(verbose_name='Body')
 	icon = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Icon')
@@ -432,10 +434,14 @@ class Organizations(SuperModel):
 		verbose_name_plural = "Organizations"
 
 	name = models.CharField(max_length=255, verbose_name='Organization Name')
+	short_name = models.CharField(max_length=100, blank=True, null=True, verbose_name='Short Name', 
+		help_text='Short name displayed in header (e.g., "SMSP")')
 	slug = models.SlugField(unique=True, verbose_name='Subdomain Slug')
 	
 	# Branding Settings (JSON matching BrandingSettings.tsx structure)
-	custom_logo_base64 = models.TextField(blank=True, null=True, verbose_name='Custom Logo (Base64)')
+	logo = models.ImageField(upload_to='organization_logos/', blank=True, null=True, verbose_name='Organization Logo')
+	custom_logo_base64 = models.TextField(blank=True, null=True, verbose_name='Custom Logo (Base64)', 
+		help_text='Legacy field - use logo field instead')
 	branding_palette = models.JSONField(blank=True, null=True, verbose_name='Color Palette', 
 		help_text='{"light": {"primary": {"main": "#877010"}, "secondary": {"main": "#2a74b7"}}, "dark": {...}}')
 	branding_typography = models.JSONField(blank=True, null=True, verbose_name='Typography Settings',

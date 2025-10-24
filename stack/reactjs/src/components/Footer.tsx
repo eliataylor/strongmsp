@@ -3,18 +3,33 @@ import {
     Box,
     Typography
 } from "@mui/material";
-import React from "react";
+import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import { MenuButton } from "src/theme/StyledFields";
+import { useAppContext } from "../context/AppContext";
 import Logo from "../theme/Logo";
+import { ThemeContext } from "../theme/ThemeContext";
 import RoleBasedMenu from "./RoleBasedMenu";
 import PublicPagesMenu from "./menus/PublicPagesMenu";
 
 const Footer: React.FC = () => {
+    const { organization } = useAppContext();
+    const { brandingSettings } = useContext(ThemeContext);
 
     const handleContactClick = () => {
         window.location.href = 'mailto:info@strongmindstrongperformance.com';
     };
+
+    // Check if this is SMSP organization
+    const isSMSP = organization?.slug === 'strongmindstrongperformance' ||
+        organization?.name?.toLowerCase().includes('strong mind strong performance') ||
+        (!organization && !brandingSettings?.organizationName);
+
+    // Get organization display name
+    const orgDisplayName = brandingSettings?.organizationShortName ||
+        brandingSettings?.organizationName ||
+        organization?.short_name ||
+        organization?.name;
 
     return (
         <>
@@ -46,20 +61,63 @@ const Footer: React.FC = () => {
                             fontWeight: 'bold',
                             color: 'text.primary',
                         }}>
-                            <Typography
-                                variant="h6"
-                                component="div"
-                                sx={{ m: 0, p: 0 }}
-                            >
-                                Strong Mind
-                            </Typography>
-                            <Typography
-                                variant="h6"
-                                component="div"
-                                sx={{ m: 0, p: 0 }}
-                            >
-                                Strong Performance
-                            </Typography>
+                            {isSMSP ? (
+                                // Show only SMSP for SMSP organization
+                                <>
+                                    <Typography
+                                        variant="h6"
+                                        component="div"
+                                        sx={{ m: 0, p: 0 }}
+                                    >
+                                        Strong Mind
+                                    </Typography>
+                                    <Typography
+                                        variant="h6"
+                                        component="div"
+                                        sx={{ m: 0, p: 0 }}
+                                    >
+                                        Strong Performance
+                                    </Typography>
+                                </>
+                            ) : (
+                                // Show organization name with "powered by SMSP" for other organizations
+                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                    <Typography
+                                        variant="h6"
+                                        component="div"
+                                        sx={{ m: 0, p: 0, lineHeight: 1.2 }}
+                                    >
+                                        {orgDisplayName}
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                                        <Typography
+                                            variant="caption"
+                                            component="span"
+                                            sx={{
+                                                m: 0,
+                                                p: 0,
+                                                fontSize: '0.7rem',
+                                                opacity: 0.8,
+                                                mr: 0.5
+                                            }}
+                                        >
+                                            powered by
+                                        </Typography>
+                                        <Typography
+                                            variant="caption"
+                                            component="span"
+                                            sx={{
+                                                m: 0,
+                                                p: 0,
+                                                fontSize: '0.7rem',
+                                                fontWeight: 'bold'
+                                            }}
+                                        >
+                                            Strong Mind Strong Performance
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            )}
                         </Box>
                     </Link>
                 </Box>

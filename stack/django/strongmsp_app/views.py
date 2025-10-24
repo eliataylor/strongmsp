@@ -379,6 +379,109 @@ class AgentResponsesViewSet(AutoAuthorViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @action(detail=True, methods=['post'])
+    def regenerate_with_changes(self, request, pk=None):
+        """
+        Regenerate an agent response with change request and version history.
+        POST /api/agent-responses/{id}/regenerate-with-changes/
+        Body: {"change_request": "Make it more concise and add specific drill recommendations"}
+        """
+        try:
+            agent_response = self.get_object()
+            change_request = request.data.get('change_request', '')
+
+            if not change_request:
+                return Response(
+                    {'error': 'change_request is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Get all previous versions for same athlete/purpose/assessment
+            previous_versions = AgentResponses.objects.filter(
+                athlete=agent_response.athlete,
+                purpose=agent_response.purpose,
+                assessment=agent_response.assessment
+            ).exclude(id=agent_response.id).order_by('-created_at')[:5]  # Limit to 5 most recent
+
+            # Get coach from assignment
+            coach = None
+            if agent_response.assignment and agent_response.assignment.coaches.exists():
+                coach = agent_response.assignment.coaches.first()
+
+            # Prepare input data
+            from .services.agent_completion_service import AgentCompletionService
+            completion_service = AgentCompletionService();
+            input_data = completion_service.prepare_input_data(
+                agent_response.athlete,
+                agent_response.assessment,
+                agent_response.purpose
+            )
+
+            # Run iterative completion
+            new_response = completion_service.run_iterative_completion(
+                agent_response.prompt_template,
+                agent_response.athlete,
+                agent_response.assessment,
+                input_data,
+                previous_versions=list(previous_versions),
+                change_request=change_request,
+                coach=coach
+            )
+
+            if not new_response:
+                return Response(
+                    {'error': 'Failed to regenerate agent response with changes'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            # Serialize and return new response
+            serializer = AgentResponsesSerializer(new_response)
+            return Response(serializer.data)
+
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to regenerate with changes: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['post'])
+    def create_coach_content(self, request, pk=None):
+        """
+        Create CoachContent from AgentResponse.
+        POST /api/agent-responses/{id}/create-coach-content/
+        Body: {"title": "Custom Title", "privacy": "mentioned"}
+        """
+        try:
+            agent_response = self.get_object()
+            title = request.data.get('title', f"{agent_response.purpose.replace('_', ' ').title()} for {agent_response.athlete.get_full_name()}")
+            privacy = request.data.get('privacy', 'mentioned')
+
+            # Get assignment for the coach content
+            assignment = agent_response.assignment
+
+            # Create CoachContent
+            from .models import CoachContent
+            coach_content = CoachContent.objects.create(
+                author=request.user,
+                assignment=assignment,
+                source_draft=agent_response,
+                athlete=agent_response.athlete,
+                title=title,
+                body=agent_response.ai_response,  # Store as-is, will be converted to HTML in frontend
+                purpose=agent_response.purpose,
+                privacy=privacy
+            )
+
+            # Serialize and return
+            serializer = CoachContentSerializer(coach_content)
+            return Response(serializer.data)
+
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to create coach content: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 class CoachContentViewSet(AutoAuthorViewSet):
     serializer_class = CoachContentSerializer
     permission_classes = [CoachContentPermission]
@@ -404,6 +507,165 @@ class CoachContentViewSet(AutoAuthorViewSet):
 
         # Single save with author and assignment
         serializer.save(author=self.request.user, assignment=assignments)
+
+    @action(detail=True, methods=['post'])
+    def publish(self, request, pk=None):
+        """
+        Publish CoachContent (mark as delivered).
+        POST /api/coach-content/{id}/publish/
+        """
+        try:
+            coach_content = self.get_object()
+            
+            # Set coach_delivered timestamp
+            from django.utils import timezone
+            coach_content.coach_delivered = timezone.now()
+            coach_content.save()
+
+            # Trigger athlete/parent notifications
+            from .services.agent_orchestrator import AgentOrchestrator
+            orchestrator = AgentOrchestrator()
+            orchestrator.notify_content_published(coach_content)
+
+            # Serialize and return updated content
+            serializer = CoachContentSerializer(coach_content)
+            return Response(serializer.data)
+
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to publish content: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['post'])
+    def regenerate_draft(self, request, pk=None):
+        """
+        Regenerate the linked draft with change request.
+        POST /api/coach-content/{id}/regenerate_draft/
+        Body: {"change_request": "Add more detail about mental training techniques"}
+        """
+        try:
+            coach_content = self.get_object()
+            change_request = request.data.get('change_request', '')
+
+            if not coach_content.source_draft:
+                return Response(
+                    {'error': 'No source draft linked to this content'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if not change_request:
+                return Response(
+                    {'error': 'change_request is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Get all previous versions for same athlete/purpose/assessment
+            previous_versions = AgentResponses.objects.filter(
+                athlete=coach_content.athlete,
+                purpose=coach_content.purpose,
+                assessment=coach_content.source_draft.assessment
+            ).exclude(id=coach_content.source_draft.id).order_by('-created_at')[:5]
+
+            # Get coach from assignment
+            coach = None
+            if coach_content.assignment and coach_content.assignment.coaches.exists():
+                coach = coach_content.assignment.coaches.first()
+
+            # Prepare input data
+            from .services.agent_completion_service import AgentCompletionService
+            completion_service = AgentCompletionService()
+            input_data = completion_service.prepare_input_data(
+                coach_content.athlete,
+                coach_content.source_draft.assessment,
+                coach_content.purpose
+            )
+
+            # Run iterative completion
+            new_response = completion_service.run_iterative_completion(
+                coach_content.source_draft.prompt_template,
+                coach_content.athlete,
+                coach_content.source_draft.assessment,
+                input_data,
+                previous_versions=list(previous_versions),
+                change_request=change_request,
+                coach=coach
+            )
+
+            if not new_response:
+                return Response(
+                    {'error': 'Failed to regenerate draft'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            # Update source_draft reference
+            coach_content.source_draft = new_response
+            coach_content.save()
+
+            # Return both the new response and updated content
+            response_serializer = AgentResponsesSerializer(new_response)
+            content_serializer = CoachContentSerializer(coach_content)
+            
+            return Response({
+                'new_response': response_serializer.data,
+                'updated_content': content_serializer.data
+            })
+
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to regenerate draft: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['post'])
+    def mark_athlete_received(self, request, pk=None):
+        """
+        Mark CoachContent as received by athlete.
+        POST /api/coach-content/{id}/mark_athlete_received/
+        """
+        try:
+            coach_content = self.get_object()
+            
+            # Only update if not already set
+            if not coach_content.athlete_received:
+                from django.utils import timezone
+                coach_content.athlete_received = timezone.now()
+                coach_content.save()
+
+            # Serialize and return updated content
+            serializer = CoachContentSerializer(coach_content)
+            return Response(serializer.data)
+
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to mark athlete received: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['post'])
+    def mark_parent_received(self, request, pk=None):
+        """
+        Mark CoachContent as received by parent.
+        POST /api/coach-content/{id}/mark_parent_received/
+        """
+        try:
+            coach_content = self.get_object()
+            
+            # Only update if not already set
+            if not coach_content.parent_received:
+                from django.utils import timezone
+                coach_content.parent_received = timezone.now()
+                coach_content.save()
+
+            # Serialize and return updated content
+            serializer = CoachContentSerializer(coach_content)
+            return Response(serializer.data)
+
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to mark parent received: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class SharesViewSet(AutoAuthorViewSet):
     queryset = Shares.objects.all().order_by('id')
@@ -1073,8 +1335,10 @@ class CurrentContextView(APIView):
             context_data['organization'] = {
                 'id': org.id,
                 'name': org.name,
+                'short_name': org.short_name,
                 'slug': org.slug,
                 'is_active': org.is_active,
+                'logo': org.logo.url if org.logo else None,
                 'custom_logo_base64': org.custom_logo_base64,
                 'branding_palette': org.branding_palette,
                 'branding_typography': org.branding_typography,

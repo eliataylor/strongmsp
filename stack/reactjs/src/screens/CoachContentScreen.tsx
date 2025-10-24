@@ -1,13 +1,38 @@
 import {
     Box,
+    Button,
+    Chip,
+    CircularProgress,
     Container,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    FormControl,
+    InputLabel,
+    MenuItem,
     Paper,
+    Select,
+    TextField,
     Typography,
     useTheme
 } from '@mui/material';
-import DOMPurify from 'dompurify';
+import { useSnackbar } from 'notistack';
 import React, { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { useNavigate } from 'react-router-dom';
+import MarkdownEditor from '../components/MarkdownEditor';
+import ApiClient from '../config/ApiClient';
+import { useActiveRole } from '../context/ActiveRoleContext';
 import { CoachContent } from '../object-actions/types/types';
+import {
+    getDeliveryStatus,
+    getSourceDraftInfo,
+    markAthleteReceived,
+    markParentReceived,
+    publishCoachContent,
+    regenerateDraftFromContent
+} from '../utils/contentHelpers';
 
 interface CoachContentScreenProps {
     entity: CoachContent;
@@ -17,18 +42,111 @@ const CoachContentScreen: React.FC<CoachContentScreenProps> = ({
     entity
 }) => {
     const theme = useTheme();
-    const [sanitizedDescription, setSanitizedDescription] = useState<string>('');
+    const navigate = useNavigate();
+    const { enqueueSnackbar } = useSnackbar();
+    const { activeRole } = useActiveRole();
 
+    // State for editorial features
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [regenerateDialogOpen, setRegenerateDialogOpen] = useState(false);
+    const [changeRequest, setChangeRequest] = useState('');
+
+    // Edit form state
+    const [editTitle, setEditTitle] = useState(entity.title);
+    const [editBody, setEditBody] = useState('');
+    const [editPrivacy, setEditPrivacy] = useState(entity.privacy);
+    const [editPurpose, setEditPurpose] = useState(entity.purpose);
+
+    // Delivery status
+    const deliveryStatus = getDeliveryStatus(entity);
+    const sourceDraftInfo = getSourceDraftInfo(entity);
+
+    // Initialize edit form when entering edit mode
     useEffect(() => {
-        if (entity.body) {
-            // Sanitize the HTML content using DOMPurify
-            const clean = DOMPurify.sanitize(entity.body, {
-                ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'blockquote'],
-                ALLOWED_ATTR: ['href', 'target', 'rel']
-            });
-            setSanitizedDescription(clean);
+        if (isEditMode) {
+            setEditTitle(entity.title);
+            setEditBody(entity.body || ''); // Use Markdown directly
+            setEditPrivacy(entity.privacy);
+            setEditPurpose(entity.purpose);
         }
-    }, [entity.body]);
+    }, [isEditMode, entity]);
+
+    // Mark as received when athlete or parent accesses the page (only if not already marked)
+    useEffect(() => {
+        const markAsReceived = async () => {
+            try {
+                if (activeRole === 'athlete' && !entity.athlete_received) {
+                    await markAthleteReceived(Number(entity.id));
+                } else if (activeRole === 'parent' && !entity.parent_received) {
+                    await markParentReceived(Number(entity.id));
+                }
+            } catch (error) {
+                console.error('Error marking content as received:', error);
+                // Don't show error to user as this is a background operation
+            }
+        };
+
+        markAsReceived();
+    }, [activeRole, entity.id, entity.athlete_received, entity.parent_received]);
+
+    const handlePublish = async () => {
+        setLoading(true);
+        try {
+            await publishCoachContent(Number(entity.id));
+            enqueueSnackbar('Content published successfully!', { variant: 'success' });
+            // Refresh the page to show updated status
+            window.location.reload();
+        } catch (error) {
+            enqueueSnackbar('Failed to publish content', { variant: 'error' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSave = async () => {
+        setLoading(true);
+        try {
+            const response = await ApiClient.put(`/api/coach-content/${entity.id}/`, {
+                title: editTitle,
+                body: editBody, // Save as Markdown directly
+                privacy: editPrivacy,
+                purpose: editPurpose
+            });
+
+            if (response.error) {
+                throw new Error(response.error);
+            }
+
+            enqueueSnackbar('Content saved successfully!', { variant: 'success' });
+            setIsEditMode(false);
+            // Refresh the page to show updated content
+            window.location.reload();
+        } catch (error) {
+            enqueueSnackbar('Failed to save content', { variant: 'error' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRegenerateDraft = async () => {
+        if (!changeRequest.trim()) return;
+
+        setLoading(true);
+        try {
+            const result = await regenerateDraftFromContent(Number(entity.id), changeRequest);
+            setRegenerateDialogOpen(false);
+            setChangeRequest('');
+            enqueueSnackbar('Draft regenerated successfully!', { variant: 'success' });
+
+            // Update the content with new draft
+            setEditBody(result.updated_content.body || ''); // Use Markdown directly
+        } catch (error) {
+            enqueueSnackbar('Failed to regenerate draft', { variant: 'error' });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -45,59 +163,251 @@ const CoachContentScreen: React.FC<CoachContentScreenProps> = ({
                             mb: 2
                         }}
                     >
-                        {entity.title}
+                        {isEditMode ? (
+                            <TextField
+                                fullWidth
+                                value={editTitle}
+                                onChange={(e) => setEditTitle(e.target.value)}
+                                variant="outlined"
+                                size="medium"
+                            />
+                        ) : (
+                            entity.title
+                        )}
                     </Typography>
+
+                    {/* Action Buttons */}
+                    <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+                        {!isEditMode ? (
+                            <>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={() => setIsEditMode(true)}
+                                >
+                                    Edit
+                                </Button>
+                                {!deliveryStatus.isPublished && (
+                                    <Button
+                                        variant="contained"
+                                        color="success"
+                                        onClick={handlePublish}
+                                        disabled={loading}
+                                        startIcon={loading ? <CircularProgress size={20} /> : undefined}
+                                    >
+                                        Publish
+                                    </Button>
+                                )}
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => navigate(`/agent-responses/${entity.athlete?.id}`)}
+                                >
+                                    Preview as Athlete
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={handleSave}
+                                    disabled={loading}
+                                    startIcon={loading ? <CircularProgress size={20} /> : undefined}
+                                >
+                                    Save
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => setIsEditMode(false)}
+                                >
+                                    Cancel
+                                </Button>
+                            </>
+                        )}
+                    </Box>
+
+                    {/* Source Draft Info */}
+                    {sourceDraftInfo && (
+                        <Box sx={{ mb: 2 }}>
+                            <Chip
+                                label={sourceDraftInfo.displayText}
+                                color="info"
+                                variant="outlined"
+                                onClick={() => navigate(`/agent-responses/${sourceDraftInfo.id}`)}
+                                sx={{ cursor: 'pointer' }}
+                            />
+                            {isEditMode && (
+                                <Button
+                                    size="small"
+                                    onClick={() => setRegenerateDialogOpen(true)}
+                                    sx={{ ml: 1 }}
+                                >
+                                    Request Changes from AI
+                                </Button>
+                            )}
+                        </Box>
+                    )}
+
+                    {/* Delivery Status */}
+                    <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                        <Chip
+                            label={`Coach Delivered: ${deliveryStatus.coachDelivered ? 'Yes' : 'No'}`}
+                            color={deliveryStatus.coachDelivered ? 'success' : 'default'}
+                            size="small"
+                        />
+                        <Chip
+                            label={`Athlete Received: ${deliveryStatus.athleteReceived ? 'Yes' : 'No'}`}
+                            color={deliveryStatus.athleteReceived ? 'success' : 'default'}
+                            size="small"
+                        />
+                        <Chip
+                            label={`Parent Received: ${deliveryStatus.parentReceived ? 'Yes' : 'No'}`}
+                            color={deliveryStatus.parentReceived ? 'success' : 'default'}
+                            size="small"
+                        />
+                    </Box>
                 </Box>
 
                 {/* Content Body */}
                 <Box sx={{ mb: 4 }}>
-                    {sanitizedDescription && (
-                        <Typography
-                            variant="body1"
-                            color="text.secondary"
-                            sx={{
-                                lineHeight: 1.8,
-                                fontSize: '1.1rem',
-                                '& p': { margin: 0 },
-                                '& p + p': { marginTop: 2 },
-                                '& h1, & h2, & h3, & h4, & h5, & h6': {
-                                    marginTop: 3,
-                                    marginBottom: 2,
-                                    fontWeight: 'bold'
-                                },
-                                '& ul, & ol': {
-                                    marginTop: 2,
-                                    marginBottom: 2,
-                                    paddingLeft: 3
-                                },
-                                '& li': {
-                                    marginBottom: 1
-                                },
-                                '& a': {
-                                    color: 'primary.main',
-                                    textDecoration: 'none',
-                                    '&:hover': {
-                                        textDecoration: 'underline'
-                                    }
-                                },
-                                '& blockquote': {
-                                    borderLeft: `4px solid ${theme.palette.primary.main}`,
-                                    paddingLeft: 2,
-                                    marginLeft: 0,
-                                    fontStyle: 'italic',
-                                    color: 'text.secondary'
-                                }
-                            }}
-                            dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
-                        />
-                    )}
+                    {isEditMode ? (
+                        <Box>
+                            {/* Purpose and Privacy Selectors */}
+                            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                                <FormControl sx={{ minWidth: 120 }}>
+                                    <InputLabel>Purpose</InputLabel>
+                                    <Select
+                                        value={editPurpose}
+                                        onChange={(e) => setEditPurpose(e.target.value)}
+                                        label="Purpose"
+                                    >
+                                        <MenuItem value="lesson_plan">Lesson Plan</MenuItem>
+                                        <MenuItem value="curriculum">Curriculum</MenuItem>
+                                        <MenuItem value="talking_points">Talking Points</MenuItem>
+                                        <MenuItem value="feedback_report">Feedback Report</MenuItem>
+                                        <MenuItem value="scheduling_email">Scheduling Email</MenuItem>
+                                    </Select>
+                                </FormControl>
+                                <FormControl sx={{ minWidth: 120 }}>
+                                    <InputLabel>Privacy</InputLabel>
+                                    <Select
+                                        value={editPrivacy}
+                                        onChange={(e) => setEditPrivacy(e.target.value)}
+                                        label="Privacy"
+                                    >
+                                        <MenuItem value="public">Public</MenuItem>
+                                        <MenuItem value="authenticated">Authenticated</MenuItem>
+                                        <MenuItem value="mentioned">Mentioned</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Box>
 
-                    {!sanitizedDescription && (
-                        <Typography variant="body1" color="text.secondary">
-                            No content available at this time.
-                        </Typography>
+                            {/* Markdown Editor */}
+                            <MarkdownEditor
+                                value={editBody}
+                                onChange={setEditBody}
+                                placeholder="Enter your content here..."
+                                minHeight={400}
+                            />
+                        </Box>
+                    ) : (
+                        <Box>
+                            {entity.body ? (
+                                <Box
+                                    sx={{
+                                        '& p': { margin: 0 },
+                                        '& p + p': { marginTop: 2 },
+                                        '& h1, & h2, & h3, & h4, & h5, & h6': {
+                                            marginTop: 3,
+                                            marginBottom: 2,
+                                            fontWeight: 'bold',
+                                            color: 'text.primary'
+                                        },
+                                        '& ul, & ol': {
+                                            marginTop: 2,
+                                            marginBottom: 2,
+                                            paddingLeft: 3
+                                        },
+                                        '& li': {
+                                            marginBottom: 1
+                                        },
+                                        '& a': {
+                                            color: 'primary.main',
+                                            textDecoration: 'none',
+                                            '&:hover': {
+                                                textDecoration: 'underline'
+                                            }
+                                        },
+                                        '& blockquote': {
+                                            borderLeft: `4px solid ${theme.palette.primary.main}`,
+                                            paddingLeft: 2,
+                                            marginLeft: 0,
+                                            fontStyle: 'italic',
+                                            color: 'text.secondary',
+                                            backgroundColor: 'grey.50',
+                                            padding: 2,
+                                            borderRadius: 1
+                                        },
+                                        '& code': {
+                                            backgroundColor: 'grey.100',
+                                            padding: '2px 4px',
+                                            borderRadius: 1,
+                                            fontFamily: 'monospace'
+                                        },
+                                        '& pre': {
+                                            backgroundColor: 'grey.100',
+                                            padding: 2,
+                                            borderRadius: 1,
+                                            overflow: 'auto'
+                                        }
+                                    }}
+                                >
+                                    <ReactMarkdown>{entity.body}</ReactMarkdown>
+                                </Box>
+                            ) : (
+                                <Typography variant="body1" color="text.secondary">
+                                    No content available at this time.
+                                </Typography>
+                            )}
+                        </Box>
                     )}
                 </Box>
+
+                {/* Regenerate Draft Dialog */}
+                <Dialog
+                    open={regenerateDialogOpen}
+                    onClose={() => setRegenerateDialogOpen(false)}
+                    maxWidth="sm"
+                    fullWidth
+                >
+                    <DialogTitle>Request Changes from AI</DialogTitle>
+                    <DialogContent>
+                        <TextField
+                            autoFocus
+                            margin="dense"
+                            label="Change Request"
+                            placeholder="Describe what changes you'd like the AI to make..."
+                            fullWidth
+                            multiline
+                            rows={4}
+                            value={changeRequest}
+                            onChange={(e) => setChangeRequest(e.target.value)}
+                            variant="outlined"
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setRegenerateDialogOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleRegenerateDraft}
+                            variant="contained"
+                            disabled={!changeRequest.trim() || loading}
+                        >
+                            {loading ? <CircularProgress size={20} /> : 'Request Changes'}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             </Paper>
         </Container>
     );

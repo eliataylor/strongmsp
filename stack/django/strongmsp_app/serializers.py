@@ -278,7 +278,7 @@ class CoachContentSerializer(CustomSerializer):
     class Meta:
         model = CoachContent
         fields = '__all__'
-        read_only_fields = ['author', 'assignment']
+        read_only_fields = ['author', 'assignment', 'source_draft', 'athlete']
 class SharesSerializer(CustomSerializer):
     class Meta:
         model = Shares
