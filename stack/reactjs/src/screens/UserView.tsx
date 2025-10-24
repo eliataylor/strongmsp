@@ -7,7 +7,7 @@ import { useAuth } from "../allauth/auth";
 import PermissionError from "../components/PermissionError";
 import ApiClient from "../config/ApiClient";
 import { canDo } from "../object-actions/types/access";
-import { ModelType, NAVITEMS, USER_TYPE } from "../object-actions/types/types";
+import { ModelType, USER_TYPE } from "../object-actions/types/types";
 import AdminView from "./user-views/AdminView";
 import AgentView from "./user-views/AgentView";
 import AthleteView from "./user-views/AthleteView";
@@ -22,7 +22,6 @@ const UserView: React.FC = () => {
   const [userProfile, updateUserProfile] = React.useState<ModelType<"Users"> | null>(
     null
   );
-  const [stats, updateStats] = React.useState<{ [key: string]: number }>({});
   const [questionResponseStats, setQuestionResponseStats] = React.useState<{
     user_id: number;
     category_stats: Array<{
@@ -59,37 +58,6 @@ const UserView: React.FC = () => {
     };
     fetchUserProfile();
   }, [location.pathname, location.search, uid]);
-
-  useEffect(() => {
-    const newstats = { ...stats };
-    const fetchStats = async (model: string) => {
-      const response = await ApiClient.get(
-        `/api/users/${uid}/${model.toLowerCase()}/stats${location.search}`
-      );
-      if (response.error) {
-        return showSnackBar(response.error);
-      }
-      if (response.success && response.data) {
-        // @ts-ignore
-        newstats[model] = response.data.count;
-      }
-    };
-
-    const updateAllStats = async () => {
-      const fetchPromises = NAVITEMS.map(async (item) => {
-        if (item.type === "Users") return null;
-        await fetchStats(item.type);
-      });
-
-      await Promise.all(fetchPromises);
-
-      updateStats(newstats);
-    };
-
-    updateAllStats();
-
-    console.log("STATS", stats);
-  }, [uid]);
 
   // Fetch question response category stats
   useEffect(() => {
@@ -156,7 +124,6 @@ const UserView: React.FC = () => {
   const renderUserTypeComponent = () => {
     const commonProps = {
       userProfile,
-      stats,
       questionResponseStats,
       expanded,
       handleChange

@@ -1,18 +1,12 @@
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Box } from "@mui/material";
-import Accordion from "@mui/material/Accordion";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import AccordionSummary from "@mui/material/AccordionSummary";
 import Typography from "@mui/material/Typography";
 import React from "react";
 import SpiderChart from "../../components/SpiderChart";
 import EntityCard from "../../object-actions/components/EntityCard";
-import { ModelType, NAVITEMS } from "../../object-actions/types/types";
-import EntityList from "../EntityList";
+import { ModelType } from "../../object-actions/types/types";
 
 interface AdminViewProps {
     userProfile: ModelType<"Users">;
-    stats: { [key: string]: number };
     questionResponseStats: {
         user_id: number;
         category_stats: Array<{
@@ -29,7 +23,6 @@ interface AdminViewProps {
 
 const AdminView: React.FC<AdminViewProps> = ({
     userProfile,
-    stats,
     questionResponseStats,
     expanded,
     handleChange
@@ -56,45 +49,6 @@ const AdminView: React.FC<AdminViewProps> = ({
                     height={400}
                 />
             )}
-
-            {/* System-wide Data Management */}
-            {NAVITEMS.map((item) => {
-                if (item.type === "Users") return null;
-                return (
-                    <Accordion
-                        expanded={expanded === item.type}
-                        key={`admin-${item.type}`}
-                        onChange={handleChange(item.type)}
-                    >
-                        <AccordionSummary
-                            expandIcon={<ExpandMoreIcon />}
-                            aria-controls={`admin-${item.type}-content`}
-                            id={`admin-${item.type}-header`}
-                            sx={{
-                                justifyContent: "space-between",
-                                alignContent: "center",
-                                alignItems: "center",
-                                display: "flex"
-                            }}
-                        >
-                            {typeof stats[item.type] !== "undefined" && (
-                                <Typography variant={"subtitle2"} mr={2}>
-                                    {stats[item.type]}
-                                </Typography>
-                            )}
-
-                            <Typography variant={"subtitle2"}>{item.plural}</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails id={`admin-${item.type}-content`}>
-                            <Typography>
-                                {expanded === item.type && (
-                                    <EntityList author={userProfile.id.toString()} model={item.type} />
-                                )}
-                            </Typography>
-                        </AccordionDetails>
-                    </Accordion>
-                );
-            })}
         </Box>
     );
 };
