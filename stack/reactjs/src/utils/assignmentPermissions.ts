@@ -14,11 +14,6 @@ export function getUserRoleInAssignment(
 ): UserRole {
     if (!userId) return 'none';
 
-    // Check if user is an author (payer) of any payment
-    if (assignment.payments.some(payment => payment.author && payment.author.id === userId)) {
-        return 'author';
-    }
-
     // Check if user is the athlete
     if (assignment.athlete.id === userId) {
         return 'athlete';
@@ -33,6 +28,12 @@ export function getUserRoleInAssignment(
     if (assignment.parents.some(parent => parent.id === userId)) {
         return 'parent';
     }
+
+    // Check if user is an author (payer) of any payment
+    if (assignment.payments.some(payment => payment.author && payment.author.id === userId)) {
+        return 'author';
+    }
+
 
     return 'none';
 }

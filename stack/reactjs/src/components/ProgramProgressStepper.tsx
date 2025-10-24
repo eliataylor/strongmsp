@@ -159,16 +159,21 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
                                     Pre-Assessment: Completed
                                 </Typography>
                             ) : (
-                                <Button
-                                    component={Link}
-                                    to={`/assessments/${assignment.pre_assessment.id}`}
-                                    variant="contained"
-                                    size="small"
-                                    fullWidth
-                                >
-                                    Start Pre-Assessment
-                                </Button>
-                            )}
+                                userRole === 'athlete' ? (
+                                    <Button
+                                        component={Link}
+                                        to={`/assessments/${assignment.pre_assessment.id}`}
+                                        variant="contained"
+                                        size="small"
+                                        fullWidth
+                                    >
+                                        Start Pre-Assessment
+                                    </Button>
+                                ) : (
+                                    <Typography variant="body2" color="text.secondary">
+                                        Not yet completed
+                                    </Typography>
+                                ))}
                         </Typography>
                     </StepContent>
                 </Step>
@@ -269,7 +274,7 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
                         <Typography variant="body2" color="text.secondary">
                             {assignment.post_assessment_submitted_at ? (
                                 <Typography variant="body2" color="text.secondary">
-                                    Post-Assessment: Completed
+                                    Completed
                                 </Typography>
                             ) : (userRole === 'athlete' ? (
                                 <Button
@@ -281,6 +286,10 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
                                 >
                                     Start Post-Assessment
                                 </Button>
+                            ) : assignment.pre_assessment_submitted_at ? (
+                                <Typography variant="body2" color="text.secondary">
+                                    Not yet completed
+                                </Typography>
                             ) : null)}
                         </Typography>
                     </StepContent>
