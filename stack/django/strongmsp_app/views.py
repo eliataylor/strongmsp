@@ -1503,7 +1503,9 @@ class CurrentContextView(APIView):
                                         'modified_at': obj.modified_at.isoformat(),
                                         'coach_delivered': obj.coach_delivered.isoformat() if obj.coach_delivered else None,
                                         'athlete_received': obj.athlete_received.isoformat() if obj.athlete_received else None,
-                                        'parent_received': obj.parent_received.isoformat() if obj.parent_received else None,                                    
+                                        'parent_received': obj.parent_received.isoformat() if obj.parent_received else None,
+                                        'screenshot_light': obj.screenshot_light.url if obj.screenshot_light else None,
+                                        'screenshot_dark': obj.screenshot_dark.url if obj.screenshot_dark else None,
                                     }
                                 })
 

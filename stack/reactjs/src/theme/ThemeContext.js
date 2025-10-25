@@ -26,11 +26,15 @@ const ThemeProvider = ({ children }) => {
     palette: {
       light: {
         primary: { main: "#877010" },
-        secondary: { main: "#2a74b7" }
+        secondary: { main: "#2a74b7" },
+        background: { default: "#ffffff" },
+        paper: { main: "#fafafa" }
       },
       dark: {
         primary: { main: "#f4ab2a" },
-        secondary: { main: "#2ab1f4" }
+        secondary: { main: "#2ab1f4" },
+        background: { default: "#121212" },
+        paper: { main: "#1e1e1e" }
       }
     },
     typography: {
@@ -52,11 +56,15 @@ const ThemeProvider = ({ children }) => {
         palette: {
           light: {
             primary: { main: "#877010" },
-            secondary: { main: "#2a74b7" }
+            secondary: { main: "#2a74b7" },
+            background: { default: "#ffffff" },
+            paper: { main: "#fafafa" }
           },
           dark: {
             primary: { main: "#f4ab2a" },
-            secondary: { main: "#2ab1f4" }
+            secondary: { main: "#2ab1f4" },
+            background: { default: "#121212" },
+            paper: { main: "#1e1e1e" }
           }
         },
         typography: {

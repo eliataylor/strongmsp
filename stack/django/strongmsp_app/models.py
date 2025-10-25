@@ -22,6 +22,9 @@ def upload_file_path(instance, filename):
 	# Construct the final upload path: "uploads/<yyyy-mm>/<filename>"
 	return os.path.join('uploads', date_folder, new_filename)
 
+def screenshot_upload_path(instance, filename):
+	return f'coachcontent/screenshots/{filename}'
+
 class Users(AbstractUser, BumpParentsModelMixin):
 	class Meta:
 		verbose_name = "User"
@@ -191,8 +194,6 @@ class Courses(SuperModel):
 	preassessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Pre-Assessment')
 	postassessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Post-Assessment')
 	price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Price')
-	icon = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Icon')
-	cover_photo = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Cover Photo')
 
 class Products(SuperModel):
 	class Meta:
@@ -209,8 +210,6 @@ class Products(SuperModel):
 	features = models.JSONField(blank=True, null=True, verbose_name='Features', help_text='JSON containing agents, content_variations, and assessment counts')
 	pre_assessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Pre-Assessment')
 	post_assessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Post-Assessment')
-	icon = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Icon')
-	cover_photo = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Cover Photo')
 
 class Assessments(SuperModel):
 	class Meta:
@@ -433,8 +432,8 @@ class CoachContent(SuperModel):
 	athlete = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='+', null=True, verbose_name='Athlete')
 	title = models.TextField(verbose_name='Title')
 	body = models.TextField(verbose_name='Body')
-	icon = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Icon')
-	cover_photo = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Cover Photo')
+	screenshot_light = models.ImageField(upload_to=screenshot_upload_path, blank=True, null=True, verbose_name='Screenshot Light')
+	screenshot_dark = models.ImageField(upload_to=screenshot_upload_path, blank=True, null=True, verbose_name='Screenshot Dark')
 	privacy = models.CharField(max_length=13, choices=PrivacyChoices.choices, verbose_name='Privacy', default="mentioned")
 	purpose = models.CharField(max_length=50, choices=PurposeChoices.choices, verbose_name='Purpose', blank=True, null=True)
 	coach_delivered = models.DateTimeField(blank=True, null=True, verbose_name='Coach Delivered At') # only coach can check

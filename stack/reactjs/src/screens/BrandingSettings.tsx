@@ -349,6 +349,102 @@ const BrandingSettings: React.FC = () => {
                     </Card>
                 </Grid>
 
+                {/* Background Colors */}
+                <Grid item xs={12} md={6}>
+                    <Card>
+                        <CardHeader
+                            title="Background Colors"
+                            subheader="Set the default background color for each theme"
+                        />
+                        <CardContent>
+                            <Grid container spacing={2}>
+                                <Grid item xs={6}>
+                                    <Typography variant="subtitle2" gutterBottom>
+                                        Light Mode
+                                    </Typography>
+                                    <TextField
+                                        type="color"
+                                        value={brandingSettings.palette.light.background.default}
+                                        onChange={(e) => handleColorChange('palette.light.background.default', e.target.value)}
+                                        fullWidth
+                                        size="small"
+                                    />
+                                    <Chip
+                                        label={brandingSettings.palette.light.background.default}
+                                        size="small"
+                                        sx={{ mt: 1, width: '100%' }}
+                                    />
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="subtitle2" gutterBottom>
+                                        Dark Mode
+                                    </Typography>
+                                    <TextField
+                                        type="color"
+                                        value={brandingSettings.palette.dark.background.default}
+                                        onChange={(e) => handleColorChange('palette.dark.background.default', e.target.value)}
+                                        fullWidth
+                                        size="small"
+                                    />
+                                    <Chip
+                                        label={brandingSettings.palette.dark.background.default}
+                                        size="small"
+                                        sx={{ mt: 1, width: '100%' }}
+                                    />
+                                </Grid>
+                            </Grid>
+                        </CardContent>
+                    </Card>
+                </Grid>
+
+                {/* Paper Colors */}
+                <Grid item xs={12} md={6}>
+                    <Card>
+                        <CardHeader
+                            title="Paper Colors"
+                            subheader="Set the paper/surface color for cards and elevated elements"
+                        />
+                        <CardContent>
+                            <Grid container spacing={2}>
+                                <Grid item xs={6}>
+                                    <Typography variant="subtitle2" gutterBottom>
+                                        Light Mode
+                                    </Typography>
+                                    <TextField
+                                        type="color"
+                                        value={brandingSettings.palette.light.paper.main}
+                                        onChange={(e) => handleColorChange('palette.light.paper.main', e.target.value)}
+                                        fullWidth
+                                        size="small"
+                                    />
+                                    <Chip
+                                        label={brandingSettings.palette.light.paper.main}
+                                        size="small"
+                                        sx={{ mt: 1, width: '100%' }}
+                                    />
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="subtitle2" gutterBottom>
+                                        Dark Mode
+                                    </Typography>
+                                    <TextField
+                                        type="color"
+                                        value={brandingSettings.palette.dark.paper.main}
+                                        onChange={(e) => handleColorChange('palette.dark.paper.main', e.target.value)}
+                                        fullWidth
+                                        size="small"
+                                    />
+                                    <Chip
+                                        label={brandingSettings.palette.dark.paper.main}
+                                        size="small"
+                                        sx={{ mt: 1, width: '100%' }}
+                                    />
+                                </Grid>
+                            </Grid>
+                        </CardContent>
+                    </Card>
+                </Grid>
+
                 {/* Action Buttons */}
                 <Grid item xs={12}>
                     <Card>

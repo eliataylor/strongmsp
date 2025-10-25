@@ -18,13 +18,14 @@ import {
     useTheme
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
 import MarkdownEditor from '../components/MarkdownEditor';
 import ApiClient from '../config/ApiClient';
 import { useActiveRole } from '../context/ActiveRoleContext';
 import { CoachContent } from '../object-actions/types/types';
+import { ThemeContext } from '../theme/ThemeContext';
 import {
     getDeliveryStatus,
     getSourceDraftInfo,
@@ -45,6 +46,7 @@ const CoachContentScreen: React.FC<CoachContentScreenProps> = ({
     const navigate = useNavigate();
     const { enqueueSnackbar } = useSnackbar();
     const { activeRole } = useActiveRole();
+    const { brandingSettings } = useContext(ThemeContext);
 
     // State for editorial features
     const [isEditMode, setIsEditMode] = useState(false);
@@ -321,7 +323,8 @@ const CoachContentScreen: React.FC<CoachContentScreenProps> = ({
                                             marginTop: 3,
                                             marginBottom: 2,
                                             fontWeight: 'bold',
-                                            color: 'text.primary'
+                                            color: 'text.primary',
+                                            fontFamily: brandingSettings?.typography?.fontFamily || theme.typography.fontFamily
                                         },
                                         '& ul, & ol': {
                                             marginTop: 2,
@@ -332,7 +335,7 @@ const CoachContentScreen: React.FC<CoachContentScreenProps> = ({
                                             marginBottom: 1
                                         },
                                         '& a': {
-                                            color: 'primary.main',
+                                            color: theme.palette.primary.main,
                                             textDecoration: 'none',
                                             '&:hover': {
                                                 textDecoration: 'underline'
@@ -344,18 +347,18 @@ const CoachContentScreen: React.FC<CoachContentScreenProps> = ({
                                             marginLeft: 0,
                                             fontStyle: 'italic',
                                             color: 'text.secondary',
-                                            backgroundColor: 'grey.50',
+                                            backgroundColor: brandingSettings?.palette?.[theme.palette.mode]?.paper?.main || (theme.palette.mode === 'dark' ? 'grey.800' : 'grey.50'),
                                             padding: 2,
                                             borderRadius: 1
                                         },
                                         '& code': {
-                                            backgroundColor: 'grey.100',
+                                            backgroundColor: brandingSettings?.palette?.[theme.palette.mode]?.paper?.main || (theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100'),
                                             padding: '2px 4px',
                                             borderRadius: 1,
                                             fontFamily: 'monospace'
                                         },
                                         '& pre': {
-                                            backgroundColor: 'grey.100',
+                                            backgroundColor: brandingSettings?.palette?.[theme.palette.mode]?.paper?.main || (theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100'),
                                             padding: 2,
                                             borderRadius: 1,
                                             overflow: 'auto'
@@ -372,6 +375,129 @@ const CoachContentScreen: React.FC<CoachContentScreenProps> = ({
                         </Box>
                     )}
                 </Box>
+
+                {/* Screenshots Section */}
+                {(entity.screenshot_light || entity.screenshot_dark) && (
+                    <Box sx={{ mb: 4 }}>
+                        <Typography
+                            variant="h5"
+                            component="h2"
+                            gutterBottom
+                            sx={{
+                                fontWeight: 'bold',
+                                color: 'primary.main',
+                                mb: 3
+                            }}
+                        >
+                            Screenshots
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                            {entity.screenshot_light && (
+                                <Box sx={{ flex: '1 1 300px', minWidth: 300 }}>
+                                    <Typography variant="h6" gutterBottom sx={{ color: 'text.secondary' }}>
+                                        Light Theme
+                                    </Typography>
+                                    <Box
+                                        sx={{
+                                            border: 1,
+                                            borderColor: 'divider',
+                                            borderRadius: 2,
+                                            overflow: 'hidden',
+                                            boxShadow: 2
+                                        }}
+                                    >
+                                        <img
+                                            src={entity.screenshot_light}
+                                            alt="Light theme screenshot"
+                                            style={{
+                                                width: '100%',
+                                                height: 'auto',
+                                                display: 'block',
+                                                cursor: 'pointer'
+                                            }}
+                                            onClick={() => entity.screenshot_light && window.open(entity.screenshot_light, '_blank')}
+                                        />
+                                    </Box>
+                                    <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            onClick={() => entity.screenshot_light && window.open(entity.screenshot_light, '_blank')}
+                                        >
+                                            View Full Size
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            onClick={() => {
+                                                if (entity.screenshot_light) {
+                                                    const link = document.createElement('a');
+                                                    link.href = entity.screenshot_light;
+                                                    link.download = `coach_content_${entity.id}_light.png`;
+                                                    link.click();
+                                                }
+                                            }}
+                                        >
+                                            Download
+                                        </Button>
+                                    </Box>
+                                </Box>
+                            )}
+
+                            {entity.screenshot_dark && (
+                                <Box sx={{ flex: '1 1 300px', minWidth: 300 }}>
+                                    <Typography variant="h6" gutterBottom sx={{ color: 'text.secondary' }}>
+                                        Dark Theme
+                                    </Typography>
+                                    <Box
+                                        sx={{
+                                            border: 1,
+                                            borderColor: 'divider',
+                                            borderRadius: 2,
+                                            overflow: 'hidden',
+                                            boxShadow: 2
+                                        }}
+                                    >
+                                        <img
+                                            src={entity.screenshot_dark}
+                                            alt="Dark theme screenshot"
+                                            style={{
+                                                width: '100%',
+                                                height: 'auto',
+                                                display: 'block',
+                                                cursor: 'pointer'
+                                            }}
+                                            onClick={() => entity.screenshot_dark && window.open(entity.screenshot_dark, '_blank')}
+                                        />
+                                    </Box>
+                                    <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            onClick={() => entity.screenshot_dark && window.open(entity.screenshot_dark, '_blank')}
+                                        >
+                                            View Full Size
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            onClick={() => {
+                                                if (entity.screenshot_dark) {
+                                                    const link = document.createElement('a');
+                                                    link.href = entity.screenshot_dark;
+                                                    link.download = `coach_content_${entity.id}_dark.png`;
+                                                    link.click();
+                                                }
+                                            }}
+                                        >
+                                            Download
+                                        </Button>
+                                    </Box>
+                                </Box>
+                            )}
+                        </Box>
+                    </Box>
+                )}
 
                 {/* Regenerate Draft Dialog */}
                 <Dialog

@@ -1,11 +1,14 @@
 import {
     Box,
     Button,
+    Card,
+    CardMedia,
     Step,
     StepContent,
     StepLabel,
     Stepper,
-    Typography
+    Typography,
+    useTheme
 } from '@mui/material';
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -15,6 +18,7 @@ import { getUserRoleInAssignment } from '../utils/assignmentPermissions';
 
 const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }> = ({ assignment }) => {
     const auth = useAuth();
+    const theme = useTheme();
     const currentUserId = auth?.data?.user?.id;
 
     // Determine if current user is a coach
@@ -94,6 +98,23 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
         });
     };
 
+    // Helper function to get the appropriate screenshot based on theme
+    const getScreenshotUrl = (item: any) => {
+        if (!item.entity) return null;
+
+        // Use dark theme screenshot if available and theme is dark, otherwise use light
+        const isDarkTheme = theme.palette.mode === 'dark';
+        if (isDarkTheme && item.entity.screenshot_dark) {
+            return item.entity.screenshot_dark;
+        } else if (item.entity.screenshot_light) {
+            return item.entity.screenshot_light;
+        } else if (item.entity.screenshot_dark) {
+            return item.entity.screenshot_dark;
+        }
+
+        return null;
+    };
+
     // Helper function to get delivery status for each party
     const getDeliveryStatus = (item: any) => {
         const now = new Date();
@@ -120,6 +141,7 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
     const renderContentItems = (content: any[], purpose: string) => {
         return content.map((item, index) => {
             const deliveryStatus = getDeliveryStatus(item);
+            const screenshotUrl = getScreenshotUrl(item);
             let reportTitle = PurposeNames[purpose as keyof typeof PurposeNames];
             if (content.length > 1) {
                 reportTitle += ` #${item.id}`;
@@ -128,19 +150,48 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
             const segment = item._type === 'CoachContent' ? 'coach-content' : 'agent-responses';
 
             return (
-                <Box key={`${purpose}-${index}`} mb={2} >
-                    <Typography variant="h6" >
-                        <Link to={`/${segment}/${item.id}`}>View {reportTitle}</Link>
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" >
-                        <strong>Athlete:</strong> {deliveryStatus.athlete}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" >
-                        <strong>Parent:</strong> {deliveryStatus.parent}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        <strong>Coach:</strong> {deliveryStatus.coach}
-                    </Typography>
+                <Box key={`${purpose}-${index}`} mb={2}>
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                        {/* Screenshot thumbnail */}
+                        {screenshotUrl && (
+                            <Card sx={{
+                                width: 160,
+                                height: 100,
+                                flexShrink: 0,
+                                borderRadius: 1,
+                                overflow: 'hidden',
+                                boxShadow: 1
+                            }}>
+                                <CardMedia
+                                    component="img"
+                                    image={screenshotUrl}
+                                    alt={`${reportTitle} preview`}
+                                    sx={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover',
+                                        objectPosition: 'top center'
+                                    }}
+                                />
+                            </Card>
+                        )}
+
+                        {/* Content details */}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography variant="h6">
+                                <Link to={`/${segment}/${item.id}`}>View {reportTitle}</Link>
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                <strong>Athlete:</strong> {deliveryStatus.athlete}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                <strong>Parent:</strong> {deliveryStatus.parent}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                <strong>Coach:</strong> {deliveryStatus.coach}
+                            </Typography>
+                        </Box>
+                    </Box>
                 </Box>
             );
         });

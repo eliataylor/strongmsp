@@ -171,18 +171,6 @@ class UsersAdmin(BaseUserAdmin):
 class CoursesAdmin(BaseModelAdmin):
     readonly_fields = ('id', 'created_at', 'modified_at')
 
-    def image_tag(self, obj):
-        if obj.icon:
-            return format_html('<div style="width: 100px; height: 100px; background-image: url({}); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>', obj.icon.url)
-        return "No Image"
-    image_tag.short_description = "Icon"
-
-    def cover_photo_tag(self, obj):
-        if obj.cover_photo:
-            return format_html('<div style="width: 100px; height: 100px; background-image: url({}); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>', obj.cover_photo.url)
-        return "No Cover Photo"
-    cover_photo_tag.short_description = "Cover Photo"
-
     def display_price(self, obj):
         if obj.price:
             return f"${obj.price}"
@@ -198,7 +186,7 @@ class CoursesAdmin(BaseModelAdmin):
         return ", ".join(assessments) if assessments else "No assessments"
     display_assessments.short_description = "Assessments"
 
-    list_display = ('id', 'title', 'price', 'display_assessments', 'image_tag', 'cover_photo_tag', 'author', 'created_at', 'modified_at')
+    list_display = ('id', 'title', 'price', 'display_assessments', 'author', 'created_at', 'modified_at')
     list_filter = ('price', 'created_at', 'modified_at', 'author')
     search_fields = ('title', 'description', 'author__username', 'author__email')
     readonly_fields = ('id', 'created_at', 'modified_at')
@@ -759,18 +747,6 @@ class CoachContentAdmin(BaseModelAdmin):
             form.base_fields['body'].widget = forms.Textarea(attrs={'rows': 20, 'cols': 80})
         return form
 
-    def image_tag(self, obj):
-        if obj.icon:
-            return format_html('<div style="width: 100px; height: 100px; background-image: url({}); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>', obj.icon.url)
-        return "No Image"
-    image_tag.short_description = "Icon"
-
-    def cover_photo_tag(self, obj):
-        if obj.cover_photo:
-            return format_html('<div style="width: 100px; height: 100px; background-image: url({}); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>', obj.cover_photo.url)
-        return "No Cover Photo"
-    cover_photo_tag.short_description = "Cover Photo"
-
     def display_coach(self, obj):
         return safe_display_name(obj.author)
     display_coach.short_description = "Coach"
@@ -818,7 +794,16 @@ class CoachContentAdmin(BaseModelAdmin):
         return "Not received"
     display_parent_received.short_description = "Parent Received"
 
-    list_display = ('id', 'display_title_preview', 'display_coach', 'display_assignment', 'source_draft', 'display_coach_delivered', 'display_athlete_received', 'display_parent_received', 'created_at', 'modified_at')
+    def screenshot_dark_thumb(self, obj):
+        if obj.screenshot_dark:
+            return format_html(
+                '<div style="width: 80px; height: 60px; background-image: url({}); background-size: cover; background-repeat: no-repeat; background-position: center; border: 1px solid #ddd; border-radius: 4px;"></div>',
+                obj.screenshot_dark.url
+            )
+        return "No Screenshot"
+    screenshot_dark_thumb.short_description = "Dark Screenshot"
+
+    list_display = ('id', 'screenshot_dark_thumb', 'display_title_preview', 'display_coach', 'display_assignment', 'source_draft', 'display_coach_delivered', 'display_athlete_received', 'display_parent_received', 'created_at', 'modified_at')
     list_filter = ('coach_delivered', 'athlete_received', 'parent_received', 'created_at', 'modified_at', 'assignment', CoachFilter)
     search_fields = ('title', 'body', 'author__username', 'author__email', 'author__first_name', 'author__last_name', 'assignment__id')
     readonly_fields = ('id', 'created_at', 'modified_at')
@@ -830,7 +815,7 @@ class CoachContentAdmin(BaseModelAdmin):
             'fields': ('author', 'assignment', 'source_draft', 'athlete', 'title', 'body', 'purpose', 'privacy')
         }),
         ('Media', {
-            'fields': ('icon', 'cover_photo'),
+            'fields': ('screenshot_light', 'screenshot_dark'),
             'classes': ('collapse',)
         }),
         ('Delivery Status', {

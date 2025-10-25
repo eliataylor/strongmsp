@@ -310,28 +310,6 @@ export const TypeFieldSchema: ITypeFieldSchema = {
       "default": "",
       "required": true,
       "example": ""
-    },
-    "icon": {
-      "machine": "icon",
-      "singular": "Icon",
-      "plural": "Icons",
-      "field_type": "image",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    },
-    "cover_photo": {
-      "machine": "cover_photo",
-      "singular": "Cover Photo",
-      "plural": "Cover Photos",
-      "field_type": "image",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
     }
   },
   "Assessments": {
@@ -932,10 +910,10 @@ export const TypeFieldSchema: ITypeFieldSchema = {
       "required": true,
       "example": ""
     },
-    "icon": {
-      "machine": "icon",
-      "singular": "Icon",
-      "plural": "Icons",
+    "screenshot_light": {
+      "machine": "screenshot_light",
+      "singular": "Screenshot Light",
+      "plural": "Screenshot Lights",
       "field_type": "image",
       "data_type": "string",
       "cardinality": 1,
@@ -943,10 +921,10 @@ export const TypeFieldSchema: ITypeFieldSchema = {
       "required": false,
       "example": ""
     },
-    "cover_photo": {
-      "machine": "cover_photo",
-      "singular": "Cover Photo",
-      "plural": "Cover Photos",
+    "screenshot_dark": {
+      "machine": "screenshot_dark",
+      "singular": "Screenshot Dark",
+      "plural": "Screenshot Darks",
       "field_type": "image",
       "data_type": "string",
       "cardinality": 1,
@@ -1314,8 +1292,6 @@ export interface Courses extends SuperModel {
   preassessment: RelEntity<"Assessments">;
   postassessment: RelEntity<"Assessments">;
   price: number;
-  icon?: string | null;
-  cover_photo?: string | null;
 }
 export interface Assessments extends SuperModel {
   title: string;
@@ -1355,8 +1331,6 @@ export interface Products extends SuperModel {
   stripe_price_id?: string | null;
   is_active: boolean;
   features?: Record<string, any> | null;
-  icon?: string | null;
-  cover_photo?: string | null;
 }
 
 export interface Payments extends SuperModel {
@@ -1399,8 +1373,8 @@ export interface CoachContent extends SuperModel {
   author: RelEntity<"Users">;
   title: string;
   body: string;
-  icon?: string | null;
-  cover_photo?: string | null;
+  screenshot_light?: string | null;
+  screenshot_dark?: string | null;
   privacy: string;
   purpose: string;
   coach_delivered: string | null;
