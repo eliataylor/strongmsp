@@ -1,5 +1,4 @@
 import {
-    AccountCircle as AccountCircleIcon,
     Dashboard as DashboardIcon,
     Description as DescriptionIcon,
     Notifications as NotificationsIcon,
@@ -12,6 +11,7 @@ import { ListItemAvatar, ListItemButton, ListItemText } from "@mui/material";
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import RoleSwitchPrompt from "src/screens/RoleSwitchPrompt";
+import ProfileIcon from "src/theme/icons/ProfileIcon";
 export type MenuLayout = 'drawer' | 'footer' | 'header';
 export interface MenuProps {
     layout?: MenuLayout;
@@ -127,7 +127,7 @@ const AdminMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
                 selected={location.pathname === "/my-profile"}
             >
                 <ListItemAvatar style={{ display: "flex" }}>
-                    <AccountCircleIcon fontSize="small" />
+                    <ProfileIcon fontSize="small" />
                 </ListItemAvatar>
                 <ListItemText primary="My Account" />
             </ListItemButton>

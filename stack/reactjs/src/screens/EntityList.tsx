@@ -1,5 +1,5 @@
 import { Add } from "@mui/icons-material";
-import { AppBar, Box, Fab, Grid } from "@mui/material";
+import { AppBar, Box, Fab, Grid, LinearProgress } from "@mui/material";
 import React, { useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../allauth/auth";
@@ -92,7 +92,7 @@ const EntityList = <T extends ModelName>({
   let allowAdd: boolean | string = true;
   let content = null;
   if (!listData) {
-    content = <div>Loading...</div>;
+    content = <LinearProgress />;
   } else if (typeof listData === "string") {
     content = <div>{listData}</div>;
   } else {

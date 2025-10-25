@@ -1,6 +1,5 @@
-import { Box } from "@mui/material";
+import { Box, LinearProgress } from "@mui/material";
 import Snackbar from "@mui/material/Snackbar";
-import Typography from "@mui/material/Typography";
 import React, { useEffect } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { useAuth } from "../allauth/auth";
@@ -94,7 +93,7 @@ const UserView: React.FC = () => {
       setExpanded(isExpanded ? panel : false);
     };
 
-  if (!userProfile) return <Typography>Loading...</Typography>;
+  if (!userProfile) return <LinearProgress />;
 
   const canView = canDo("view", userProfile, me);
 

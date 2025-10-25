@@ -1,11 +1,11 @@
 import {
-    AccountCircle as AccountCircleIcon,
     Dashboard as DashboardIcon
 } from "@mui/icons-material";
 import { Box } from "@mui/material";
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { MenuButton } from "src/theme/StyledFields";
+import ProfileIcon from "src/theme/icons/ProfileIcon";
 import { MenuProps } from "./PublicPagesMenu";
 
 const ParentMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
@@ -17,7 +17,7 @@ const ParentMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
         //        { path: "/users", icon: PersonIcon, label: "Users", priority: false },
         //        { path: "/payments", icon: PaymentIcon, label: "Payments", priority: false },
         //        { path: "/coach-content", icon: SportsIcon, label: "Coach Content", priority: false },
-        { path: "/my-profile", icon: AccountCircleIcon, label: "My Account", priority: false }
+        { path: "/my-profile", icon: ProfileIcon, label: "My Account", priority: false }
     ];
 
     const renderItems = () => {

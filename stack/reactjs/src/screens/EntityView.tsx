@@ -1,14 +1,18 @@
+import { LinearProgress } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import ApiClient from "../config/ApiClient";
+import { useActiveRole } from "../context/ActiveRoleContext";
 import EntityCard from "../object-actions/components/EntityCard";
 import { AgentResponses, CoachContent, ModelName, ModelType, NavItem, NAVITEMS } from "../object-actions/types/types";
 import AgentResponseScreen from "./AgentResponseScreen";
-import CoachContentScreen from "./CoachContentScreen";
+import CoachContentEditorView from "./CoachContentEditorView";
+import CoachContentReadOnlyView from "./CoachContentReadOnlyView";
 
 const EntityView = () => {
   const location = useLocation();
   const { id } = useParams();
+  const { activeRole } = useActiveRole();
 
   // We'll set the model type once we find the matching nav item
   const [modelType, setModelType] = useState<ModelName | null>(null);
@@ -46,7 +50,7 @@ const EntityView = () => {
   }, [location.pathname, location.search, id]);
 
   if (!entityData) {
-    return <div>Loading...</div>;
+    return <LinearProgress />;
   }
 
   if (typeof entityData === "string") {
@@ -60,11 +64,21 @@ const EntityView = () => {
   // Check if this is a CoachContent entity and render the specialized screen
   if (modelType === "CoachContent" && entityData.data) {
     const coachContent = entityData.data as CoachContent;
-    return (
-      <div id="EntityView">
-        <CoachContentScreen entity={coachContent} />
-      </div>
-    );
+
+    // Route based on active role
+    if (activeRole === 'coach' || activeRole === 'admin') {
+      return (
+        <div id="EntityView">
+          <CoachContentEditorView entity={coachContent} />
+        </div>
+      );
+    } else {
+      return (
+        <div id="EntityView">
+          <CoachContentReadOnlyView entity={coachContent} />
+        </div>
+      );
+    }
   }
 
   // Check if this is an AgentResponses entity and render the specialized screen

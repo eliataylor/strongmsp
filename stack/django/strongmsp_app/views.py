@@ -1489,7 +1489,7 @@ class CurrentContextView(APIView):
                         obj_list = CoachContent.objects.filter(
                             Q(purpose=purpose) & 
                             Q(assignment=assignment.id)
-                            )
+                            ).order_by('-created_at')
                         if obj_list:
                             by_athlete[athlete_id]['content_progress'][purpose] = []
                             for obj in obj_list:
@@ -1513,7 +1513,7 @@ class CurrentContextView(APIView):
                         obj_list = AgentResponses.objects.filter(
                             Q(purpose=purpose) & 
                             Q(assignment=assignment.id)
-                            )
+                            ).order_by('-created_at')
                         if obj_list:
                             by_athlete[athlete_id]['agent_progress'][purpose] = []
                             for obj in obj_list:

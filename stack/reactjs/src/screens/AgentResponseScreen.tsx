@@ -8,13 +8,13 @@ import {
     DialogContent,
     DialogTitle,
     Divider,
+    LinearProgress,
     List,
     ListItem,
     ListItemText,
     Paper,
     TextField,
-    Typography,
-    useTheme
+    Typography
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React, { useEffect, useState } from 'react';
@@ -34,7 +34,6 @@ interface AgentResponseScreenProps {
 const AgentResponseScreen: React.FC<AgentResponseScreenProps> = ({
     entity
 }) => {
-    const theme = useTheme();
     const navigate = useNavigate();
     const { enqueueSnackbar } = useSnackbar();
 
@@ -63,6 +62,8 @@ const AgentResponseScreen: React.FC<AgentResponseScreenProps> = ({
 
         loadVersionHistory();
     }, [entity]);
+
+    if (!entity || entity._type !== 'AgentResponses') return <LinearProgress />;
 
     const handleCreateDraft = async () => {
         setLoading(true);

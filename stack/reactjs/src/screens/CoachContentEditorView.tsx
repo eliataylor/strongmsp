@@ -10,6 +10,7 @@ import {
     DialogTitle,
     FormControl,
     InputLabel,
+    LinearProgress,
     MenuItem,
     Paper,
     Select,
@@ -39,7 +40,7 @@ interface CoachContentScreenProps {
     entity: CoachContent;
 }
 
-const CoachContentScreen: React.FC<CoachContentScreenProps> = ({
+const CoachContentEditorView: React.FC<CoachContentScreenProps> = ({
     entity
 }) => {
     const theme = useTheme();
@@ -91,6 +92,8 @@ const CoachContentScreen: React.FC<CoachContentScreenProps> = ({
 
         markAsReceived();
     }, [activeRole, entity.id, entity.athlete_received, entity.parent_received]);
+
+    if (!entity || entity._type !== 'CoachContent') return <LinearProgress />;
 
     const handlePublish = async () => {
         setLoading(true);
@@ -539,4 +542,4 @@ const CoachContentScreen: React.FC<CoachContentScreenProps> = ({
     );
 };
 
-export default CoachContentScreen;
+export default CoachContentEditorView;

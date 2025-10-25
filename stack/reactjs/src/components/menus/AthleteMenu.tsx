@@ -1,20 +1,22 @@
 import {
-    AccountCircle as AccountCircleIcon,
     Dashboard as DashboardIcon
 } from "@mui/icons-material";
 import { Box } from "@mui/material";
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useUser } from "src/allauth/auth";
 import { MenuButton } from "src/theme/StyledFields";
+import ProfileIcon from "src/theme/icons/ProfileIcon";
 import { MenuProps } from "./PublicPagesMenu";
 
 const AthleteMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
     const location = useLocation();
+    const user = useUser();
 
     const menuItems = [
         { path: "/dashboard", icon: DashboardIcon, label: "Dashboard", priority: true },
         // { path: "/notifications", icon: NotificationsIcon, label: "Notifications", priority: true },
-        { path: "/my-profile", icon: AccountCircleIcon, label: "My Account", priority: false }
+        { path: "/my-profile", icon: ProfileIcon, label: (user.display && layout === 'header') ? `${user.display}` : "My Account", priority: false }
     ];
 
     const renderItems = () => {

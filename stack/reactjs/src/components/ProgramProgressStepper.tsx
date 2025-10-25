@@ -10,7 +10,7 @@ import {
     Typography,
     useTheme
 } from '@mui/material';
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../allauth/auth/hooks';
 import { AthletePaymentAssignment, PurposeNames } from '../object-actions/types/types';
@@ -20,6 +20,22 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
     const auth = useAuth();
     const theme = useTheme();
     const currentUserId = auth?.data?.user?.id;
+
+    // State to track which purposes have their previous versions expanded
+    const [expandedPurposes, setExpandedPurposes] = useState<Set<string>>(new Set());
+
+    // Helper function to toggle expanded state for a purpose
+    const toggleExpanded = (purpose: string) => {
+        setExpandedPurposes(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(purpose)) {
+                newSet.delete(purpose);
+            } else {
+                newSet.add(purpose);
+            }
+            return newSet;
+        });
+    };
 
     // Determine if current user is a coach
     const userRole = getUserRoleInAssignment(currentUserId, assignment);
@@ -139,62 +155,88 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
 
     // Helper function to render content items with delivery status
     const renderContentItems = (content: any[], purpose: string) => {
-        return content.map((item, index) => {
-            const deliveryStatus = getDeliveryStatus(item);
-            const screenshotUrl = getScreenshotUrl(item);
-            let reportTitle = PurposeNames[purpose as keyof typeof PurposeNames];
-            if (content.length > 1) {
-                reportTitle += ` #${item.id}`;
-            }
+        if (!content || content.length === 0) return null;
 
-            const segment = item._type === 'CoachContent' ? 'coach-content' : 'agent-responses';
+        const isExpanded = expandedPurposes.has(purpose);
+        const hasMultipleVersions = content.length > 1;
 
-            return (
-                <Box key={`${purpose}-${index}`} mb={2}>
-                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-                        {/* Screenshot thumbnail */}
-                        {screenshotUrl && (
-                            <Card sx={{
-                                width: 160,
-                                height: 100,
-                                flexShrink: 0,
-                                borderRadius: 1,
-                                overflow: 'hidden',
-                                boxShadow: 1
-                            }}>
-                                <CardMedia
-                                    component="img"
-                                    image={screenshotUrl}
-                                    alt={`${reportTitle} preview`}
-                                    sx={{
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'cover',
-                                        objectPosition: 'top center'
-                                    }}
-                                />
-                            </Card>
-                        )}
+        // Show only the latest entry (first in array) by default, or all if expanded
+        const itemsToShow = isExpanded ? content : [content[0]];
 
-                        {/* Content details */}
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography variant="h6">
-                                <Link to={`/${segment}/${item.id}`}>View {reportTitle}</Link>
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                <strong>Athlete:</strong> {deliveryStatus.athlete}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                <strong>Parent:</strong> {deliveryStatus.parent}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                <strong>Coach:</strong> {deliveryStatus.coach}
-                            </Typography>
+        return (
+            <Box>
+                {itemsToShow.map((item, index) => {
+                    const deliveryStatus = getDeliveryStatus(item);
+                    const screenshotUrl = getScreenshotUrl(item);
+                    let reportTitle = PurposeNames[purpose as keyof typeof PurposeNames];
+                    if (content.length > 1) {
+                        reportTitle += ` #${item.id}`;
+                    }
+
+                    const segment = item._type === 'CoachContent' ? 'coach-content' : 'agent-responses';
+
+                    return (
+                        <Box key={`${purpose}-${index}`} mb={2}>
+                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                                {/* Screenshot thumbnail */}
+                                {screenshotUrl && (
+                                    <Card sx={{
+                                        width: 160,
+                                        height: 100,
+                                        flexShrink: 0,
+                                        borderRadius: 1,
+                                        overflow: 'hidden',
+                                        boxShadow: 1
+                                    }}>
+                                        <CardMedia
+                                            component="img"
+                                            image={screenshotUrl}
+                                            alt={`${reportTitle} preview`}
+                                            sx={{
+                                                width: '100%',
+                                                height: '100%',
+                                                objectFit: 'cover',
+                                                objectPosition: 'top center'
+                                            }}
+                                        />
+                                    </Card>
+                                )}
+
+                                {/* Content details */}
+                                <Box sx={{ flex: 1, minWidth: 0 }}>
+                                    <Typography variant="h6">
+                                        <Link to={`/${segment}/${item.id}`}>View {reportTitle}</Link>
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        <strong>Athlete:</strong> {deliveryStatus.athlete}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        <strong>Parent:</strong> {deliveryStatus.parent}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        <strong>Coach:</strong> {deliveryStatus.coach}
+                                    </Typography>
+                                </Box>
+                            </Box>
                         </Box>
+                    );
+                })}
+
+                {/* Show Previous Versions button */}
+                {hasMultipleVersions && (
+                    <Box sx={{ mt: 1, mb: 2 }}>
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => toggleExpanded(purpose)}
+                            sx={{ textTransform: 'none' }}
+                        >
+                            {isExpanded ? 'Hide Previous Versions' : `Show Previous Versions (${content.length - 1})`}
+                        </Button>
                     </Box>
-                </Box>
-            );
-        });
+                )}
+            </Box>
+        );
     };
 
     return (

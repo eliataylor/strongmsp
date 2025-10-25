@@ -1,10 +1,11 @@
-import { AccountCircle, AlternateEmail, DevicesOther, ExpandMore, Logout, Password, SwitchAccount, VpnKey } from "@mui/icons-material";
+import { AlternateEmail, DevicesOther, ExpandMore, Logout, Password, SwitchAccount, VpnKey } from "@mui/icons-material";
 import { Box, Card, CardContent, Chip, Grid, List, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Paper, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth, useConfig } from "../allauth/auth";
 import { useActiveRole } from "../context/ActiveRoleContext";
 import { USER_TYPE } from "../object-actions/types/types";
+import ProfileIcon from "../theme/icons/ProfileIcon";
 import ThemeSwitcher from "../theme/ThemeSwitcher";
 import { getRoleConfig } from "../utils/roleUtils";
 import UserView from "./UserView";
@@ -105,7 +106,7 @@ export default function MyAccount() {
                             <List dense>
                                 <NavBarItem
                                     to={`/users/${me.id}`}
-                                    icon={<AccountCircle fontSize={"small"} />}
+                                    icon={<ProfileIcon fontSize={"small"} />}
                                     name="View Profile"
                                 />
                                 <NavBarItem

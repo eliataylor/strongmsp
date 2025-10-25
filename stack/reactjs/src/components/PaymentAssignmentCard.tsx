@@ -34,7 +34,7 @@ const PaymentAssignmentCard: React.FC<PaymentAssignmentCardProps> = ({ assignmen
 
             {/* Parents */}
             {assignment.parents.length > 0 && (
-                <Grid container justifyContent="flex-start" size={12} >
+                <Grid container justifyContent="flex-start" >
                     {assignment.parents.map((parent) => (
                         <Grid key={parent.id}>
                             <RelEntityHead rel={parent as RelEntity<'Users'>} label="Parent" />
@@ -45,7 +45,7 @@ const PaymentAssignmentCard: React.FC<PaymentAssignmentCardProps> = ({ assignmen
 
             {/* Coaches */}
             {assignment.coaches.length > 0 && (
-                <Grid container justifyContent="flex-start" size={12} >
+                <Grid container justifyContent="flex-start" >
                     {assignment.coaches.map((coach) => (
                         <Grid key={coach.id}>
                             <RelEntityHead rel={coach as RelEntity<'Users'>} label="Coach" />
@@ -57,7 +57,7 @@ const PaymentAssignmentCard: React.FC<PaymentAssignmentCardProps> = ({ assignmen
 
             {/* Payment Info */}
             {assignment.payments.length > 0 && (
-                <Grid size={12} >
+                <Grid size={12}>
                     <Typography variant="subtitle2" gutterBottom>Payments:</Typography>
                     {assignment.payments.map((payment, index) => (
                         <Box key={payment.id} mb={1} sx={{ pl: 1, borderLeft: '2px solid', borderColor: 'divider' }}>
