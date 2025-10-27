@@ -1,105 +1,67 @@
 import {
     Alert,
     Box,
-    Button,
     Card,
     CardContent,
-    CircularProgress,
     Container,
     Grid2 as Grid,
-    Pagination,
+    MenuItem,
     Paper,
+    Select,
+    Toolbar,
     Typography
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useUser } from 'src/allauth/auth';
 import ProgramProgressStepper from 'src/components/ProgramProgressStepper';
 import ProgramProgressStepperCoach from 'src/components/ProgramProgressStepperCoach';
 import SpiderChart from 'src/components/SpiderChart';
-import NotificationSummaryCard from '../components/NotificationSummaryCard';
+import AutoPaginatingList from '../components/AutoPaginatingList';
 import PaymentAssignmentCard from '../components/PaymentAssignmentCard';
-import ApiClient, { HttpResponse } from '../config/ApiClient';
-import { useAppContext } from '../context/AppContext';
-import { ApiListResponse, Notifications } from '../object-actions/types/types';
+import { AthletePaymentAssignment, PaginatedResponse } from '../object-actions/types/types';
 
 const Dashboard: React.FC = () => {
-    const { paymentAssignments, loading: contextLoading, error: contextError } = useAppContext();
-    const [notifications, setNotifications] = useState<Notifications[]>([]);
-    const [notificationsLoading, setNotificationsLoading] = useState(true);
-    const [notificationsError, setNotificationsError] = useState<string | null>(null);
-    const [notificationsPage, setNotificationsPage] = useState(1);
-    const [notificationsTotal, setNotificationsTotal] = useState(0);
-    const notificationsPerPage = 10;
+    const [athletes, setAthletes] = useState<AthletePaymentAssignment[]>([]);
+    const [totalCount, setTotalCount] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [offset, setOffset] = useState(0);
+    const [limit] = useState(10);
+    const [preAssessmentFilter, setPreAssessmentFilter] = useState<string>('all');
     const user = useUser();
 
-    const fetchNotifications = async (page = 1) => {
-        setNotificationsLoading(true);
-        setNotificationsError(null);
-
-        try {
-            const response: HttpResponse<ApiListResponse<'Notifications'>> = await ApiClient.get(
-                `/api/notifications/dashboard/?offset=${(page - 1) * notificationsPerPage}&limit=${notificationsPerPage}`
-            );
-
-            if (response.success && response.data) {
-                setNotifications(response.data.results || []);
-                setNotificationsTotal(response.data.count || 0);
-            } else {
-                setNotificationsError(response.error || 'Failed to load notifications');
-            }
-        } catch (err) {
-            setNotificationsError('Failed to load notifications');
-            console.error('Error fetching notifications:', err);
-        } finally {
-            setNotificationsLoading(false);
+    const buildApiPath = useCallback(() => {
+        const params = new URLSearchParams();
+        if (limit > 0) params.set('limit', limit.toString());
+        if (offset > 0) params.set('offset', offset.toString());
+        if (preAssessmentFilter === 'submitted') {
+            params.set('pre_assessment_submitted', 'true');
+        } else if (preAssessmentFilter === 'not_submitted') {
+            params.set('pre_assessment_submitted', 'false');
         }
+        return `/api/athlete-assignments?${params.toString()}`;
+    }, [limit, offset, preAssessmentFilter]);
+
+    const handleSuccess = (data: PaginatedResponse<AthletePaymentAssignment>) => {
+        if (data && data.results) {
+            setAthletes(prev => [...prev, ...(data.results as AthletePaymentAssignment[])]);
+            setTotalCount(data.count);
+        }
+        setLoading(false);
+    };
+
+    const handleError = (error: string) => {
+        setError(error);
+        setLoading(false);
     };
 
     useEffect(() => {
-        fetchNotifications(notificationsPage);
-    }, [notificationsPage]);
-
-    const handleMarkNotificationSeen = async (notificationId: number) => {
-        try {
-            const response = await ApiClient.post(`/api/notifications/${notificationId}/mark_seen/`, {});
-
-            if (response.success) {
-                // Update the notification in the local state
-                setNotifications(prev =>
-                    prev.map(notification =>
-                        notification.id === notificationId
-                            ? { ...notification, seen: true }
-                            : notification
-                    )
-                );
-            }
-        } catch (err) {
-            console.error('Error marking notification as seen:', err);
-        }
-    };
-
-    const handleNotificationsPageChange = (event: React.ChangeEvent<unknown>, page: number) => {
-        setNotificationsPage(page);
-    };
-
-    if (contextLoading) {
-        return (
-            <Container maxWidth="lg" sx={{ py: 4 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                    <CircularProgress />
-                </Box>
-            </Container>
-        );
-    }
-
-    if (contextError) {
-        return (
-            <Container maxWidth="lg" sx={{ py: 4 }}>
-                <Alert severity="error">{contextError}</Alert>
-            </Container>
-        );
-    }
+        // Reset athletes when filters change
+        setAthletes([]);
+        setOffset(0);
+        setError(null);
+        setLoading(true);
+    }, [limit, preAssessmentFilter]);
 
     function structureSpiderData(entity: any) {
         if (!entity) return [];
@@ -134,100 +96,78 @@ const Dashboard: React.FC = () => {
         return spiderData;
     }
 
+    if (error) {
+        return (
+            <Container maxWidth="lg" sx={{ py: 4 }}>
+                <Alert severity="error">{error}</Alert>
+            </Container>
+        );
+    }
+
     return (
         <Box p={2}>
-            <Box sx={{ mb: 3 }}>
-                {paymentAssignments.length === 0 ? (
-                    <Card>
-                        <CardContent>
-                            <Typography variant="body1" color="text.secondary" textAlign="center">
-                                No payment assignments found.
-                            </Typography>
-                        </CardContent>
-                    </Card>
-                ) : (
-                    paymentAssignments.map((athleteAssignment, index) => (
-                        <Paper elevation={3} sx={{ mb: 4, p: 2 }} key={athleteAssignment.athlete.id}>
-                            <Grid container spacing={1} >
-                                <Grid size={{ xs: 12, sm: 6 }} >
-                                    <PaymentAssignmentCard assignment={athleteAssignment} />
-                                </Grid>
-                                {athleteAssignment.athlete.entity && athleteAssignment.athlete.entity?.category_leadership && (
-                                    <Grid size={{ xs: 12, sm: 6 }}>
-                                        <SpiderChart data={structureSpiderData(athleteAssignment.athlete.entity)} height={250} showLegend={false} />
-                                    </Grid>
-                                )}
-                            </Grid>
-                            <Typography variant="h5" component="h2" sx={{ mt: 3, mb: 1 }}>
-                                {athleteAssignment.athlete.id == user.id ? 'My Progress' : 'Program Progress: ' + athleteAssignment.athlete.str}
-                            </Typography>
-                            {athleteAssignment.my_roles.includes('coach') ? (
-                                <ProgramProgressStepperCoach assignment={athleteAssignment} key={index} />
-                            ) :
-                                <ProgramProgressStepper assignment={athleteAssignment} key={index} />}
-                        </Paper>
-                    ))
-                )}
-            </Box>
-
-            {/* Notifications Section */}
-            <Box sx={{ mb: 4 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                    <Typography variant="h5" component="h2">
-                        Recent Notifications
+            {/* Toolbar with filters */}
+            <Paper sx={{ mb: 2 }}>
+                <Toolbar>
+                    <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                        Athlete Assignments
                     </Typography>
-                    <Button
-                        component={Link}
-                        to="/notifications"
-                        variant="outlined"
+                    <Select
+                        value={preAssessmentFilter}
+                        onChange={(e) => setPreAssessmentFilter(e.target.value)}
                         size="small"
+                        sx={{ minWidth: 200 }}
                     >
-                        View All Notifications
-                    </Button>
-                </Box>
+                        <MenuItem value="all">All Assessments</MenuItem>
+                        <MenuItem value="submitted">Pre-Assessment Submitted</MenuItem>
+                        <MenuItem value="not_submitted">Pre-Assessment Not Submitted</MenuItem>
+                    </Select>
+                </Toolbar>
+            </Paper>
 
-                {notificationsLoading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                        <CircularProgress />
-                    </Box>
-                ) : notificationsError ? (
-                    <Alert severity="error">{notificationsError}</Alert>
-                ) : notifications.length === 0 ? (
-                    <Card>
-                        <CardContent>
-                            <Typography variant="body1" color="text.secondary" textAlign="center">
-                                No notifications found.
-                            </Typography>
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <>
-                        <Grid container spacing={2}>
-                            {notifications.map((notification) => (
-                                <Grid size={{ xs: 12, sm: 6 }} key={notification.id}>
-                                    <NotificationSummaryCard
-                                        notification={notification}
-                                        onMarkSeen={handleMarkNotificationSeen}
-                                    />
+            {/* Auto-paginating athlete list */}
+            <AutoPaginatingList
+                basePath={buildApiPath()}
+                count={totalCount}
+                limit={limit}
+                offset={offset}
+                onSuccess={handleSuccess}
+                onError={handleError}
+            >
+                <Box sx={{ mb: 3 }}>
+                    {athletes.length === 0 ? (
+                        <Card>
+                            <CardContent>
+                                <Typography variant="body1" color="text.secondary" textAlign="center">
+                                    No payment assignments found.
+                                </Typography>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        athletes.map((athleteAssignment, index) => (
+                            <Paper elevation={3} sx={{ mb: 4, p: 2 }} key={athleteAssignment.athlete_id}>
+                                <Grid container spacing={1}>
+                                    <Grid size={{ xs: 12, sm: 6 }}>
+                                        <PaymentAssignmentCard assignment={athleteAssignment} />
+                                    </Grid>
+                                    {athleteAssignment.athlete.entity && athleteAssignment.athlete.entity?.category_leadership && (
+                                        <Grid size={{ xs: 12, sm: 6 }}>
+                                            <SpiderChart data={structureSpiderData(athleteAssignment.athlete.entity)} height={250} showLegend={false} />
+                                        </Grid>
+                                    )}
                                 </Grid>
-                            ))}
-                        </Grid>
-
-                        {notificationsTotal > notificationsPerPage && (
-                            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                                <Pagination
-                                    count={Math.ceil(notificationsTotal / notificationsPerPage)}
-                                    page={notificationsPage}
-                                    onChange={handleNotificationsPageChange}
-                                    color="primary"
-                                />
-                            </Box>
-                        )}
-                    </>
-                )}
-            </Box>
-
-
+                                <Typography variant="h5" component="h2" sx={{ mt: 3, mb: 1 }}>
+                                    {athleteAssignment.athlete.id == user.id ? 'My Progress' : 'Program Progress: ' + athleteAssignment.athlete.str}
+                                </Typography>
+                                {athleteAssignment.my_roles.includes('coach') ? (
+                                    <ProgramProgressStepperCoach assignment={athleteAssignment} key={index} />
+                                ) :
+                                    <ProgramProgressStepper assignment={athleteAssignment} key={index} />}
+                            </Paper>
+                        ))
+                    )}
+                </Box>
+            </AutoPaginatingList>
         </Box>
     );
 };

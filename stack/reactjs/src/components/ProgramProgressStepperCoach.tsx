@@ -415,7 +415,7 @@ const ProgramProgressStepperCoach: React.FC<{ assignment: AthletePaymentAssignme
                 </StepContent>
             </Step>
 
-            {assignment.post_assessment &&
+            {assignment.post_assessments && assignment.post_assessments.length > 0 &&
                 <Step expanded={true}>
                     <StepLabel>Post Assessment</StepLabel>
                     <StepContent>
@@ -427,7 +427,7 @@ const ProgramProgressStepperCoach: React.FC<{ assignment: AthletePaymentAssignme
                             ) : (userRole === 'athlete' ? (
                                 <Button
                                     component={Link}
-                                    to={`/assessments/${assignment.post_assessment.id}`}
+                                    to={`/assessments/${assignment.post_assessments[0].id}`}
                                     variant="contained"
                                     size="small"
                                     fullWidth

@@ -17,8 +17,9 @@ import { useUser } from "../allauth/auth/hooks";
 import { useAppContext } from "../context/AppContext";
 import Logo from "../theme/Logo";
 import { ThemeContext } from "../theme/ThemeContext";
-import RoleBasedMenu from "./RoleBasedMenu";
 import PublicPagesMenu from "./menus/PublicPagesMenu";
+import NotificationButton from "./NotificationButton";
+import RoleBasedMenu from "./RoleBasedMenu";
 
 const PublicHeader: React.FC = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -111,7 +112,14 @@ const PublicHeader: React.FC = () => {
                     {/* Desktop Navigation */}
                     {!isMobile && (
                         <Box sx={{ display: 'flex', flexGrow: 1, justifyContent: 'flex-end', gap: 2, mr: 3 }}>
-                            {user?.id ? <RoleBasedMenu layout="header" /> : <PublicPagesMenu layout="header" />}
+                            {user?.id ? (
+                                <>
+                                    <RoleBasedMenu layout="header" />
+                                    <NotificationButton />
+                                </>
+                            ) : (
+                                <PublicPagesMenu layout="header" />
+                            )}
                         </Box>
                     )}
 

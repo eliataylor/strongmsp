@@ -1,23 +1,23 @@
-import React, {useCallback, useEffect, useState} from "react";
-import {Box, LinearProgress} from "@mui/material";
-import { ApiListResponse, ModelName } from "../object-actions/types/types";
+import { Box, LinearProgress } from "@mui/material";
+import React, { useCallback, useEffect, useState } from "react";
 import ApiClient from "../config/ApiClient";
 import { trackGAEvent } from "../config/GaTracking";
+import { AthletePaymentAssignment, ModelName, PaginatedResponse } from "../object-actions/types/types";
 
-interface AutoPaginatingListProps<T extends ModelName = ModelName> {
+interface AutoPaginatingListProps<T extends ModelName | AthletePaymentAssignment> {
     basePath: string;
     count: number;
     limit: number;
     offset: number;
-    onSuccess?: (data: ApiListResponse<T>) => void;
+    onSuccess?: (data: PaginatedResponse<T>) => void;
     onError?: (error: string) => void;
     children: React.ReactNode;
 }
 
 
-const AutoPaginatingList = <T extends ModelName>({
-                                                     basePath, limit, count, offset, onSuccess, onError, children
-                                                 }: AutoPaginatingListProps<T>) => {
+const AutoPaginatingList = <T extends ModelName | AthletePaymentAssignment>({
+    basePath, limit, count, offset, onSuccess, onError, children
+}: AutoPaginatingListProps<T>) => {
     const [loading, setLoading] = useState(false);
 
     const fetchData = useCallback(async (newOffset = 0, newLimit = 10) => {
@@ -38,7 +38,7 @@ const AutoPaginatingList = <T extends ModelName>({
         if (response.error) {
             if (onError) onError(response.error);
         } else {
-            if (onSuccess) onSuccess(response.data as ApiListResponse<T>);
+            if (onSuccess) onSuccess(response.data as PaginatedResponse<T>);
         }
         setLoading(false);
 

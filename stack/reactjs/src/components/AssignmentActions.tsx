@@ -90,7 +90,8 @@ const AssignmentActions: React.FC<AssignmentActionsProps> = ({ assignment, onUpd
             }
 
             // Make API call to update assignment using ApiClient
-            const assignmentId = assignment.assignments[0].id;
+            // Use the first paymentassignment_id
+            const assignmentId = assignment.paymentassignment_ids[0];
             const response = await ApiClient.patch(`/api/payment-assignments/${assignmentId}/`, updateData);
 
             if (response.success) {

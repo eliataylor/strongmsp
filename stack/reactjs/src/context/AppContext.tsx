@@ -1,12 +1,11 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import { useAuth } from "../allauth/auth/hooks";
 import ApiClient, { HttpResponse } from "../config/ApiClient";
-import { AthletePaymentAssignment, ContextApiResponse, OrganizationPublicData, UserOrganizationMembership } from "../object-actions/types/types";
+import { ContextApiResponse, OrganizationPublicData, UserOrganizationMembership } from "../object-actions/types/types";
 
 interface AppContextType {
     organization: OrganizationPublicData | null;
     membership: UserOrganizationMembership | null;
-    paymentAssignments: AthletePaymentAssignment[];
     loading: boolean;
     error: string | null;
     refresh: () => Promise<void>;
@@ -29,7 +28,6 @@ interface Props {
 export function AppContextProvider({ children }: Props) {
     const [organization, setOrganization] = useState<OrganizationPublicData | null>(null);
     const [membership, setMembership] = useState<UserOrganizationMembership | null>(null);
-    const [paymentAssignments, setPaymentAssignments] = useState<AthletePaymentAssignment[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const auth = useAuth();
@@ -42,7 +40,6 @@ export function AppContextProvider({ children }: Props) {
             if (response.success && response.data) {
                 setOrganization(response.data.organization);
                 setMembership(response.data.membership);
-                setPaymentAssignments(response.data.payment_assignments || []);
             } else {
                 setError(response.error || "Failed to load context");
             }
@@ -68,7 +65,6 @@ export function AppContextProvider({ children }: Props) {
             console.log("[CONTEXT] User logged out, clearing context");
             setOrganization(null);
             setMembership(null);
-            setPaymentAssignments([]);
             setError(null);
             setLoading(false);
         }
@@ -79,16 +75,14 @@ export function AppContextProvider({ children }: Props) {
         console.log("[CONTEXT] Context state updated:", {
             organization: organization?.name || "None",
             membership: membership?.groups?.join(", ") || "None",
-            paymentAssignments: paymentAssignments.length,
             loading,
             error
         });
-    }, [organization, membership, paymentAssignments, loading, error]);
+    }, [organization, membership, loading, error]);
 
     const value: AppContextType = {
         organization,
         membership,
-        paymentAssignments,
         loading,
         error,
         refresh: fetchContext

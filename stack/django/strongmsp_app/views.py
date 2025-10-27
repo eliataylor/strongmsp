@@ -1420,192 +1420,85 @@ class CurrentContextView(APIView):
                 except UserOrganizations.DoesNotExist:
                     pass
 
-        # Get payment assignments (user-specific, filtered by organization)
-        context_data['payment_assignments'] = []
-        if request.user.is_authenticated and context_data.get('organization'):
-            all_assignments_data = request.assignment_service.get_all()
-
-            by_athlete = {}
-
-            for assignment_data in all_assignments_data:
-
-                assignment = assignment_data['assignment']
-                athlete_id = assignment.athlete.id
-
-                athlete_relentity = {
-                    'id': athlete_id,
-                    'str': str(assignment.athlete),
-                    '_type': 'Users',
-                    'img': assignment.athlete.photo.url if assignment.athlete.photo else None,
-                    'entity': {
-                        'category_performance_mindset': float(assignment.athlete.category_performance_mindset) if assignment.athlete.category_performance_mindset else None,
-                        'category_emotional_regulation': float(assignment.athlete.category_emotional_regulation) if assignment.athlete.category_emotional_regulation else None,
-                        'category_confidence': float(assignment.athlete.category_confidence) if assignment.athlete.category_confidence else None,
-                        'category_resilience_motivation': float(assignment.athlete.category_resilience_motivation) if assignment.athlete.category_resilience_motivation else None,
-                        'category_concentration': float(assignment.athlete.category_concentration) if assignment.athlete.category_concentration else None,
-                        'category_leadership': float(assignment.athlete.category_leadership) if assignment.athlete.category_leadership else None,
-                        'category_mental_wellbeing': float(assignment.athlete.category_mental_wellbeing) if assignment.athlete.category_mental_wellbeing else None,
-                    }
-                } if assignment.athlete else None
-
-                if athlete_id not in by_athlete:
-                    by_athlete[athlete_id] = {
-                        'assignments': [],
-                        'my_roles': assignment_data['my_roles'],
-                        'athlete': athlete_relentity,
-                        'coaches': [],
-                        'parents': [],
-                        'pre_assessment_submitted_at': None,
-                        'post_assessment_submitted_at': None,
-                        'pre_assessment': None,
-                        'post_assessment': None,
-                        'payments': [],
-                        # Track IDs for efficient deduplication
-                        '_coach_ids': set(),
-                        '_parent_ids': set(),
-                        'agent_progress': {
-                            "lesson_plan": None,  # null or RelEntity<AgentResponses> where purpose == lesson_plan and matching org + AgentResponses.payment_assignment.athelete 
-                            "feedback_report": None, # null  or RelEntity<AgentResponses> where purpose == feedback_report  and matching org + AgentResponses.payment_assignment.athelete 
-                            "talking_points": None, # null or RelEntity<AgentResponses>  where purpose == talking_points  and matching org + AgentResponses.payment_assignment.athelete 
-                            "scheduling_email": None, # null or RelEntity<AgentResponses>  where purpose == scheduling_email  and matching org + AgentResponses.payment_assignment.athelete 
-                            "curriculum": None,  # null or RelEntity<AgentResponses> where purpose == curriculum  and matching org + AgentResponses.payment_assignment.athelete 
-                        },
-                        "content_progress": {
-                            "lesson_plan": None, # or RelEntity<CoachContent> where purpose == lesson_plan  and matching org + CoachContent.payment_assignment.athelete 
-                            "feedback_report": None, # or RelEntity<CoachContent> where purpose == feedback_report  and matching org + CoachContent.payment_assignment.athelete 
-                            "talking_points": None, # or RelEntity<CoachContent> where purpose == talking_points  and matching org + CoachContent.payment_assignment.athelete 
-                            "scheduling_email": None, # or RelEntity<CoachContent> where purpose == scheduling_email  and matching org + CoachContent.payment_assignment.athelete 
-                            "curriculum": None, # or RelEntity<CoachContent> where purpose == curriculum  and matching org + CoachContent.payment_assignment.athelete 
-                        }
-                    }
-
-                   
-                by_athlete[athlete_id]['assignments'].append({
-                    'id': assignment.id,
-                    'str': str(assignment.payment.product), 
-                    '_type': 'PaymentAssignments'
-                })
-
-                
-                # Add coaches with deduplication
-                for coach in assignment.coaches.all():
-                    if coach.id not in by_athlete[athlete_id]['_coach_ids']:
-                        coach_relentity = {
-                            'id': coach.id,
-                            'str': str(coach),
-                            '_type': 'Users',
-                            'img': coach.photo.url if coach.photo else None
-                        }
-                        by_athlete[athlete_id]['coaches'].append(coach_relentity)
-                        by_athlete[athlete_id]['_coach_ids'].add(coach.id)
-                
-                # Add parents with deduplication
-                for parent in assignment.parents.all():
-                    if parent.id not in by_athlete[athlete_id]['_parent_ids']:
-                        parent_relentity = {
-                            'id': parent.id,
-                            'str': str(parent),
-                            '_type': 'Users',
-                            'img': parent.photo.url if parent.photo else None
-                        }
-                        by_athlete[athlete_id]['parents'].append(parent_relentity)
-                        by_athlete[athlete_id]['_parent_ids'].add(parent.id)
-
-                if assignment.pre_assessment_submitted_at:
-                    by_athlete[athlete_id]['pre_assessment_submitted_at'] = assignment.pre_assessment_submitted_at.isoformat()
-                if assignment.post_assessment_submitted_at:
-                    by_athlete[athlete_id]['post_assessment_submitted_at'] = assignment.post_assessment_submitted_at.isoformat()
-                    
-                if assignment.payment.product and assignment.payment.product.post_assessment:
-                    by_athlete[athlete_id]['post_assessment'] = {
-                        'id': assignment.payment.product.post_assessment.id,
-                        'str': str(assignment.payment.product.post_assessment),
-                        '_type': 'Assessments'
-                    }
-                    
-                if assignment.payment.product and assignment.payment.product.pre_assessment:
-                    by_athlete[athlete_id]['pre_assessment'] = {
-                        'id': assignment.payment.product.pre_assessment.id,
-                        'str': str(assignment.payment.product.pre_assessment),
-                        '_type': 'Assessments'
-                    }
-
-                    allpurposes = ['lesson_plan', 'curriculum', 'talking_points', 'feedback_report', 'scheduling_email']
-                    for purpose in allpurposes:
-                        obj_list = CoachContent.objects.filter(
-                            Q(purpose=purpose) & 
-                            Q(assignment=assignment.id)
-                            ).order_by('-created_at')
-                        if obj_list:
-                            by_athlete[athlete_id]['content_progress'][purpose] = []
-                            for obj in obj_list:
-                                by_athlete[athlete_id]['content_progress'][purpose].append({
-                                    'id': obj.id,
-                                    'str': str(obj),
-                                    '_type': 'CoachContent',
-                                    'entity': {
-                                        'purpose': purpose,
-                                        'created_at': obj.created_at.isoformat(),
-                                        'modified_at': obj.modified_at.isoformat(),
-                                        'coach_delivered': obj.coach_delivered.isoformat() if obj.coach_delivered else None,
-                                        'athlete_received': obj.athlete_received.isoformat() if obj.athlete_received else None,
-                                        'parent_received': obj.parent_received.isoformat() if obj.parent_received else None,
-                                        'screenshot_light': obj.screenshot_light.url if obj.screenshot_light else None,
-                                        'screenshot_dark': obj.screenshot_dark.url if obj.screenshot_dark else None,
-                                    }
-                                })
-
-                    for purpose in allpurposes:
-                        obj_list = AgentResponses.objects.filter(
-                            Q(purpose=purpose) & 
-                            Q(assignment=assignment.id)
-                            ).order_by('-created_at')
-                        if obj_list:
-                            by_athlete[athlete_id]['agent_progress'][purpose] = []
-                            for obj in obj_list:
-                                by_athlete[athlete_id]['agent_progress'][purpose].append({
-                                    'id': obj.id,
-                                    'str': str(obj),
-                                    '_type': 'AgentResponses',
-                                    'entity': {
-                                        'purpose': purpose,
-                                        'created_at': obj.created_at.isoformat(),
-                                        'modified_at': obj.modified_at.isoformat(),
-                                    }
-                                })
-
-                    
-                if assignment.payment.product:
-                    payment_data = {
-                        'id': assignment.payment.id,
-                        'status': assignment.payment.status,
-                        'subscription_ends': assignment.payment.subscription_ends.isoformat() if assignment.payment.subscription_ends else None,
-                        'product': {
-                            'id': assignment.payment.product.id,
-                            'str': str(assignment.payment.product),
-                            '_type': 'Products'
-                        }
-                    }
-                    
-                    # Add author if available
-                    if assignment.payment.author:
-                        payment_data['author'] = {
-                            'id': assignment.payment.author.id,
-                            'str': str(assignment.payment.author),
-                            '_type': 'Users',
-                            'img': assignment.payment.author.photo.url if assignment.payment.author.photo else None
-                        }
-                    
-                    by_athlete[athlete_id]['payments'].append(payment_data)
-
-            # Clean up tracking sets before returning data
-            for athlete_data in by_athlete.values():
-                athlete_data.pop('_coach_ids', None)
-                athlete_data.pop('_parent_ids', None)
-            
-            context_data['payment_assignments'] = by_athlete.values()
-
         response = Response(context_data, status=status.HTTP_200_OK)
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        return response
+
+
+class AthleteAssignmentsListView(APIView):
+    """
+    Returns paginated athlete assignments with filtering support.
+    Accessible by authenticated users only.
+    """
+    
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        """
+        GET /api/athlete-assignments/
+        
+        Query parameters:
+            - limit: Maximum number of results (optional)
+            - offset: Number of results to skip (optional)
+            - pre_assessment_submitted: Filter by pre-assessment status (true/false, optional)
+            - athlete_id: Filter by specific athlete (optional)
+        """
+        # Extract query parameters
+        limit = request.query_params.get('limit', None)
+        offset = request.query_params.get('offset', None)
+        pre_assessment_submitted_param = request.query_params.get('pre_assessment_submitted', None)
+        athlete_id_param = request.query_params.get('athlete_id', None)
+        
+        # Parse limit and offset
+        try:
+            limit = int(limit) if limit else None
+        except (ValueError, TypeError):
+            limit = None
+            
+        try:
+            offset = int(offset) if offset else None
+        except (ValueError, TypeError):
+            offset = None
+        
+        # Parse pre_assessment_submitted filter
+        pre_assessment_submitted = None
+        if pre_assessment_submitted_param is not None:
+            if pre_assessment_submitted_param.lower() == 'true':
+                pre_assessment_submitted = True
+            elif pre_assessment_submitted_param.lower() == 'false':
+                pre_assessment_submitted = False
+        
+        # Get paginated results
+        assignments_response = request.assignment_service.get_all_paginated(
+            limit=limit,
+            offset=offset,
+            pre_assessment_submitted=pre_assessment_submitted
+        )
+        
+        # Filter by athlete_id if specified
+        if athlete_id_param:
+            try:
+                athlete_id = int(athlete_id_param)
+                filtered_results = [
+                    result for result in assignments_response['results']
+                    if result.get('athlete_id') == athlete_id
+                ]
+                assignments_response['results'] = filtered_results
+                assignments_response['count'] = len(filtered_results)
+            except (ValueError, TypeError):
+                pass
+        
+        # Format response
+        response_data = {
+            'results': assignments_response['results'],
+            'count': assignments_response['count'],
+            'limit': assignments_response.get('limit'),
+            'offset': assignments_response.get('offset'),
+        }
+        
+        response = Response(response_data, status=status.HTTP_200_OK)
         response['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
         response['Pragma'] = 'no-cache'
         response['Expires'] = '0'

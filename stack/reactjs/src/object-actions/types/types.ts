@@ -28,12 +28,16 @@ export type ITypeFieldSchema = {
   };
 }
 
-export interface ApiListResponse<T extends ModelName> {
+export interface PaginatedResponse<T> {
   count: number;
   offset: number;
   limit: number;
   meta: any;
   error: string | null;
+  results: Array<T>
+}
+
+export interface ApiListResponse<T extends ModelName> extends PaginatedResponse<ModelType<T>> {
   results: Array<ModelType<T>>
 }
 
@@ -1271,24 +1275,20 @@ export interface ContentProgressTracking {
   scheduling_email: RelEntity<'CoachContent'>[] | null;
 }
 
-// Athlete-centric payment assignment structure
+// Athlete-centric payment assignment structure (updated to match get_all_paginated response)
 export interface AthletePaymentAssignment {
-  assignments: RelEntity<'PaymentAssignments'>[];
-  my_roles: string[];
+  athlete_id: number;
   athlete: RelEntity<'Users'>;
   coaches: RelEntity<'Users'>[];
   parents: RelEntity<'Users'>[];
+  my_roles: string[];
   pre_assessment_submitted_at: string | null;
   post_assessment_submitted_at: string | null;
   pre_assessment: RelEntity<'Assessments'> | null;
-  post_assessment: RelEntity<'Assessments'> | null;
-  payments: {
-    id: number;
-    status: string;
-    subscription_ends: string | null;
-    product: RelEntity<'Products'>;
-    author?: RelEntity<'Users'>;
-  }[];
+  post_assessments: RelEntity<'Assessments'>[];
+  paymentassignment_ids: number[];
+  payment_ids: number[];
+  product_ids: number[];
   agent_progress: ProgressTracking;
   content_progress: ContentProgressTracking;
 }
@@ -1297,7 +1297,6 @@ export interface AthletePaymentAssignment {
 export interface ContextApiResponse {
   organization: OrganizationPublicData | null;
   membership: UserOrganizationMembership | null;
-  payment_assignments: AthletePaymentAssignment[];
 }
 export interface Assessments extends SuperModel {
   title: string;

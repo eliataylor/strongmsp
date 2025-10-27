@@ -23,6 +23,9 @@ class AssignmentService:
         """
         Lazy loads all active assignments for the current user.
         Returns list of dicts with assignment and user roles.
+        
+        DEPRECATED: This method is deprecated and will be removed in a future version.
+        Use get_all_paginated() instead for better performance and pagination support.
         """
         if self._assignments is None:
             if not self.user.is_authenticated:
@@ -62,6 +65,20 @@ class AssignmentService:
         return self._assignments
 
     def get_all_paginated(self, limit=None, offset=None, pre_assessment_submitted=None):
+        """
+        Get paginated athlete assignments with optional filtering.
+        
+        Args:
+            limit: Maximum number of results to return
+            offset: Number of results to skip
+            pre_assessment_submitted: Filter by pre-assessment submission status
+                - True: Only show submissions with pre_assessment submitted
+                - False: Only show submissions with pre_assessment not submitted
+                - None: No filter
+        
+        Returns:
+            Dict with keys: results, count, limit, offset
+        """
         if not self.user.is_authenticated:
             return {
                 'results': [],
@@ -70,7 +87,30 @@ class AssignmentService:
                 'offset': offset or 0
             }
 
-        sql = """SELECT DISTINCT pa.athlete_id, pr.pre_assessment_id,
+        # Build the WHERE clause with optional pre_assessment_submitted filter
+        pre_assessment_filter = ""
+        params = [
+            self.user.id,  # coach
+            self.user.id,  # parent
+            self.user.id,  # athlete
+            self.user.id,  # author
+            self.organization_slug  # organization slug
+        ]
+        
+        if pre_assessment_submitted is not None:
+            if pre_assessment_submitted:
+                pre_assessment_filter = "AND pa.pre_assessment_submitted_at IS NOT NULL"
+            else:
+                pre_assessment_filter = "AND pa.pre_assessment_submitted_at IS NULL"
+
+        # Build the pagination clause
+        limit_offset_clause = ""
+        if limit is not None and limit > 0:
+            limit_offset_clause = f"LIMIT {limit}"
+            if offset is not None and offset > 0:
+                limit_offset_clause += f" OFFSET {offset}"
+
+        sql = f"""SELECT DISTINCT pa.athlete_id, pr.pre_assessment_id,
                 GROUP_CONCAT(distinct pr.post_assessment_id) as post_assessment_ids,
                 GROUP_CONCAT(distinct pa.id) as paymentassignment_ids,
                 GROUP_CONCAT(distinct p.id) as payment_ids,
@@ -103,19 +143,13 @@ class AssignmentService:
                     p.subscription_ends IS NULL OR            -- payment__subscription_ends__isnull
                     p.subscription_ends >= now()                 -- payment__subscription_ends__gte (now date)
                 )
+                {pre_assessment_filter}
                 GROUP BY pa.athlete_id, pr.pre_assessment_id 
-                ORDER BY pre_submitted DESC, post_submitted DESC, created_at;
+                ORDER BY pre_submitted DESC, post_submitted DESC, created_at DESC
+                {limit_offset_clause};
                 """
 
         with connection.cursor() as cursor:
-            # Use proper parameter binding
-            params = [
-                self.user.id,  # coach
-                self.user.id,  # parent
-                self.user.id,  # athlete
-                self.user.id,  # author
-                self.organization_slug  # organization slug
-            ]
             cursor.execute(sql, params)
             rows = cursor.fetchall()
 
@@ -278,6 +312,8 @@ class AssignmentService:
                             })
 
                 athlete_state['my_roles'] = list(my_roles.keys())
+                athlete_state['agent_progress'] = agent_progress
+                athlete_state['content_progress'] = content_progress
                 athlete_states.append(athlete_state)
 
         return {

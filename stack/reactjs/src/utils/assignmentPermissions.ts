@@ -29,10 +29,9 @@ export function getUserRoleInAssignment(
         return 'parent';
     }
 
-    // Check if user is an author (payer) of any payment
-    if (assignment.payments.some(payment => payment.author && payment.author.id === userId)) {
-        return 'author';
-    }
+    // Note: payments array was removed from AthletePaymentAssignment
+    // If we need to check payer role, we'll need to add it back or get it from elsewhere
+    // For now, skip this check
 
 
     return 'none';

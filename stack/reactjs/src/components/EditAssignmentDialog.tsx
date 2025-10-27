@@ -137,21 +137,21 @@ const EditAssignmentDialog: React.FC<EditAssignmentDialogProps> = ({
             }
 
             // Update all assignments for this athlete
-            const updatePromises = assignment.assignments.map(async (assignmentEntity) => {
-                const response = await ApiClient.patch(`/api/payment-assignments/${assignmentEntity.id}/`, updateData);
+            const updatePromises = assignment.paymentassignment_ids.map(async (assignmentId: number) => {
+                const response = await ApiClient.patch(`/api/payment-assignments/${assignmentId}/`, updateData);
                 return response;
             });
 
             const responses = await Promise.all(updatePromises);
 
             // Check if all updates were successful
-            const allSuccessful = responses.every(response => response.success);
+            const allSuccessful = responses.every((response: any) => response.success);
 
             if (allSuccessful) {
                 enqueueSnackbar('Assignment updated successfully', { variant: 'success' });
                 onSuccess();
             } else {
-                const failedCount = responses.filter(response => !response.success).length;
+                const failedCount = responses.filter((response: any) => !response.success).length;
                 setError(`Failed to update ${failedCount} assignment(s)`);
                 enqueueSnackbar(`Failed to update ${failedCount} assignment(s)`, { variant: 'error' });
             }

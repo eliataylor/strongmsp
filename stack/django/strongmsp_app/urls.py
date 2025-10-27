@@ -23,6 +23,7 @@ from .views import SharesViewSet
 from .views import NotificationsViewSet
 from .views import CurrentContextView
 from .views import CoachSearchView
+from .views import AthleteAssignmentsListView
 ####OBJECT-ACTIONS-URL-IMPORTS-ENDS####
 urlpatterns = [path('', RenderFrontendIndex.as_view(), name='index')]
 
@@ -55,6 +56,7 @@ urlpatterns += [
     path('api/groups/stats', GroupStatsView.as_view(), name='group-stats'),
     path('api/users/search-coaches', CoachSearchView.as_view(), name='coach-search'),
     path('api/context/current', CurrentContextView.as_view(), name='current-context'),
+    path('api/athlete-assignments', AthleteAssignmentsListView.as_view(), name='athlete-assignments-list'),
     path('api/', include(OARouter.urls)),
 ]
 ####OBJECT-ACTIONS-URLS-ENDS####
