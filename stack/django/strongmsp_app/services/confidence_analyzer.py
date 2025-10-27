@@ -114,3 +114,46 @@ class ConfidenceAnalyzer:
                 })
         
         return result
+
+    @staticmethod
+    def update_user_category_scores(user_id, assessment_id):
+        """
+        Calculate category stats and update them on the Users model.
+        
+        Args:
+            user_id: ID of the user
+            assessment_id: ID of the assessment just completed
+        """
+        from ..models import Users
+        
+        # Get the user
+        try:
+            user = Users.objects.get(id=user_id)
+        except Users.DoesNotExist:
+            return
+        
+        # Calculate category stats for this assessment
+        category_stats = ConfidenceAnalyzer.get_category_stats(user_id, assessment_id)
+        
+        # Map category names to field names
+        category_field_mapping = {
+            'performance_mindset': 'category_performance_mindset',
+            'emotional_regulation': 'category_emotional_regulation',
+            'confidence': 'category_confidence',
+            'resilience__motivation': 'category_resilience_motivation',
+            'concentration': 'category_concentration',
+            'leadership': 'category_leadership',
+            'mental_wellbeing': 'category_mental_wellbeing',
+        }
+        
+        # Update user fields
+        update_fields = []
+        for stat in category_stats:
+            category = stat['category']
+            field_name = category_field_mapping.get(category)
+            if field_name:
+                setattr(user, field_name, stat['average_response'])
+                update_fields.append(field_name)
+        
+        if update_fields:
+            user.save(update_fields=update_fields)

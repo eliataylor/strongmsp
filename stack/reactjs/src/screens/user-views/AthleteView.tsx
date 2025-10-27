@@ -45,7 +45,6 @@ const AthleteView: React.FC<AthleteViewProps> = ({
             {questionResponseStats && questionResponseStats.category_stats.length > 0 && (
                 <SpiderChart
                     data={questionResponseStats.category_stats}
-                    title="Performance Analysis"
                     height={400}
                 />
             )}

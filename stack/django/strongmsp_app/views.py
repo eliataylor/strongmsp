@@ -21,8 +21,6 @@ from django.db.models import Q
 from django.db import models
 from .serializers import UsersSerializer
 from .models import Users
-from .serializers import CoursesSerializer
-from .models import Courses
 from .serializers import AssessmentsSerializer
 from .models import Assessments
 from .serializers import ProductsSerializer
@@ -99,15 +97,6 @@ class UsersViewSet(AutoAuthorViewSet):
             ).distinct()
 
         return queryset
-
-
-
-class CoursesViewSet(AutoAuthorViewSet):
-    queryset = Courses.objects.all().order_by('id')
-    serializer_class = CoursesSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['title']
 
 
 class AssessmentsViewSet(AutoAuthorViewSet):
@@ -509,6 +498,57 @@ class CoachContentViewSet(AutoAuthorViewSet):
         # Single save with author and assignment
         serializer.save(author=self.request.user, assignment=assignments)
 
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Override retrieve to automatically include athlete category scores in subfields.
+        """
+        # Build list of category fields to add
+        category_fields = [
+            'category_performance_mindset',
+            'category_emotional_regulation',
+            'category_confidence',
+            'category_resilience_motivation',
+            'category_concentration',
+            'category_leadership',
+            'category_mental_wellbeing'
+        ]
+        
+        # Get existing subfields
+        existing_subfields = list(request.query_params.getlist('subfields', []))
+        
+        # Add category fields if not already present
+        updated_subfields = existing_subfields + [f for f in category_fields if f not in existing_subfields]
+        
+        # Temporarily modify request.query_params to include the category fields
+        if updated_subfields != existing_subfields:
+            # Patch the _request.GET to include our subfields
+            from django.http import QueryDict
+            
+            # Create a new mutable QueryDict
+            mutable_params = QueryDict(mutable=True)
+            
+            # Copy all existing params except subfields
+            for key in request.query_params:
+                if key != 'subfields':
+                    for value in request.query_params.getlist(key):
+                        mutable_params.appendlist(key, value)
+            
+            # Add all subfields including category fields
+            for subfield in updated_subfields:
+                mutable_params.appendlist('subfields', subfield)
+            
+            # Temporarily replace GET params
+            original_get = request._request.GET
+            request._request.GET = mutable_params
+        
+        try:
+            # Call parent retrieve
+            return super().retrieve(request, *args, **kwargs)
+        finally:
+            # Restore original GET params
+            if updated_subfields != existing_subfields:
+                request._request.GET = original_get
+
     @action(detail=True, methods=['post'])
     def publish(self, request, pk=None):
         """
@@ -802,9 +842,6 @@ SEARCH_FIELDS_MAPPING = {
     "first_name",
     "last_name"
   ],
-  "Courses": [
-    "title"
-  ],
   "Assessments": [
     "title"
   ],
@@ -821,7 +858,7 @@ SEARCH_FIELDS_MAPPING = {
   ]
 }
 
-SERIALZE_MODEL_MAP = { "Users": UsersSerializer,"Courses": CoursesSerializer,"Assessments": AssessmentsSerializer,"QuestionResponses": QuestionResponsesSerializer,"PromptTemplates": PromptTemplatesSerializer,"AgentResponses": AgentResponsesSerializer,"CoachContent": CoachContentSerializer,"Shares": SharesSerializer }
+SERIALZE_MODEL_MAP = { "Users": UsersSerializer,"Assessments": AssessmentsSerializer,"QuestionResponses": QuestionResponsesSerializer,"PromptTemplates": PromptTemplatesSerializer,"AgentResponses": AgentResponsesSerializer,"CoachContent": CoachContentSerializer,"Shares": SharesSerializer }
 
 class UserStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -1399,7 +1436,16 @@ class CurrentContextView(APIView):
                     'id': athlete_id,
                     'str': str(assignment.athlete),
                     '_type': 'Users',
-                    'img': assignment.athlete.photo.url if assignment.athlete.photo else None
+                    'img': assignment.athlete.photo.url if assignment.athlete.photo else None,
+                    'entity': {
+                        'category_performance_mindset': float(assignment.athlete.category_performance_mindset) if assignment.athlete.category_performance_mindset else None,
+                        'category_emotional_regulation': float(assignment.athlete.category_emotional_regulation) if assignment.athlete.category_emotional_regulation else None,
+                        'category_confidence': float(assignment.athlete.category_confidence) if assignment.athlete.category_confidence else None,
+                        'category_resilience_motivation': float(assignment.athlete.category_resilience_motivation) if assignment.athlete.category_resilience_motivation else None,
+                        'category_concentration': float(assignment.athlete.category_concentration) if assignment.athlete.category_concentration else None,
+                        'category_leadership': float(assignment.athlete.category_leadership) if assignment.athlete.category_leadership else None,
+                        'category_mental_wellbeing': float(assignment.athlete.category_mental_wellbeing) if assignment.athlete.category_mental_wellbeing else None,
+                    }
                 } if assignment.athlete else None
 
                 if athlete_id not in by_athlete:

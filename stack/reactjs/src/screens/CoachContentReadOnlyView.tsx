@@ -7,6 +7,7 @@ import {
 } from '@mui/material';
 import React, { useContext, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import SpiderChart from '../components/SpiderChart';
 import { useActiveRole } from '../context/ActiveRoleContext';
 import { CoachContent } from '../object-actions/types/types';
 import { ThemeContext } from '../theme/ThemeContext';
@@ -22,6 +23,40 @@ const CoachContentReadOnlyView: React.FC<CoachContentReadOnlyViewProps> = ({
     const theme = useTheme();
     const { activeRole } = useActiveRole();
     const { brandingSettings } = useContext(ThemeContext);
+
+    // Helper function to convert athlete category scores to SpiderChart data format
+    const structureSpiderData = (entity: any) => {
+        if (!entity?.entity) return [];
+
+        const staticResponseCounts: Record<string, number> = {
+            category_performance_mindset: 6,
+            category_emotional_regulation: 6,
+            category_confidence: 6,
+            category_resilience_motivation: 5,
+            category_concentration: 13,
+            category_leadership: 6,
+            category_mental_wellbeing: 8,
+        };
+
+        const spiderData = [];
+        for (const [field_name, count] of Object.entries(staticResponseCounts)) {
+            if (entity.entity[field_name]) {
+                const score = entity.entity[field_name];
+                const numScore = typeof score === 'number' ? score : (typeof score === 'string' ? parseFloat(score) : 0);
+                const category = field_name.replace('category_', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                if (!isNaN(numScore)) {
+                    spiderData.push({
+                        category: category,
+                        average_response: numScore,
+                        response_count: count,
+                        total_response: numScore * count
+                    });
+                }
+            }
+        }
+
+        return spiderData;
+    };
 
     // Mark as received when athlete or parent accesses the page (only if not already marked)
     useEffect(() => {
@@ -109,6 +144,32 @@ const CoachContentReadOnlyView: React.FC<CoachContentReadOnlyViewProps> = ({
                         </Box>
                     )}
                 </Box>
+
+                {/* SpiderChart Section */}
+                {entity.athlete && (() => {
+                    const spiderData = structureSpiderData(entity.athlete);
+                    return spiderData.length > 0 && (
+                        <Box sx={{ mb: 4 }}>
+                            <Typography
+                                variant="h5"
+                                component="h2"
+                                gutterBottom
+                                sx={{
+                                    fontWeight: 'bold',
+                                    color: 'primary.main',
+                                    mb: 3
+                                }}
+                            >
+                                Athlete Performance Profile
+                            </Typography>
+                            <SpiderChart
+                                data={spiderData}
+                                title={`${entity.athlete.str}'s Performance Profile`}
+                                height={400}
+                            />
+                        </Box>
+                    );
+                })()}
 
                 {/* Content Body */}
                 <Box sx={{ mb: 4 }}>

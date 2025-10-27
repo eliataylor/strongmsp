@@ -45,7 +45,6 @@ const AdminView: React.FC<AdminViewProps> = ({
             {questionResponseStats && questionResponseStats.category_stats.length > 0 && (
                 <SpiderChart
                     data={questionResponseStats.category_stats}
-                    title="System Analytics"
                     height={400}
                 />
             )}

@@ -26,3 +26,29 @@ from django.dispatch import receiver
 def update_state_on_city_delete(sender, instance, **kwargs):
     if instance.state_id:
         instance.state_id.update_aggregations()
+
+
+# Add signal to update user category scores when assessments are submitted
+from django.db.models.signals import post_save
+from .models import PaymentAssignments
+from .services.confidence_analyzer import ConfidenceAnalyzer
+
+@receiver(post_save, sender=PaymentAssignments)
+def update_user_category_scores_on_submission(sender, instance, **kwargs):
+    """Update user's category scores when they submit an assessment."""
+    if not instance.athlete:
+        return
+    
+    # Check if pre_assessment was submitted
+    if instance.pre_assessment_submitted_at and instance.payment.product and instance.payment.product.pre_assessment:
+        ConfidenceAnalyzer.update_user_category_scores(
+            instance.athlete.id,
+            instance.payment.product.pre_assessment.id
+        )
+    
+    # Check if post_assessment was submitted
+    if instance.post_assessment_submitted_at and instance.payment.product and instance.payment.product.post_assessment:
+        ConfidenceAnalyzer.update_user_category_scores(
+            instance.athlete.id,
+            instance.payment.product.post_assessment.id
+        )

@@ -1,6 +1,7 @@
 from django.db.models import Q
+from django.db import connection
 from django.utils import timezone
-from ..models import PaymentAssignments
+from ..models import PaymentAssignments, Assessments
 from utils.helpers import get_subdomain_from_request
 
 
@@ -32,7 +33,7 @@ class AssignmentService:
 
             # Query all assignments where user is involved
             assignments = PaymentAssignments.objects.filter(
-                Q(coaches=self.user) | 
+                Q(coaches=self.user) |
                 Q(parents=self.user) |
                 Q(athlete=self.user) |
                 Q(payment__author=self.user),
@@ -59,6 +60,232 @@ class AssignmentService:
                     })
 
         return self._assignments
+
+    def get_all_paginated(self, limit=None, offset=None, pre_assessment_submitted=None):
+        if not self.user.is_authenticated:
+            return {
+                'results': [],
+                'count': 0,
+                'limit': limit or 0,
+                'offset': offset or 0
+            }
+
+        sql = """SELECT DISTINCT pa.athlete_id, pr.pre_assessment_id,
+                GROUP_CONCAT(distinct pr.post_assessment_id) as post_assessment_ids,
+                GROUP_CONCAT(distinct pa.id) as paymentassignment_ids,
+                GROUP_CONCAT(distinct p.id) as payment_ids,
+                GROUP_CONCAT(distinct pr.id) as product_ids,
+                GROUP_CONCAT(distinct c_m2m.users_id) as coach_ids,
+                GROUP_CONCAT(distinct pa_m2m.users_id) as parent_ids,
+                MAX(pa.created_at) as created_at,
+                MAX(distinct pa.post_assessment_submitted_at) as post_submitted,
+                MAX(distinct pa.pre_assessment_submitted_at) as pre_submitted
+            FROM
+                strongmsp_app_paymentassignments pa
+                INNER JOIN strongmsp_app_payments p ON pa.payment_id = p.id
+                INNER JOIN strongmsp_app_products pr ON p.product_id = pr.id
+                INNER JOIN strongmsp_app_organizations o ON p.organization_id = o.id
+                LEFT JOIN strongmsp_app_paymentassignments_coaches c_m2m ON pa.id = c_m2m.paymentassignments_id
+                LEFT JOIN strongmsp_app_paymentassignments_parents pa_m2m ON pa.id = pa_m2m.paymentassignments_id
+            WHERE
+                -- User involvement conditions (OR logic)
+                (
+                    c_m2m.users_id = %s OR                    -- User is a coach
+                    pa_m2m.users_id = %s OR                   -- User is a parent
+                    pa.athlete_id = %s OR                     -- User is the athlete
+                    p.author_id = %s                          -- User is the payment author
+                )
+                -- required AND filters
+                AND o.slug = %s                               -- payment__organization__slug
+                AND p.status = 'succeeded'                    -- payment__status
+                AND pr.is_active = true                       -- payment__product__is_active
+                AND (
+                    p.subscription_ends IS NULL OR            -- payment__subscription_ends__isnull
+                    p.subscription_ends >= now()                 -- payment__subscription_ends__gte (now date)
+                )
+                GROUP BY pa.athlete_id, pr.pre_assessment_id 
+                ORDER BY pre_submitted DESC, post_submitted DESC, created_at;
+                """
+
+        with connection.cursor() as cursor:
+            # Use proper parameter binding
+            params = [
+                self.user.id,  # coach
+                self.user.id,  # parent
+                self.user.id,  # athlete
+                self.user.id,  # author
+                self.organization_slug  # organization slug
+            ]
+            cursor.execute(sql, params)
+            rows = cursor.fetchall()
+
+            athlete_states = []
+            for row in rows:
+
+                def split_ids(id_string):
+                    """Split comma-separated IDs into a list of integers"""
+                    return [int(id_) for id_ in id_string.split(',')] if id_string else []
+
+                def get_user_relentity(user_id, role=None):
+                    """Create a RelEntity structure for a user"""
+                    from ..models import Users
+                    user = Users.objects.filter(id=user_id).first()
+                    if not user:
+                        return None
+                    rel = {
+                        'id': user.id,
+                        'str': str(user),
+                        '_type': 'Users',
+                        'img': user.photo.url if user.photo else None
+                    }
+                    if role == 'athlete':
+                        rel['entity'] = {
+                            'category_performance_mindset': float(user.category_performance_mindset) if user.category_performance_mindset else None,
+                            'category_emotional_regulation': float(user.category_emotional_regulation) if user.category_emotional_regulation else None,
+                            'category_confidence': float(user.category_confidence) if user.category_confidence else None,
+                            'category_resilience_motivation': float(user.category_resilience_motivation) if user.category_resilience_motivation else None,
+                            'category_concentration': float(user.category_concentration) if user.category_concentration else None,
+                            'category_leadership': float(user.category_leadership) if user.category_leadership else None,
+                            'category_mental_wellbeing': float(user.category_mental_wellbeing) if user.category_mental_wellbeing else None,
+                        }
+                    return rel
+
+                def get_assessment_relentity(id):
+                    """Create a RelEntity structure for an Assessment"""
+                    assessment = Assessments.objects.filter(id=id).first()
+                    if not assessment:
+                        return None
+                    rel = {
+                        'id': assessment.id,
+                        'str': str(assessment),
+                        '_type': 'Assessments',
+                        'img': assessment.photo.url if hasattr(assessment, 'photo') and assessment.photo else None
+                    }
+                    return rel
+
+                columns = [
+                    'athlete_id', 'pre_assessment_id', 'post_assessment_ids', 'paymentassignment_ids',
+                    'payment_ids', 'product_ids', 'coach_ids', 'parent_ids',
+                    'created_at', 'post_submitted', 'pre_submitted'
+                ]
+                row_data = dict(zip(columns, row))
+
+                # Split concatenated IDs into lists
+                paymentassignment_ids = split_ids(row_data['paymentassignment_ids'])
+                payment_ids = split_ids(row_data['payment_ids'])
+                product_ids = split_ids(row_data['product_ids'])
+                coach_ids = split_ids(row_data['coach_ids'])
+                parent_ids = split_ids(row_data['parent_ids'])
+
+                my_roles = {}
+
+                athlete_state = {
+                    'athlete_id': row_data['athlete_id'],
+                    'athlete': get_user_relentity(row_data['athlete_id'], role='athlete'),
+                    'paymentassignment_ids': paymentassignment_ids,
+                    'payment_ids': payment_ids,
+                    'product_ids': product_ids,
+                    'coaches': [],
+                    'parents': [],
+                    'my_roles': [],
+                    'pre_assessment_submitted_at': row_data['pre_submitted'],
+                    'post_assessment_submitted_at': row_data['post_submitted'],
+                    'pre_assessment': {},
+                    'post_assessments': [],
+                    'content_progress': {
+                        'lesson_plan': [],
+                        'curriculum': [],
+                        'talking_points': [],
+                        'feedback_report': [],
+                        'scheduling_email': []
+                    }
+                }
+
+                if row_data['athlete_id'] == self.user.id:
+                    my_roles['athlete'] = True
+
+                # Get coach and parent RelEntities
+                for coach_id in coach_ids:
+                    coach_relentity = get_user_relentity(coach_id, role='coach')
+                    athlete_state['coaches'].append(coach_relentity)
+                    if coach_id == self.user.id:
+                        my_roles['coach'] = True
+
+                for parent_id in parent_ids:
+                    parent_relentity = get_user_relentity(parent_id, role='parent')
+                    athlete_state['parents'].append(parent_relentity)
+                    if parent_id == self.user.id:
+                        my_roles['parent'] = True
+
+                # Initialize progress trackers
+                agent_progress = {purpose: [] for purpose in ['lesson_plan', 'curriculum', 'talking_points', 'feedback_report', 'scheduling_email']}
+                content_progress = {purpose: [] for purpose in ['lesson_plan', 'curriculum', 'talking_points', 'feedback_report', 'scheduling_email']}
+
+                # Fetch and populate progress data
+                from ..models import AgentResponses, CoachContent
+                from django.db.models import Q
+
+                agent_responses = AgentResponses.objects.filter(
+                    assignment_id__in=paymentassignment_ids
+                ).order_by('-created_at')
+
+                for agent_response in agent_responses:
+                    agent_progress[agent_response.purpose].append({
+                        'id': agent_response.id,
+                        'str': str(agent_response),
+                        '_type': 'AgentResponses',
+                        'entity': {
+                            'purpose': agent_response.purpose,
+                            'created_at': agent_response.created_at.isoformat(),
+                            'modified_at': agent_response.modified_at.isoformat(),
+                        }
+                    })
+
+                # Fetch and populate coach content
+                coach_contents = CoachContent.objects.filter(
+                    assignment_id__in=paymentassignment_ids
+                ).order_by('-created_at')
+
+                for content in coach_contents:
+                    content_progress[content.purpose].append({
+                        'id': content.id,
+                        'str': str(content),
+                        '_type': 'CoachContent',
+                        'entity': {
+                            'purpose': content.purpose,
+                            'created_at': content.created_at.isoformat(),
+                            'modified_at': content.modified_at.isoformat(),
+                            'coach_delivered': content.coach_delivered.isoformat() if content.coach_delivered else None,
+                            'athlete_received': content.athlete_received.isoformat() if content.athlete_received else None,
+                            'parent_received': content.parent_received.isoformat() if content.parent_received else None,
+                            'screenshot_light': content.screenshot_light.url if content.screenshot_light else None,
+                            'screenshot_dark': content.screenshot_dark.url if content.screenshot_dark else None,
+                        }
+                    })
+
+                # Fetch and populate post assessments
+                if row_data['post_assessment_ids']:
+                    post_ids = [int(pid) for pid in row_data['post_assessment_ids'].split(',') if pid]
+                    if post_ids:
+                        post_assessments = Assessments.objects.filter(
+                            id__in=post_ids
+                        ).order_by('-created_at')
+                        for assessment in post_assessments:
+                            athlete_state['post_assessments'].append({
+                                'id': assessment.id,
+                                'str': str(assessment),
+                                '_type': 'Assessments',
+                            })
+
+                athlete_state['my_roles'] = list(my_roles.keys())
+                athlete_states.append(athlete_state)
+
+        return {
+            'results': athlete_states,
+            'count': len(athlete_states), # TODO: run query as count
+            'limit': limit,
+            'offset': offset
+        }
 
     def get_for_athlete(self, athlete_id):
         """

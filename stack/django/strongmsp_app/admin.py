@@ -6,7 +6,6 @@ from django.utils.html import format_html
 from django import forms
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import Users
-from .models import Courses
 from .models import Assessments
 from .models import AssessmentQuestions
 from .models import Questions
@@ -166,39 +165,6 @@ class UsersAdmin(BaseUserAdmin):
     readonly_fields = ('id', 'date_joined', 'last_login', 'avatar_preview', 'photo_preview')
     date_hierarchy = 'date_joined'
     ordering = ('-date_joined',)
-
-@admin.register(Courses)
-class CoursesAdmin(BaseModelAdmin):
-    readonly_fields = ('id', 'created_at', 'modified_at')
-
-    def display_price(self, obj):
-        if obj.price:
-            return f"${obj.price}"
-        return "Free"
-    display_price.short_description = "Price"
-
-    def display_assessments(self, obj):
-        assessments = []
-        if obj.preassessment:
-            assessments.append(f"Pre: {obj.preassessment.title}")
-        if obj.postassessment:
-            assessments.append(f"Post: {obj.postassessment.title}")
-        return ", ".join(assessments) if assessments else "No assessments"
-    display_assessments.short_description = "Assessments"
-
-    list_display = ('id', 'title', 'price', 'display_assessments', 'author', 'created_at', 'modified_at')
-    list_filter = ('price', 'created_at', 'modified_at', 'author')
-    search_fields = ('title', 'description', 'author__username', 'author__email')
-    readonly_fields = ('id', 'created_at', 'modified_at')
-    date_hierarchy = 'created_at'
-    ordering = ('-created_at',)
-    list_editable = ('title', 'price')
-
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "author":
-            # Limit to users in the Agents group
-            kwargs["queryset"] = Users.objects.filter(groups__name='Agents').distinct().order_by('username')
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(Assessments)
 class AssessmentsAdmin(BaseModelAdmin):

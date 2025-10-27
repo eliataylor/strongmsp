@@ -45,7 +45,6 @@ const CoachView: React.FC<CoachViewProps> = ({
             {questionResponseStats && questionResponseStats.category_stats.length > 0 && (
                 <SpiderChart
                     data={questionResponseStats.category_stats}
-                    title="Team Performance Analysis"
                     height={400}
                 />
             )}

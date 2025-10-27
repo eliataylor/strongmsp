@@ -1,8 +1,7 @@
 //---OBJECT-ACTIONS-API-RESP-STARTS---//
-export type ModelName = "Users" | "Courses" | "Assessments" | "AssessmentQuestions" | "Questions" | "QuestionResponses" | "Payments" | "Products" | "PromptTemplates" | "AgentResponses" | "CoachContent" | "Shares" | "Notifications" | "PaymentAssignments";
+export type ModelName = "Users" | "Assessments" | "AssessmentQuestions" | "Questions" | "QuestionResponses" | "Payments" | "Products" | "PromptTemplates" | "AgentResponses" | "CoachContent" | "Shares" | "Notifications" | "PaymentAssignments";
 
 export type ModelType<T extends ModelName> = T extends 'Users' ? Users :
-  T extends 'Courses' ? Courses :
   T extends 'Assessments' ? Assessments :
   T extends 'AssessmentQuestions' ? AssessmentQuestions :
   T extends "PaymentAssignments" ? PaymentAssignments :
@@ -251,65 +250,83 @@ export const TypeFieldSchema: ITypeFieldSchema = {
       "default": "",
       "required": false,
       "example": ""
-    }
-  },
-  "Courses": {
-    "title": {
-      "machine": "title",
-      "singular": "Title",
-      "plural": "Titles",
-      "field_type": "text",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
     },
-    "description": {
-      "machine": "description",
-      "singular": "Description",
-      "plural": "Descriptions",
-      "field_type": "textarea",
-      "data_type": "string",
-      "cardinality": 1,
-      "default": "",
-      "required": false,
-      "example": ""
-    },
-    "preassessment": {
-      "machine": "preassessment",
-      "singular": "Pre-Assessment",
-      "plural": "Pre-Assessments",
-      "relationship": "Assessments",
-      "field_type": "type_reference",
-      "data_type": "RelEntity",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "postassessment": {
-      "machine": "postassessment",
-      "singular": "Post-Assessment",
-      "plural": "Post-Assessments",
-      "relationship": "Assessments",
-      "field_type": "type_reference",
-      "data_type": "RelEntity",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
-      "example": ""
-    },
-    "price": {
-      "machine": "price",
-      "singular": "Price",
-      "plural": "Prices",
+    "category_performance_mindset": {
+      "machine": "category_performance_mindset",
+      "singular": "Performance Mindset Score",
+      "plural": "Performance Mindset Scores",
       "field_type": "decimal",
       "data_type": "number",
       "cardinality": 1,
       "default": "",
-      "required": true,
-      "example": ""
+      "required": false,
+      "example": "4.5"
+    },
+    "category_emotional_regulation": {
+      "machine": "category_emotional_regulation",
+      "singular": "Emotional Regulation Score",
+      "plural": "Emotional Regulation Scores",
+      "field_type": "decimal",
+      "data_type": "number",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": "4.5"
+    },
+    "category_confidence": {
+      "machine": "category_confidence",
+      "singular": "Confidence Score",
+      "plural": "Confidence Scores",
+      "field_type": "decimal",
+      "data_type": "number",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": "4.5"
+    },
+    "category_resilience_motivation": {
+      "machine": "category_resilience_motivation",
+      "singular": "Resilience & Motivation Score",
+      "plural": "Resilience & Motivation Scores",
+      "field_type": "decimal",
+      "data_type": "number",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": "4.5"
+    },
+    "category_concentration": {
+      "machine": "category_concentration",
+      "singular": "Concentration Score",
+      "plural": "Concentration Scores",
+      "field_type": "decimal",
+      "data_type": "number",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": "4.5"
+    },
+    "category_leadership": {
+      "machine": "category_leadership",
+      "singular": "Leadership Score",
+      "plural": "Leadership Scores",
+      "field_type": "decimal",
+      "data_type": "number",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": "4.5"
+    },
+    "category_mental_wellbeing": {
+      "machine": "category_mental_wellbeing",
+      "singular": "Mental Well-being Score",
+      "plural": "Mental Well-being Scores",
+      "field_type": "decimal",
+      "data_type": "number",
+      "cardinality": 1,
+      "default": "",
+      "required": false,
+      "example": "4.5"
     }
   },
   "Assessments": {
@@ -523,18 +540,6 @@ export const TypeFieldSchema: ITypeFieldSchema = {
       "cardinality": 1,
       "default": "",
       "required": false,
-      "example": ""
-    },
-    "course": {
-      "machine": "course",
-      "singular": "Course",
-      "plural": "Courses",
-      "relationship": "Courses",
-      "field_type": "type_reference",
-      "data_type": "RelEntity",
-      "cardinality": 1,
-      "default": "",
-      "required": true,
       "example": ""
     },
     "paid": {
@@ -1215,6 +1220,14 @@ export interface Users {
   ethnicity?: string[] | null;
   birthdate?: string | null;
   zip_code?: string | null;
+
+  category_performance_mindset?: number | null;
+  category_emotional_regulation?: number | null;
+  category_confidence?: number | null;
+  category_resilience_motivation?: number | null;
+  category_concentration?: number | null;
+  category_leadership?: number | null;
+  category_mental_wellbeing?: number | null;
 }
 
 // Context API types
@@ -1285,13 +1298,6 @@ export interface ContextApiResponse {
   organization: OrganizationPublicData | null;
   membership: UserOrganizationMembership | null;
   payment_assignments: AthletePaymentAssignment[];
-}
-export interface Courses extends SuperModel {
-  title: string;
-  description?: string | null;
-  preassessment: RelEntity<"Assessments">;
-  postassessment: RelEntity<"Assessments">;
-  price: number;
 }
 export interface Assessments extends SuperModel {
   title: string;
@@ -1526,18 +1532,6 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "roles": ["admin", "coach", "parent"]
   },
   {
-    "singular": "Course",
-    "plural": "Courses",
-    "type": "Courses",
-    "segment": "courses",
-    "api": "/api/courses",
-    "icon": "School",
-    "search_fields": [
-      "title"
-    ],
-    "roles": ["admin", "parent"]
-  },
-  {
     "singular": "My Assessment",
     "plural": "Assessments",
     "type": "Assessments",
@@ -1596,9 +1590,7 @@ export const NAVITEMS: { [K in ModelName]: NavItem<K> }[ModelName][] = [
     "api": "/api/payments",
     "icon": "Payment",
     "model_type": "vocabulary",
-    "search_fields": [
-      "course__title"
-    ],
+    "search_fields": [],
     "roles": ["parent", "admin"]
   },
   {

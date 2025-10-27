@@ -45,7 +45,6 @@ const ParentView: React.FC<ParentViewProps> = ({
             {questionResponseStats && questionResponseStats.category_stats.length > 0 && (
                 <SpiderChart
                     data={questionResponseStats.category_stats}
-                    title="Family Progress Analysis"
                     height={400}
                 />
             )}

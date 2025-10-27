@@ -45,7 +45,6 @@ const AgentView: React.FC<AgentViewProps> = ({
             {questionResponseStats && questionResponseStats.category_stats.length > 0 && (
                 <SpiderChart
                     data={questionResponseStats.category_stats}
-                    title="Client Performance Analysis"
                     height={400}
                 />
             )}

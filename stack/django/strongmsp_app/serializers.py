@@ -9,7 +9,6 @@ from rest_framework import serializers
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ManyToManyField
 from .models import Users
-from .models import Courses
 from .models import Assessments
 from .models import Products
 from .models import Payments
@@ -167,12 +166,6 @@ class UsersSerializer(CustomUsersSerializer):
     class Meta:
         model = Users
         exclude = ('password', 'email', 'is_active', 'is_staff', 'is_superuser')
-        
-class CoursesSerializer(CustomSerializer):
-    class Meta:
-        model = Courses
-        fields = '__all__'
-        read_only_fields = ['author']
         
 class AssessmentsSerializer(serializers.ModelSerializer):
     """

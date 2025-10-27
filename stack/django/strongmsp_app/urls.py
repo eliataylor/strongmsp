@@ -11,7 +11,6 @@ from .views import RenderFrontendIndex
 from .views import redirect_to_frontend
 from .oa_testing import OATesterUserViewSet
 from .views import UsersViewSet
-from .views import CoursesViewSet
 from .views import AssessmentsViewSet
 from .views import ProductsViewSet
 from .views import PaymentsViewSet
@@ -32,7 +31,6 @@ urlpatterns = [path('', RenderFrontendIndex.as_view(), name='index')]
 OARouter = DefaultRouter(trailing_slash=False)
 OARouter.register(r'oa-testers', OATesterUserViewSet, basename='oa-tester')
 OARouter.register('users', UsersViewSet, basename='users')
-OARouter.register('courses', CoursesViewSet, basename='courses')
 OARouter.register('assessments', AssessmentsViewSet, basename='assessments')
 OARouter.register('products', ProductsViewSet, basename='products')
 OARouter.register('payments', PaymentsViewSet, basename='payments')

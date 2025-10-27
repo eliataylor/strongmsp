@@ -1,14 +1,12 @@
 import { Box, Paper, Typography } from '@mui/material';
 import React from 'react';
 import {
-    Legend,
     PolarAngleAxis,
     PolarGrid,
     PolarRadiusAxis,
     Radar,
     RadarChart,
-    ResponsiveContainer,
-    Tooltip
+    ResponsiveContainer
 } from 'recharts';
 
 interface CategoryStat {
@@ -21,12 +19,14 @@ interface CategoryStat {
 interface SpiderChartProps {
     data: CategoryStat[];
     title?: string;
+    showLegend?: boolean;
     height?: number;
 }
 
 const SpiderChart: React.FC<SpiderChartProps> = ({
     data,
-    title = "Question Response Category Stats",
+    title = undefined,
+    showLegend = true,
     height = 400
 }) => {
     // Transform data for the radar chart
@@ -51,10 +51,12 @@ const SpiderChart: React.FC<SpiderChartProps> = ({
     }
 
     return (
-        <Paper sx={{ p: 2, mb: 2 }}>
-            <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 2 }}>
-                {title}
-            </Typography>
+        <Paper>
+            {title && (
+                <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 2 }}>
+                    {title}
+                </Typography>
+            )}
             <Box sx={{ width: '100%', height: height }}>
                 <ResponsiveContainer width="100%" height="100%">
                     <RadarChart data={chartData} margin={{ top: 20, right: 80, bottom: 20, left: 80 }}>
@@ -76,34 +78,27 @@ const SpiderChart: React.FC<SpiderChartProps> = ({
                             fillOpacity={0.3}
                             strokeWidth={2}
                         />
-                        <Tooltip
-                            formatter={(value: number, name: string) => [
-                                value.toFixed(2),
-                                name === 'average_response' ? 'Average Response' : name
-                            ]}
-                            labelFormatter={(label: string) => `Category: ${label}`}
-                        />
-                        <Legend />
                     </RadarChart>
                 </ResponsiveContainer>
             </Box>
 
-            {/* Additional stats display */}
-            <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
-                {data.map((item, index) => (
-                    <Box key={index} sx={{ textAlign: 'center', minWidth: 120 }}>
-                        <Typography variant="subtitle2" color="primary">
-                            {item.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            Avg: {item.average_response.toFixed(2)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                            ({item.response_count} responses)
-                        </Typography>
-                    </Box>
-                ))}
-            </Box>
+            {showLegend && (
+                <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
+                    {data.map((item, index) => (
+                        <Box key={index} sx={{ textAlign: 'center', minWidth: 120 }}>
+                            <Typography variant="subtitle2" color="primary">
+                                {item.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Avg: {item.average_response.toFixed(2)}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                                ({item.response_count} responses)
+                            </Typography>
+                        </Box>
+                    ))}
+                </Box>
+            )}
         </Paper>
     );
 };

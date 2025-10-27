@@ -23,6 +23,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
 import MarkdownEditor from '../components/MarkdownEditor';
+import SpiderChart from '../components/SpiderChart';
 import ApiClient from '../config/ApiClient';
 import { useActiveRole } from '../context/ActiveRoleContext';
 import { CoachContent } from '../object-actions/types/types';
@@ -74,6 +75,40 @@ const CoachContentEditorView: React.FC<CoachContentScreenProps> = ({
             setEditPurpose(entity.purpose);
         }
     }, [isEditMode, entity]);
+
+    // Helper function to convert athlete category scores to SpiderChart data format
+    const structureSpiderData = (entity: any) => {
+        if (!entity?.entity) return [];
+
+        const staticResponseCounts: Record<string, number> = {
+            category_performance_mindset: 6,
+            category_emotional_regulation: 6,
+            category_confidence: 6,
+            category_resilience_motivation: 5,
+            category_concentration: 13,
+            category_leadership: 6,
+            category_mental_wellbeing: 8,
+        };
+
+        const spiderData = [];
+        for (const [field_name, count] of Object.entries(staticResponseCounts)) {
+            if (entity.entity[field_name]) {
+                const score = entity.entity[field_name];
+                const numScore = typeof score === 'number' ? score : (typeof score === 'string' ? parseFloat(score) : 0);
+                const category = field_name.replace('category_', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                if (!isNaN(numScore)) {
+                    spiderData.push({
+                        category: category,
+                        average_response: numScore,
+                        response_count: count,
+                        total_response: numScore * count
+                    });
+                }
+            }
+        }
+
+        return spiderData;
+    };
 
     // Mark as received when athlete or parent accesses the page (only if not already marked)
     useEffect(() => {
@@ -378,6 +413,32 @@ const CoachContentEditorView: React.FC<CoachContentScreenProps> = ({
                         </Box>
                     )}
                 </Box>
+
+                {/* SpiderChart Section */}
+                {entity.athlete && (() => {
+                    const spiderData = structureSpiderData(entity.athlete);
+                    return spiderData.length > 0 && (
+                        <Box sx={{ mb: 4 }}>
+                            <Typography
+                                variant="h5"
+                                component="h2"
+                                gutterBottom
+                                sx={{
+                                    fontWeight: 'bold',
+                                    color: 'primary.main',
+                                    mb: 3
+                                }}
+                            >
+                                Athlete Performance Profile
+                            </Typography>
+                            <SpiderChart
+                                data={spiderData}
+                                title={`${entity.athlete.str}'s Performance Profile`}
+                                height={400}
+                            />
+                        </Box>
+                    );
+                })()}
 
                 {/* Screenshots Section */}
                 {(entity.screenshot_light || entity.screenshot_dark) && (

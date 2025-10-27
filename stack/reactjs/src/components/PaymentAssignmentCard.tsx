@@ -5,7 +5,6 @@ import {
 import Grid from '@mui/material/Grid2';
 import React from 'react';
 import RelEntityHead from 'src/object-actions/components/RelEntityHead';
-import { useAppContext } from '../context/AppContext';
 import { AthletePaymentAssignment, RelEntity } from '../object-actions/types/types';
 
 interface PaymentAssignmentCardProps {
@@ -13,15 +12,10 @@ interface PaymentAssignmentCardProps {
 }
 
 const PaymentAssignmentCard: React.FC<PaymentAssignmentCardProps> = ({ assignment }) => {
-    const { refresh } = useAppContext();
 
     const formatDate = (dateString: string | null) => {
         if (!dateString) return 'No expiration';
         return new Date(dateString).toLocaleDateString();
-    };
-
-    const handleUpdate = () => {
-        refresh();
     };
 
     // We'll render all payments below
@@ -55,8 +49,8 @@ const PaymentAssignmentCard: React.FC<PaymentAssignmentCardProps> = ({ assignmen
             )}
 
 
-            {/* Payment Info */}
-            {assignment.payments.length > 0 && (
+            {/* Payment Info if any failed */}
+            {assignment.payments.length > 0 && assignment.payments.some(payment => payment.status !== 'succeeded') && (
                 <Grid size={12}>
                     <Typography variant="subtitle2" gutterBottom>Payments:</Typography>
                     {assignment.payments.map((payment, index) => (

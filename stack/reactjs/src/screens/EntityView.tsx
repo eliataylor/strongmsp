@@ -33,6 +33,27 @@ const EntityView = () => {
           apiUrl += `/u/${hasUrl.type.toLowerCase()}/${id}/${location.search}`;
         }
 
+        // Add subfields for athlete category scores when fetching CoachContent
+        if (hasUrl.type === "CoachContent" && id) {
+          const url = new URL(apiUrl, window.location.origin);
+          const categoryFields = [
+            'category_performance_mindset',
+            'category_emotional_regulation',
+            'category_confidence',
+            'category_resilience_motivation',
+            'category_concentration',
+            'category_leadership',
+            'category_mental_wellbeing'
+          ];
+
+          categoryFields.forEach(field => {
+            if (!url.searchParams.has('subfields') || !url.searchParams.getAll('subfields').includes(field)) {
+              url.searchParams.append('subfields', field);
+            }
+          });
+          apiUrl = url.pathname + url.search;
+        }
+
         try {
           const response = await ApiClient.get(apiUrl);
           if (response.error) {

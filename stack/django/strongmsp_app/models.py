@@ -56,6 +56,36 @@ class Users(AbstractUser, BumpParentsModelMixin):
 		help_text='Array of ethnicity choices - allows multiple selection')
 	birthdate = models.DateField(blank=True, null=True, verbose_name='Birthdate')
 	zip_code = models.CharField(max_length=10, blank=True, null=True, verbose_name='Zip Code')
+	
+	# Assessment category scores (cached from most recent assessment)
+	category_performance_mindset = models.DecimalField(
+		max_digits=4, decimal_places=2, blank=True, null=True,
+		verbose_name='Performance Mindset Score'
+	)
+	category_emotional_regulation = models.DecimalField(
+		max_digits=4, decimal_places=2, blank=True, null=True,
+		verbose_name='Emotional Regulation Score'
+	)
+	category_confidence = models.DecimalField(
+		max_digits=4, decimal_places=2, blank=True, null=True,
+		verbose_name='Confidence Score'
+	)
+	category_resilience_motivation = models.DecimalField(
+		max_digits=4, decimal_places=2, blank=True, null=True,
+		verbose_name='Resilience & Motivation Score'
+	)
+	category_concentration = models.DecimalField(
+		max_digits=4, decimal_places=2, blank=True, null=True,
+		verbose_name='Concentration Score'
+	)
+	category_leadership = models.DecimalField(
+		max_digits=4, decimal_places=2, blank=True, null=True,
+		verbose_name='Leadership Score'
+	)
+	category_mental_wellbeing = models.DecimalField(
+		max_digits=4, decimal_places=2, blank=True, null=True,
+		verbose_name='Mental Well-being Score'
+	)
 
 	def __str__(self):
 		full_name = self.get_full_name()
@@ -182,18 +212,6 @@ class SuperModel(models.Model):
 			return request.user
 		return None
 
-
-class Courses(SuperModel):
-	class Meta:
-		abstract = False
-		verbose_name = "Course"
-		verbose_name_plural = "Courses"
-
-	title = models.CharField(max_length=255, verbose_name='Title')
-	description = models.TextField(blank=True, null=True, verbose_name='Description')
-	preassessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Pre-Assessment')
-	postassessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, verbose_name='Post-Assessment')
-	price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Price')
 
 class Products(SuperModel):
 	class Meta:
