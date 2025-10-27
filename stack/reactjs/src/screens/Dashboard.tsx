@@ -7,7 +7,7 @@ import {
     Grid2 as Grid,
     MenuItem,
     Paper,
-    Select,
+    TextField,
     Toolbar,
     Typography
 } from '@mui/material';
@@ -28,6 +28,7 @@ const Dashboard: React.FC = () => {
     const [offset, setOffset] = useState(0);
     const [limit] = useState(10);
     const [preAssessmentFilter, setPreAssessmentFilter] = useState<string>('all');
+    const [sortBy, setSortBy] = useState<string>('default');
     const user = useUser();
 
     const buildApiPath = useCallback(() => {
@@ -39,8 +40,11 @@ const Dashboard: React.FC = () => {
         } else if (preAssessmentFilter === 'not_submitted') {
             params.set('pre_assessment_submitted', 'false');
         }
+        if (sortBy !== 'default') {
+            params.set('sort_by', sortBy);
+        }
         return `/api/athlete-assignments?${params.toString()}`;
-    }, [limit, offset, preAssessmentFilter]);
+    }, [limit, offset, preAssessmentFilter, sortBy]);
 
     const handleSuccess = (data: PaginatedResponse<AthletePaymentAssignment>) => {
         if (data && data.results) {
@@ -61,7 +65,7 @@ const Dashboard: React.FC = () => {
         setOffset(0);
         setError(null);
         setLoading(true);
-    }, [limit, preAssessmentFilter]);
+    }, [limit, preAssessmentFilter, sortBy]);
 
     function structureSpiderData(entity: any) {
         if (!entity) return [];
@@ -112,16 +116,32 @@ const Dashboard: React.FC = () => {
                     <Typography variant="h6" sx={{ flexGrow: 1 }}>
                         Athlete Assignments
                     </Typography>
-                    <Select
+                    <TextField
+                        select
+                        label="Filter By"
                         value={preAssessmentFilter}
                         onChange={(e) => setPreAssessmentFilter(e.target.value)}
                         size="small"
-                        sx={{ minWidth: 200 }}
+                        sx={{ minWidth: 200, mr: 2 }}
                     >
                         <MenuItem value="all">All Assessments</MenuItem>
                         <MenuItem value="submitted">Pre-Assessment Submitted</MenuItem>
                         <MenuItem value="not_submitted">Pre-Assessment Not Submitted</MenuItem>
-                    </Select>
+                    </TextField>
+                    <TextField
+                        select
+                        label="Sort By"
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        size="small"
+                        sx={{ minWidth: 200 }}
+                    >
+                        <MenuItem value="default">Default</MenuItem>
+                        <MenuItem value="newest">Newest</MenuItem>
+                        <MenuItem value="oldest">Oldest</MenuItem>
+                        <MenuItem value="most_confident">Most Confident</MenuItem>
+                        <MenuItem value="least_confident">Least Confident</MenuItem>
+                    </TextField>
                 </Toolbar>
             </Paper>
 

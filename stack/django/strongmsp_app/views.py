@@ -1443,13 +1443,13 @@ class AthleteAssignmentsListView(APIView):
             - limit: Maximum number of results (optional)
             - offset: Number of results to skip (optional)
             - pre_assessment_submitted: Filter by pre-assessment status (true/false, optional)
-            - athlete_id: Filter by specific athlete (optional)
+            - sort_by: Sort order (newest, oldest, most_confident, least_confident, default, optional)
         """
         # Extract query parameters
         limit = request.query_params.get('limit', None)
         offset = request.query_params.get('offset', None)
         pre_assessment_submitted_param = request.query_params.get('pre_assessment_submitted', None)
-        athlete_id_param = request.query_params.get('athlete_id', None)
+        sort_by_param = request.query_params.get('sort_by', None)
         
         # Parse limit and offset
         try:
@@ -1470,25 +1470,25 @@ class AthleteAssignmentsListView(APIView):
             elif pre_assessment_submitted_param.lower() == 'false':
                 pre_assessment_submitted = False
         
+        # Parse sort_by parameter - map UI values to internal values
+        sort_by = None
+        if sort_by_param:
+            sort_by_mapping = {
+                'most_confident': 'category_total_desc',
+                'least_confident': 'category_total_asc',
+                'newest': 'created_desc',
+                'oldest': 'created_asc',
+                'default': None
+            }
+            sort_by = sort_by_mapping.get(sort_by_param, None)
+        
         # Get paginated results
         assignments_response = request.assignment_service.get_all_paginated(
             limit=limit,
             offset=offset,
-            pre_assessment_submitted=pre_assessment_submitted
+            pre_assessment_submitted=pre_assessment_submitted,
+            sort_by=sort_by
         )
-        
-        # Filter by athlete_id if specified
-        if athlete_id_param:
-            try:
-                athlete_id = int(athlete_id_param)
-                filtered_results = [
-                    result for result in assignments_response['results']
-                    if result.get('athlete_id') == athlete_id
-                ]
-                assignments_response['results'] = filtered_results
-                assignments_response['count'] = len(filtered_results)
-            except (ValueError, TypeError):
-                pass
         
         # Format response
         response_data = {

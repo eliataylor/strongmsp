@@ -86,6 +86,11 @@ class Users(AbstractUser, BumpParentsModelMixin):
 		max_digits=4, decimal_places=2, blank=True, null=True,
 		verbose_name='Mental Well-being Score'
 	)
+	category_total_score = models.DecimalField(
+		max_digits=4, decimal_places=2, blank=True, null=True,
+		verbose_name='Sum of Category Averages for sorting only'
+	)
+
 
 	def __str__(self):
 		full_name = self.get_full_name()
@@ -226,7 +231,7 @@ class Products(SuperModel):
 	stripe_price_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='Stripe Price ID')
 	is_active = models.BooleanField(default=True, verbose_name='Is Active')
 	features = models.JSONField(blank=True, null=True, verbose_name='Features', help_text='JSON containing agents, content_variations, and assessment counts')
-	pre_assessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Pre-Assessment')
+	pre_assessment = models.ForeignKey('Assessments', on_delete=models.PROTECT, related_name='+', null=False, verbose_name='Pre-Assessment')
 	post_assessment = models.ForeignKey('Assessments', on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Post-Assessment')
 
 class Assessments(SuperModel):

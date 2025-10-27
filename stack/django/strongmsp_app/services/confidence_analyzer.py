@@ -148,12 +148,21 @@ class ConfidenceAnalyzer:
         
         # Update user fields
         update_fields = []
+        category_scores = []
         for stat in category_stats:
             category = stat['category']
             field_name = category_field_mapping.get(category)
             if field_name:
                 setattr(user, field_name, stat['average_response'])
                 update_fields.append(field_name)
+                category_scores.append(stat['average_response'])
+        
+        # Calculate and set category_total_score as sum of all categories
+        if category_scores:
+            from decimal import Decimal
+            category_total = sum(category_scores)
+            user.category_total_score = Decimal(str(category_total))
+            update_fields.append('category_total_score')
         
         if update_fields:
             user.save(update_fields=update_fields)

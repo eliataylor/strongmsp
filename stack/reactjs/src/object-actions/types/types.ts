@@ -1232,6 +1232,7 @@ export interface Users {
   category_concentration?: number | null;
   category_leadership?: number | null;
   category_mental_wellbeing?: number | null;
+  category_total_score?: number | null;
 }
 
 // Context API types

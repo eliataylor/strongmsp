@@ -64,9 +64,9 @@ class AssignmentService:
 
         return self._assignments
 
-    def get_all_paginated(self, limit=None, offset=None, pre_assessment_submitted=None):
+    def get_all_paginated(self, limit=None, offset=None, pre_assessment_submitted=None, sort_by=None):
         """
-        Get paginated athlete assignments with optional filtering.
+        Get paginated athlete assignments with optional filtering and sorting.
         
         Args:
             limit: Maximum number of results to return
@@ -75,6 +75,10 @@ class AssignmentService:
                 - True: Only show submissions with pre_assessment submitted
                 - False: Only show submissions with pre_assessment not submitted
                 - None: No filter
+            sort_by: Sort order for results
+                - 'category_total_asc': Sort by athlete's category_total_score ascending
+                - 'category_total_desc': Sort by athlete's category_total_score descending
+                - None: Default sort (pre_submitted DESC, post_submitted DESC, created_at DESC)
         
         Returns:
             Dict with keys: results, count, limit, offset
@@ -110,7 +114,22 @@ class AssignmentService:
             if offset is not None and offset > 0:
                 limit_offset_clause += f" OFFSET {offset}"
 
-        sql = f"""SELECT DISTINCT pa.athlete_id, pr.pre_assessment_id,
+        # Build the ORDER BY clause based on sort_by parameter
+        order_by_clause = ""
+        if sort_by == 'category_total_asc':
+            order_by_clause = "ORDER BY athlete_user.category_total_score ASC NULLS LAST, pre_submitted DESC, post_submitted DESC, created_at DESC"
+        elif sort_by == 'category_total_desc':
+            order_by_clause = "ORDER BY athlete_user.category_total_score DESC NULLS LAST, pre_submitted DESC, post_submitted DESC, created_at DESC"
+        elif sort_by == 'created_asc':
+            order_by_clause = "ORDER BY created_at ASC, pre_submitted DESC, post_submitted DESC"
+        elif sort_by == 'created_desc':
+            order_by_clause = "ORDER BY created_at DESC, pre_submitted DESC, post_submitted DESC"
+        else:
+            # Default sort order
+            order_by_clause = "ORDER BY pre_submitted DESC, post_submitted DESC, created_at DESC"
+
+        # Base query (without pagination)
+        base_query = f"""SELECT DISTINCT pa.athlete_id, pr.pre_assessment_id,
                 GROUP_CONCAT(distinct pr.post_assessment_id) as post_assessment_ids,
                 GROUP_CONCAT(distinct pa.id) as paymentassignment_ids,
                 GROUP_CONCAT(distinct p.id) as payment_ids,
@@ -125,6 +144,7 @@ class AssignmentService:
                 INNER JOIN strongmsp_app_payments p ON pa.payment_id = p.id
                 INNER JOIN strongmsp_app_products pr ON p.product_id = pr.id
                 INNER JOIN strongmsp_app_organizations o ON p.organization_id = o.id
+                LEFT JOIN strongmsp_app_users athlete_user ON pa.athlete_id = athlete_user.id
                 LEFT JOIN strongmsp_app_paymentassignments_coaches c_m2m ON pa.id = c_m2m.paymentassignments_id
                 LEFT JOIN strongmsp_app_paymentassignments_parents pa_m2m ON pa.id = pa_m2m.paymentassignments_id
             WHERE
@@ -145,12 +165,22 @@ class AssignmentService:
                 )
                 {pre_assessment_filter}
                 GROUP BY pa.athlete_id, pr.pre_assessment_id 
-                ORDER BY pre_submitted DESC, post_submitted DESC, created_at DESC
-                {limit_offset_clause};
+                {order_by_clause}
                 """
 
+        # Count query: wrap base query in a COUNT subquery
+        count_sql = f"SELECT COUNT(*) FROM ({base_query}) AS count_subquery"
+        
+        # Data query: add pagination to base query
+        data_sql = base_query + limit_offset_clause + ";"
+
         with connection.cursor() as cursor:
-            cursor.execute(sql, params)
+            # Get total count
+            cursor.execute(count_sql, params)
+            total_count = cursor.fetchone()[0]
+            
+            # Get paginated results
+            cursor.execute(data_sql, params)
             rows = cursor.fetchall()
 
             athlete_states = []
@@ -297,6 +327,12 @@ class AssignmentService:
                         }
                     })
 
+                # Fetch and populate pre assessment
+                if row_data['pre_assessment_id']:
+                    pre_assessment = get_assessment_relentity(row_data['pre_assessment_id'])
+                    if pre_assessment:
+                        athlete_state['pre_assessment'] = pre_assessment
+
                 # Fetch and populate post assessments
                 if row_data['post_assessment_ids']:
                     post_ids = [int(pid) for pid in row_data['post_assessment_ids'].split(',') if pid]
@@ -318,7 +354,7 @@ class AssignmentService:
 
         return {
             'results': athlete_states,
-            'count': len(athlete_states), # TODO: run query as count
+            'count': total_count,
             'limit': limit,
             'offset': offset
         }
