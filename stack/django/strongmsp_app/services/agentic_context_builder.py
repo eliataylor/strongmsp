@@ -340,11 +340,6 @@ class AgenticContextBuilder:
         if coach.email:
             sections.append(f"**Email:** {coach.email}")
         
-        # User groups
-        if coach.groups.exists():
-            group_names = [group.name for group in coach.groups.all()]
-            sections.append(f"**User Groups:** {', '.join(group_names)}")
-        
         return "\n".join(sections)
     
     def format_assessment_responses(self) -> str:

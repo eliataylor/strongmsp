@@ -602,10 +602,5 @@ class UserOrganizations(SuperModel):
 	user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='user_organizations')
 	organization = models.ForeignKey('Organizations', on_delete=models.CASCADE, related_name='organization_users')
 	
-	# Support multiple Groups per user per organization (e.g., both 'admin' and 'coach')
-	groups = models.ManyToManyField('auth.Group', related_name='user_org_memberships', 
-		verbose_name='Groups', blank=True,
-		help_text='Django Groups defining roles/permissions within this organization')
-	
 	joined_at = models.DateTimeField(auto_now_add=True, verbose_name='Joined At')
 	is_active = models.BooleanField(default=True, verbose_name='Is Active')

@@ -74,7 +74,7 @@ export function AppContextProvider({ children }: Props) {
     useEffect(() => {
         console.log("[CONTEXT] Context state updated:", {
             organization: organization?.name || "None",
-            membership: membership?.groups?.join(", ") || "None",
+            membership: membership?.roles?.join(", ") || "None",
             loading,
             error
         });

@@ -86,13 +86,6 @@ export function AuthChangeRedirector({ children }) {
     case AuthChangeEvent.LOGGED_OUT:
       return <Navigate to={URLs.LOGOUT_REDIRECT_URL} />;
     case AuthChangeEvent.LOGGED_IN: {
-      console.log("[USERTYPE] User logged in, checking groups:", auth?.data?.user?.groups);
-      // Check if user has groups assigned, redirect to role selection if not
-      if (auth?.data?.user && (!auth.data.user.groups || auth.data.user.groups.length === 0)) {
-        console.log("[USERTYPE] No groups found, redirecting to role selection");
-        return <Navigate to="/onboarding/role-selection" />;
-      }
-      console.log("[USERTYPE] User has groups, redirecting to home");
       return <Navigate to={URLs.LOGIN_REDIRECT_URL} />;
     }
     case AuthChangeEvent.REAUTHENTICATED: {

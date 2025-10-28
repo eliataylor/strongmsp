@@ -26,17 +26,6 @@ class Command(BaseCommand):
             help='Show what would be done without making changes'
         )
         parser.add_argument(
-            '--assessment-type',
-            choices=['pre', 'post', 'both'],
-            default='pre',
-            help='Type of assessment to complete (default: pre)'
-        )
-        parser.add_argument(
-            '--only-incomplete',
-            action='store_true',
-            help='Only complete assessments that have not been submitted yet'
-        )
-        parser.add_argument(
             '--overwrite',
             action='store_true',
             help='Overwrite existing responses (default: skip assessments with existing responses)'
@@ -45,8 +34,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         organization_id = options['organization_id']
         dry_run = options['dry_run']
-        assessment_type = options['assessment_type']
-        only_incomplete = options['only_incomplete']
         overwrite = options['overwrite']
 
         try:
@@ -75,33 +62,45 @@ class Command(BaseCommand):
 
         self.stdout.write(f'Found {user_orgs.count()} active users in the organization')
 
-        # Get all PaymentAssignments for these users
-        user_ids = [uo.user.id for uo in user_orgs]
-        assignments = PaymentAssignments.objects.filter(
-            athlete_id__in=user_ids
-        ).select_related('payment', 'payment__product', 'athlete', 'payment__product__pre_assessment')
+        # Get the first 40 users from user_orgs
+        user_orgs = user_orgs[:40]
+        self.stdout.write(f'Processing first 40 users: {user_orgs.count()} users')
 
-        if assessment_type in ['pre', 'both']:
-            assignments = assignments.filter(payment__product__pre_assessment__isnull=False)
+        # Get the first payment assignment to determine which assessment to use
+        first_assignment = PaymentAssignments.objects.filter(
+            athlete_id__in=[uo.user.id for uo in user_orgs]
+        ).select_related('payment', 'payment__product', 'payment__product__pre_assessment').first()
 
-        if not assignments.exists():
+        if not first_assignment:
             self.stdout.write(
-                self.style.WARNING('No payment assignments with assessments found for these users')
+                self.style.WARNING('No payment assignments found for these users')
             )
             return
 
-        self.stdout.write(f'Found {assignments.count()} payment assignments with assessments')
+        # Get the assessment from the first assignment
+        assessment = first_assignment.payment.product.pre_assessment
+        if not assessment:
+            self.stdout.write(
+                self.style.ERROR('First assignment does not have a pre-assessment')
+            )
+            return
 
-        # Process each assignment
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'Using assessment: {assessment.title} (ID: {assessment.id}) from first assignment'
+            )
+        )
+
+        # Process each user in the user_orgs list
         processed_count = 0
         skipped_count = 0
         created_responses = 0
 
-        for assignment in assignments:
-            result = self._process_assignment(
-                assignment,
-                assessment_type,
-                only_incomplete,
+        for user_org in user_orgs:
+            user = user_org.user
+            result = self._process_user_assessment(
+                user,
+                assessment,
                 overwrite,
                 dry_run
             )
@@ -119,149 +118,80 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING('DRY RUN - No changes were made'))
         self.stdout.write(self.style.SUCCESS(
             f'Summary:\n'
-            f'  • Assignments processed: {processed_count}\n'
-            f'  • Assignments skipped: {skipped_count}\n'
+            f'  • Users processed: {processed_count}\n'
+            f'  • Users skipped: {skipped_count}\n'
             f'  • Responses created: {created_responses}\n'
         ))
         self.stdout.write(self.style.SUCCESS('=' * 60))
 
-    def _process_assignment(self, assignment, assessment_type, only_incomplete, overwrite, dry_run):
-        """Process a single assignment and create responses"""
+    def _process_user_assessment(self, user, assessment, overwrite, dry_run):
+        """Process a single user and create responses for the assessment"""
         result = {
             'processed': False,
             'responses_count': 0
         }
 
-        athlete = assignment.athlete
-        product = assignment.payment.product
+        # Check if responses already exist
+        existing_responses = QuestionResponses.objects.filter(
+            author=user,
+            assessment=assessment
+        ).count()
 
-        if not athlete:
-            self.stdout.write('  Skipping assignment without athlete')
-            return result
-
-        # Determine which assessment(s) to process
-        assessments_to_process = []
-
-        if assessment_type in ['pre', 'both']:
-            if product.pre_assessment:
-                # Check if already submitted
-                if assignment.pre_assessment_submitted_at:
-                    if only_incomplete:
-                        self.stdout.write(
-                            f'  [{athlete}] Skipping: pre-assessment already submitted'
-                        )
-                        return result
-                    else:
-                        self.stdout.write(
-                            self.style.WARNING(
-                                f'  [{athlete}] Pre-assessment already submitted, will update'
-                            )
-                        )
-
-                assessments_to_process.append({
-                    'assessment': product.pre_assessment,
-                    'submitted_field': 'pre_assessment_submitted_at',
-                    'type': 'pre'
-                })
-
-        if assessment_type in ['post', 'both']:
-            # Get post assessments - they can be multiple
-            if assignment.payment.product.post_assessment:
-                if assignment.post_assessment_submitted_at and only_incomplete:
-                    self.stdout.write(
-                        f'  [{athlete}] Skipping: post-assessment already submitted'
-                    )
-                    # Continue to pre-assessments if requested
-                else:
-                    assessments_to_process.append({
-                        'assessment': assignment.payment.product.post_assessment,
-                        'submitted_field': 'post_assessment_submitted_at',
-                        'type': 'post'
-                    })
-
-        if not assessments_to_process:
-            self.stdout.write(f'  [{athlete}] No assessments to process')
-            return result
-
-        # Process each assessment
-        total_responses = 0
-        for assessment_data in assessments_to_process:
-            assessment = assessment_data['assessment']
-            assessment_type_name = assessment_data['type']
-
-            # Check if responses already exist
-            existing_responses = QuestionResponses.objects.filter(
-                author=athlete,
-                assessment=assessment
-            ).count()
-
-            if existing_responses > 0 and not overwrite:
-                self.stdout.write(
-                    f'  [{athlete}] Skipping {assessment_type_name}-assessment: '
-                    f'{existing_responses} existing responses (use --overwrite to replace)'
-                )
-                continue
-
-            # Get assessment questions
-            assessment_questions = AssessmentQuestions.objects.filter(
-                questions_to_assessments=assessment
-            ).select_related('question').order_by('order')
-
-            if not assessment_questions.exists():
-                self.stdout.write(
-                    f'  [{athlete}] No questions found in {assessment_type_name}-assessment'
-                )
-                continue
-
-            question_count = assessment_questions.count()
+        if existing_responses > 0 and not overwrite:
             self.stdout.write(
-                f'  [{athlete}] Processing {assessment_type_name}-assessment '
-                f'(ID: {assessment.id}) - {question_count} questions'
+                f'  [{user}] Skipping: {existing_responses} existing responses (use --overwrite to replace)'
             )
+            return result
 
-            if not dry_run:
-                with transaction.atomic():
-                    # Delete existing responses if overwrite
-                    if existing_responses > 0 and overwrite:
-                        QuestionResponses.objects.filter(
-                            author=athlete,
-                            assessment=assessment
-                        ).delete()
-                        self.stdout.write(f'    Deleted {existing_responses} existing responses')
+        # Get assessment questions
+        assessment_questions = AssessmentQuestions.objects.filter(
+            questions_to_assessments=assessment
+        ).select_related('question').order_by('order')
 
-                    # Create random responses for each question
-                    for assessment_question in assessment_questions:
-                        question = assessment_question.question
-                        random_response = self._generate_random_response(question)
+        if not assessment_questions.exists():
+            self.stdout.write(f'  [{user}] No questions found in assessment')
+            return result
 
-                        QuestionResponses.objects.create(
-                            author=athlete,
-                            question=question,
-                            assessment=assessment,
-                            response=random_response
-                        )
-                        total_responses += 1
+        question_count = assessment_questions.count()
+        self.stdout.write(
+            f'  [{user}] Processing {assessment.title} - {question_count} questions'
+        )
 
-                    # Update submission timestamp
-                    if assessment_data['submitted_field'] == 'pre_assessment_submitted_at':
-                        assignment.pre_assessment_submitted_at = timezone.now()
-                    else:
-                        assignment.post_assessment_submitted_at = timezone.now()
-                    assignment.save()
-            else:
-                # Dry run: just count what would be created
-                total_responses += question_count
+        if not dry_run:
+            with transaction.atomic():
+                # Delete existing responses if overwrite
                 if existing_responses > 0 and overwrite:
-                    self.stdout.write(f'    Would delete {existing_responses} existing responses')
+                    QuestionResponses.objects.filter(
+                        author=user,
+                        assessment=assessment
+                    ).delete()
+                    self.stdout.write(f'    Deleted {existing_responses} existing responses')
 
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f'    ✓ Created/updated {question_count} responses for {assessment_type_name}-assessment'
-                )
+                # Create random responses for each question
+                for assessment_question in assessment_questions:
+                    question = assessment_question.question
+                    random_response = self._generate_random_response(question)
+
+                    QuestionResponses.objects.create(
+                        author=user,
+                        question=question,
+                        assessment=assessment,
+                        response=random_response
+                    )
+                    result['responses_count'] += 1
+        else:
+            # Dry run: just count what would be created
+            result['responses_count'] = question_count
+            if existing_responses > 0 and overwrite:
+                self.stdout.write(f'    Would delete {existing_responses} existing responses')
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'    ✓ Created/updated {result["responses_count"]} responses'
             )
+        )
 
         result['processed'] = True
-        result['responses_count'] = total_responses
         return result
 
     def _generate_random_response(self, question):

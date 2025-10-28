@@ -30,13 +30,6 @@ export function RoleProtectedRoute({
         const next = `next=${encodeURIComponent(location.pathname + location.search)}`;
         return <Navigate to={`/account/login?${next}`} />;
     }
-
-    // Check if user has groups assigned (role selection completed)
-    if (!auth.data.user.groups || auth.data.user.groups.length === 0) {
-        console.log("[USERTYPE] RoleProtectedRoute - redirecting to role selection");
-        return <Navigate to="/onboarding/role-selection" />;
-    }
-
     // Check if user has any of the required roles
     const hasRequiredRole = requireAll
         ? requiredRoles.every(role => availableRoles.includes(role))

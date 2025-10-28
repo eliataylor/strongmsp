@@ -50,3 +50,22 @@ The builder ensures consistent TypeScript interfaces that match the Django model
 
 
 ***__Feel free to edit the file outside comment deliminators for each generated code block. If you edit inside, use git and be aware it could get editted by the builder if you rerun it later.__***
+
+
+Content States for Coach
+- Generated 
+- Edited
+- Published 
+- Received by ANY Parent
+- Received by Athlete 
+- Completed (can Mark as completed)
+
+Content States for Parent
+- Published
+- Received by ANY Parent
+- Completed (can Mark as completed)
+
+Content States for Athlete
+- Published
+- Received
+- Completed

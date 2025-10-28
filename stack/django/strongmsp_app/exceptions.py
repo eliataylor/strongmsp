@@ -84,10 +84,9 @@ def oa_exception_handler(exc, context):
 
             # User is authenticated but lacks roles
             elif request.user.is_authenticated:
-                user_groups = ["authenticated"]
-                user_groups.extend([g.name.replace('Is', '').lower() for g in request.user.groups.all()])
+                user_roles = ["authenticated"]
 
-                missing_roles = [role for role in needed_roles if role not in user_groups]
+                missing_roles = [role for role in needed_roles if role not in user_roles]
                 if missing_roles:
                     roles_str = ", ".join([f"'{role}'" for role in missing_roles])
                     ownership_word = "your own" if is_own else "other's"

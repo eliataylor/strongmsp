@@ -747,18 +747,9 @@ class NotificationsViewSet(AutoAuthorViewSet):
         if not user.is_authenticated:
             return Notifications.objects.none()
 
-        # Check if user is in allowed groups
-        allowed_groups = ['Admin', 'Agent', 'Coach']
-        user_groups = user.groups.values_list('name', flat=True)
-        if not any(group in user_groups for group in allowed_groups):
-            return Notifications.objects.none()
-
-        # If user is not Admin, only show their own notifications
-        if 'Admin' not in user_groups:
-            return Notifications.objects.filter(recipient=user)
-
-        # Admin can see all notifications
-        return Notifications.objects.all()
+        # All authenticated users can see notifications
+        # They will only see notifications for assignments they're part of (handled by the notification creation logic)
+        return Notifications.objects.filter(recipient=user)
 
     @action(detail=True, methods=['post'])
     def mark_seen(self, request, pk=None):
@@ -1406,17 +1397,42 @@ class CurrentContextView(APIView):
             organization = context_data['organization']
             if organization:  # Check if organization is not None
                 try:
-                    membership = UserOrganizations.objects.select_related('organization').prefetch_related('groups').get(
+                    membership = UserOrganizations.objects.select_related('organization').get(
                         user=request.user,
                         organization_id=organization['id'],
                         is_active=True
                     )
+                    
+                    # Calculate roles based on PaymentAssignments
+                    roles = []
+                    
+                    # Query PaymentAssignments to determine user's roles in this organization
+                    assignments = PaymentAssignments.objects.filter(
+                        Q(athlete=request.user) |
+                        Q(coaches=request.user) |
+                        Q(parents=request.user) |
+                        Q(payment__author=request.user)
+                    ).filter(
+                        payment__product__product_organizations__organization_id=organization['id']
+                    ).distinct()
+                    
+                    # Check which roles the user has
+                    if assignments.filter(athlete=request.user).exists():
+                        roles.append('athlete')
+                    if assignments.filter(coaches=request.user).exists():
+                        roles.append('coach')
+                    if assignments.filter(parents=request.user).exists():
+                        roles.append('parent')
+                    if assignments.filter(payment__author=request.user).exists():
+                        roles.append('payer')
+                    
                     context_data['membership'] = {
                         'id': membership.id,
-                        'groups': list(membership.groups.values_list('name', flat=True)),
+                        'roles': roles,
                         'joined_at': membership.joined_at.isoformat(),
                         'is_active': membership.is_active
                     }
+
                 except UserOrganizations.DoesNotExist:
                     pass
 

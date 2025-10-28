@@ -1,6 +1,7 @@
 import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import { useAuth } from "../allauth/auth";
 import { USER_TYPE } from "../object-actions/types/types";
+import { useAppContext } from "./AppContext";
 
 // Define the shape of the context value
 interface ActiveRoleContextType {
@@ -31,6 +32,7 @@ interface ActiveRoleProviderProps {
 // Provider component
 export const ActiveRoleProvider: React.FC<ActiveRoleProviderProps> = ({ children }) => {
     const auth = useAuth();
+    const appContext = useAppContext();
     const [activeRole, setActiveRoleState] = useState<USER_TYPE | null>(null);
     const [availableRoles, setAvailableRoles] = useState<USER_TYPE[]>([]);
 
@@ -43,34 +45,15 @@ export const ActiveRoleProvider: React.FC<ActiveRoleProviderProps> = ({ children
         }
     }, []);
 
-    // Update available roles when user changes
+    // Update available roles when membership changes
     useEffect(() => {
-        console.log("[USERTYPE] Auth data changed:", auth?.data?.user);
+        console.log("[USERTYPE] Membership changed:", appContext?.membership);
         console.log("[USERTYPE] Auth meta is_authenticated:", auth?.meta?.is_authenticated);
-        if (auth?.data?.user && auth?.meta?.is_authenticated) {
-            const user = auth.data.user;
-            const roles: USER_TYPE[] = [];
 
-            console.log("[USERTYPE] User groups:", user.groups);
-            console.log("[USERTYPE] User is_staff:", user.is_staff);
+        if (auth?.meta?.is_authenticated && appContext?.membership?.roles) {
+            const roles: USER_TYPE[] = appContext.membership.roles;
 
-            // Use Django groups directly as USER_TYPE values
-            if (user.groups && Array.isArray(user.groups)) {
-                user.groups.forEach((group: USER_TYPE) => {
-                    // Groups directly match USER_TYPE values
-                    if (group === 'athlete' || group === 'parent' || group === 'coach' || group === 'admin' || group === 'agent') {
-                        roles.push(group as USER_TYPE);
-                    }
-                });
-            }
-
-            // Check if user is staff (admin) - fallback for admin access
-            if (user.is_staff && !roles.includes('admin')) {
-                console.log("[USERTYPE] Adding admin role due to is_staff flag");
-                roles.push('admin');
-            }
-
-            console.log("[USERTYPE] Available roles determined:", roles);
+            console.log("[USERTYPE] Available roles from membership:", roles);
             setAvailableRoles(roles);
 
             // If no active role is set or current active role is not available, set to first available role
@@ -88,13 +71,13 @@ export const ActiveRoleProvider: React.FC<ActiveRoleProviderProps> = ({ children
                 console.log("[USERTYPE] Current active role is valid:", activeRole);
             }
         } else {
-            console.log("[USERTYPE] No user data or not authenticated, clearing roles");
+            console.log("[USERTYPE] No membership or not authenticated, clearing roles");
             // User not authenticated, clear roles
             setAvailableRoles([]);
             setActiveRoleState(null);
             localStorage.removeItem('smsp_active_role');
         }
-    }, [auth?.data?.user, auth?.meta?.is_authenticated, activeRole]);
+    }, [appContext?.membership, auth?.meta?.is_authenticated, activeRole]);
 
     // Function to set active role
     const setActiveRole = (role: USER_TYPE) => {

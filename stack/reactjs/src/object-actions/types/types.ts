@@ -1252,7 +1252,7 @@ export interface OrganizationPublicData {
 
 export interface UserOrganizationMembership {
   id: number;  // UserOrganizations ID
-  groups: string[];  // user's groups within this organization
+  roles: USER_TYPE[];  // user's roles within this organization based on PaymentAssignments
   joined_at: string;
   is_active: boolean;
 }
@@ -1438,7 +1438,7 @@ export const PurposeNames = {
 
 //---OBJECT-ACTIONS-TYPE-SCHEMA-ENDS---//
 
-export type USER_TYPE = 'athlete' | 'parent' | 'coach' | 'admin' | 'agent';
+export type USER_TYPE = 'athlete' | 'parent' | 'coach' | 'admin' | 'agent' | 'payer';
 
 // Role configuration with icons, labels, and colors
 export const ROLE_CONFIG = {
@@ -1500,6 +1500,18 @@ export const ROLE_CONFIG = {
       "Access system data for analysis",
       "Execute predefined workflows",
       "Generate automated responses"
+    ]
+  },
+  payer: {
+    icon: 'Payment',
+    label: "Payer",
+    color: "warning" as const,
+    description: "Manage payments and assignments for athletes",
+    features: [
+      "Manage athlete assignments",
+      "View payment history",
+      "Assign coaches and parents",
+      "Monitor athlete progress"
     ]
   }
 } as const;

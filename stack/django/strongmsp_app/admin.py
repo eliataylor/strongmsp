@@ -132,11 +132,6 @@ class UsersAdmin(BaseUserAdmin):
         }),
     )
 
-    def display_groups(self, obj):
-        return ", ".join([group.name for group in obj.groups.all()])
-
-
-
     def avatar_preview(self, obj):
         if obj.avatar:
             return format_html('<div style="width: 100px; height: 100px; background-image: url({}); background-size: contain; background-repeat: no-repeat; background-position: center; border: 1px solid #ddd;"></div>', obj.avatar.url)
@@ -158,7 +153,7 @@ class UsersAdmin(BaseUserAdmin):
     avatar_thumbnail.short_description = "Avatar"
     avatar_thumbnail.allow_tags = True
 
-    list_display = ('id', 'avatar_thumbnail', 'username', 'email', 'get_full_name', 'display_groups', 'is_active', 'date_joined', 'last_login')
+    list_display = ('id', 'avatar_thumbnail', 'username', 'email', 'get_full_name', 'is_active', 'date_joined', 'last_login')
     list_filter = ('is_active', 'is_staff', 'is_superuser', 'groups', 'date_joined', 'last_login')
     search_fields = ('username', 'email', 'first_name', 'last_name', 'real_name')
     list_editable = ('is_active',)
@@ -175,7 +170,7 @@ class AssessmentsAdmin(BaseModelAdmin):
     question_count.short_description = "Questions"
 
     list_display = ('id', 'title', 'question_count', 'author', 'created_at', 'modified_at')
-    list_filter = ('created_at', 'modified_at', 'author')
+    list_filter = ('created_at', 'modified_at')
     search_fields = ('title', 'author__username', 'author__email')
     readonly_fields = ('id', 'created_at', 'modified_at')
     date_hierarchy = 'created_at'
@@ -220,7 +215,7 @@ class AssessmentQuestionsAdmin(BaseModelAdmin):
         return queryset, use_distinct
 
     list_display = ('id', 'order', 'display_question_text', 'modified_at')
-    list_filter = ('created_at', 'modified_at', 'author', 'question__question_category')
+    list_filter = ('created_at', 'modified_at', 'question__question_category')
     search_fields = ('author__username', 'author__email', 'question__title', 'question__help_text')
     readonly_fields = ('id', 'created_at', 'modified_at')
     date_hierarchy = 'created_at'
@@ -258,7 +253,7 @@ class QuestionsAdmin(BaseModelAdmin):
     display_title_preview.short_description = "Question Title"
 
     list_display = ('id', 'title', 'question_category', 'scale', 'help_text', 'modified_at')
-    list_filter = ('question_category', 'scale', 'created_at', 'modified_at', 'author')
+    list_filter = ('question_category', 'scale', 'created_at', 'modified_at')
     search_fields = ('title', 'help_text', 'author__username', 'author__email')
     readonly_fields = ('id', 'created_at', 'modified_at')
     date_hierarchy = 'created_at'
@@ -295,7 +290,7 @@ class QuestionResponsesAdmin(BaseModelAdmin):
     display_assessment.short_description = "Assessment"
 
     list_display = ('id', 'display_athlete', 'display_question', 'display_assessment', 'response', 'modified_at')
-    list_filter = ('response', 'created_at', 'modified_at', 'author', 'question__question_category', 'assessment')
+    list_filter = ('response', 'created_at', 'modified_at', 'question__question_category', 'assessment')
     search_fields = ('author__username', 'author__email', 'author__first_name', 'author__last_name', 'question__title', 'assessment__title')
     readonly_fields = ('id', 'created_at', 'modified_at')
     date_hierarchy = 'created_at'
@@ -387,7 +382,7 @@ class PaymentAssignmentsAdmin(BaseModelAdmin):
     display_parents.short_description = "Parents"
     
     list_display = ('id', 'display_payment', 'display_athlete', 'display_coaches', 'display_parents', 'created_at', 'modified_at')
-    list_filter = ('created_at', 'modified_at', 'athlete', 'coaches', 'parents')
+    list_filter = ('created_at', 'modified_at', 'payment__product', 'payment__organization')
     search_fields = ('payment__id', 'athlete__username', 'athlete__email', 'coaches__username', 'parents__username')
     filter_horizontal = ('coaches', 'parents')
     ordering = ('-created_at',)
@@ -497,7 +492,7 @@ class PromptTemplatesAdmin(BaseModelAdmin):
     available_tokens_info.help_text = "Documentation of available token replacements for prompts and instructions"
 
     list_display = ('id', 'display_author', 'purpose', 'display_prompt_preview','modified_at')
-    list_filter = ('status', 'purpose', 'response_format', 'model', 'created_at', 'modified_at', 'author')
+    list_filter = ('status', 'purpose', 'response_format', 'model', 'created_at', 'modified_at')
     search_fields = ('prompt', 'instructions', 'model', 'author__username', 'author__email')
     readonly_fields = ('id', 'created_at', 'modified_at', 'available_tokens_info')
     date_hierarchy = 'created_at'
@@ -672,7 +667,7 @@ class AgentResponsesAdmin(BaseModelAdmin):
     token_usage_info.help_text = "Shows which tokens were used in the prompt template for this response"
 
     list_display = ('id', 'display_athlete', 'display_purpose', 'display_template', 'display_assignment', 'display_message_preview', 'display_ai_response_preview', 'created_at', 'modified_at')
-    list_filter = ('purpose', 'created_at', 'modified_at', 'athlete', 'prompt_template', 'assignment')
+    list_filter = ('purpose', 'created_at', 'modified_at', 'prompt_template', 'assignment')
     search_fields = ('message_body', 'ai_response', 'ai_reasoning', 'athlete__username', 'athlete__email', 'athlete__first_name', 'athlete__last_name', 'assignment__id')
     readonly_fields = ('id', 'created_at', 'modified_at', 'token_usage_info')
     date_hierarchy = 'created_at'
@@ -831,7 +826,7 @@ class SharesAdmin(BaseModelAdmin):
     is_expired.short_description = "Expired"
 
     list_display = ('id', 'display_recipient', 'display_content', 'expires', 'is_expired', 'created_at', 'modified_at')
-    list_filter = ('expires', 'created_at', 'modified_at', 'recipient', 'content__author')
+    list_filter = ('expires', 'created_at', 'modified_at', 'content__author')
     search_fields = ('recipient__username', 'recipient__email', 'recipient__first_name', 'recipient__last_name',
                     'content__title', 'content__author__username')
     readonly_fields = ('id', 'created_at', 'modified_at')
@@ -899,7 +894,7 @@ class NotificationsAdmin(BaseModelAdmin):
     send_notifications.short_description = "Send notifications"
 
     list_display = ('id', 'display_recipient', 'channel', 'notification_type', 'priority', 'display_message', 'display_delivery_status', 'display_sent_at', 'display_expires', 'is_expired', 'seen', 'created_at')
-    list_filter = ('channel', 'delivery_status', 'notification_type', 'priority', 'seen', 'auto_send', 'expires', 'created_at', 'modified_at', 'recipient')
+    list_filter = ('channel', 'delivery_status', 'notification_type', 'priority', 'seen', 'auto_send', 'expires', 'created_at', 'modified_at')
     search_fields = ('recipient__username', 'recipient__email', 'recipient__first_name', 'recipient__last_name', 'message', 'notification_group')
     readonly_fields = ('id', 'created_at', 'modified_at', 'notification_group')
     date_hierarchy = 'created_at'
@@ -957,31 +952,11 @@ class SignUpCodesAdmin(BaseModelAdmin):
     search_fields = ('code', 'organization__name')
     filter_horizontal = ('applicable_products',)
 
-class UserOrganizationsGroupsInline(admin.TabularInline):
-    model = UserOrganizations.groups.through
-    extra = 0
-    verbose_name = "Group"
-    verbose_name_plural = "Groups"
-    autocomplete_fields = ('group',)
-    
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related('group')
-
 class UserOrganizationsAdmin(BaseModelAdmin):
-    list_display = ('user', 'organization', 'display_groups', 'is_active', 'joined_at')
-    list_filter = ('organization', 'groups', 'is_active', 'joined_at')
+    list_display = ('user', 'organization', 'is_active', 'joined_at')
+    list_filter = ('organization', 'is_active', 'joined_at')
     search_fields = ('user__username', 'user__email', 'organization__name')
-    filter_horizontal = ('groups',)
     list_editable = ('is_active',)
-    inlines = [UserOrganizationsGroupsInline]
-    
-    def display_groups(self, obj):
-        """Display groups as a comma-separated string"""
-        if obj.groups.exists():
-            return ', '.join([group.name for group in obj.groups.all()])
-        return 'No groups'
-    display_groups.short_description = 'Groups'
-    display_groups.admin_order_field = 'groups__name'
 
 class GroupAdmin(BaseModelAdmin):
     list_display = ('name', 'user_count')
