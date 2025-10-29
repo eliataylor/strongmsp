@@ -45,6 +45,9 @@ CORS_ALLOWED_ORIGINS += [f"{APP_HOST_PARTS.scheme}://localhost:{DEV_PORT}",
                          f"{APP_HOST_PARTS.scheme}://reactjs-service:{DEV_PORT}",
                          f"{API_HOST_PARTS.scheme}://django-service:8088",
                          f"https://webapp.strongmindstrongperformance.com",
+                         f"https://testorg.strongmindstrongperformance.com",
+                         f"https://lakeshow.strongmindstrongperformance.com",
+                         f"https://wcc.strongmindstrongperformance.com",
                          f"http://webapp.strongmindstrongperformance.com"]
 
 # Add organization subdomain support
@@ -92,6 +95,10 @@ CSRF_TRUSTED_ORIGIN_REGEXES = [
 CSRF_TRUSTED_ORIGINS.extend([
     "https://strongmindstrongperformance.com",
     "http://strongmindstrongperformance.com",
+    "https://testorg.strongmindstrongperformance.com",  # Specific subdomain for testing
+    "https://webapp.strongmindstrongperformance.com",  # Specific subdomain for testing
+    "https://wcc.strongmindstrongperformance.com",  # Specific subdomain for testing
+    "https://lakeshow.strongmindstrongperformance.com",  # Specific subdomain for testing
     "https://localtestorg.strongmindstrongperformance.com:3008",  # Specific subdomain for testing
     "https://localhost.strongmindstrongperformance.com:3008",  # Specific subdomain for testing
     "https://localwcc.strongmindstrongperformance.com:3008",  # Specific subdomain for testing
