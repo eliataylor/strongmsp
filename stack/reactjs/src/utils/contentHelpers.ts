@@ -94,12 +94,16 @@ export const regenerateDraftFromContent = async (
  * Get version history for an AgentResponse
  */
 export const getVersionHistory = async (
+    agentResponseId: number | string,
     athleteId: number,
     purpose: string,
     assessmentId?: number
 ): Promise<AgentResponses[]> => {
+    // TODO: get actual past versions of this content not just other ones for this athlete and purpose
+
     try {
         const params = new URLSearchParams({
+            id: agentResponseId.toString(),
             athlete: athleteId.toString(),
             purpose,
             ...(assessmentId && { assessment: assessmentId.toString() })

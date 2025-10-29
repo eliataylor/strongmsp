@@ -1,24 +1,32 @@
+import { AddAlert } from '@mui/icons-material';
+import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
 import {
     Alert,
     Box,
+    Button,
+    ButtonGroup,
     Card,
     CardContent,
+    CardHeader,
     Container,
     Grid2 as Grid,
     MenuItem,
-    Paper,
     TextField,
     Toolbar,
     Typography
 } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useUser } from 'src/allauth/auth';
 import ProgramProgressStepper from 'src/components/ProgramProgressStepper';
 import ProgramProgressStepperCoach from 'src/components/ProgramProgressStepperCoach';
 import SpiderChart from 'src/components/SpiderChart';
+import { FadedPaper } from 'src/theme/StyledFields';
+import { timeAgo } from 'src/utils';
 import AutoPaginatingList from '../components/AutoPaginatingList';
 import PaymentAssignmentCard from '../components/PaymentAssignmentCard';
-import { AthletePaymentAssignment, PaginatedResponse } from '../object-actions/types/types';
+import { AthletePaymentAssignment, PaginatedResponse, PurposeNames } from '../object-actions/types/types';
+import { getCoachContentForPurpose, getContentStage } from "../utils/assignmentPermissions";
 
 const Dashboard: React.FC = () => {
     const [athletes, setAthletes] = useState<AthletePaymentAssignment[]>([]);
@@ -29,6 +37,7 @@ const Dashboard: React.FC = () => {
     const [limit] = useState(10);
     const [preAssessmentFilter, setPreAssessmentFilter] = useState<string>('all');
     const [sortBy, setSortBy] = useState<string>('default');
+    const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
     const user = useUser();
 
     const buildApiPath = useCallback(() => {
@@ -100,6 +109,118 @@ const Dashboard: React.FC = () => {
         return spiderData;
     }
 
+    function renderSummary(assignment: AthletePaymentAssignment) {
+        const { content_progress } = assignment;
+        if (!content_progress) return null;
+
+        const purposes = [
+            { key: 'feedback_report', label: 'Feedback Report' }
+        ];
+
+        if (assignment.my_roles.includes('coach')) {
+            purposes.push({ key: 'talking_points', label: 'Talking Points' });
+            purposes.push({ key: 'scheduling_email', label: 'Scheduling Email' });
+        }
+        purposes.push({ key: 'curriculum', label: 'Curriculum' });
+
+        // TODO: if purchased lesson_plans
+        purposes.push({ key: 'lesson_plan', label: 'Lesson Plan' });
+
+        const docs: React.ReactNode[] = [];
+
+        if (assignment.pre_assessment_submitted_at) {
+            docs.push(
+                <Box key="pre_assessment" display="flex" alignItems="center" gap={0.5}>
+                    <CheckCircleOutline color="secondary" sx={{ fontSize: 16 }} />
+                    <Typography component="span">Pre-Assessment Submitted</Typography>
+                </Box>
+            );
+        }
+
+        purposes.forEach(({ key, label }) => {
+            const items = getCoachContentForPurpose(assignment, key as keyof typeof PurposeNames);
+            if (items && Array.isArray(items) && items.length > 0) {
+                const status = getContentStage(assignment, items[0]).toLowerCase();
+                const segment = items[0]._type === 'CoachContent' ? 'coach-content' : 'agent-responses';
+                docs.push(
+                    <Box key={key} display="flex" alignItems="center" gap={0.5}>
+                        <CheckCircleOutline color="secondary" sx={{ fontSize: 16 }} />
+                        <Typography component="span">
+                            <Link to={`/${segment}/${items[0].id}`}>{label}</Link> <small>{status}</small></Typography>
+                    </Box>
+                );
+            }
+        });
+
+        if (assignment.post_assessment_submitted_at) {
+            docs.push(
+                <Box key="post_assessment" display="flex" alignItems="center" gap={0.5}>
+                    <CheckCircleOutline color="secondary" sx={{ fontSize: 16 }} />
+                    <Typography component="span">Post-Assessments Submitted</Typography>
+                </Box>
+            );
+        }
+
+        /* 
+        if (assignment.athlete.entity?.category_total_score) {
+            const allCats = ['category_performance_mindset', 'category_emotional_regulation', 'category_confidence', 'category_resilience_motivation', 'category_concentration', 'category_leadership', 'category_mental_wellbeing'];
+            allCats.forEach(cat => {
+                if (assignment.athlete.entity?.[cat as keyof Users]) {
+                    const label = cat.replace('category_', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+                    docs.push(
+                        <Chip key="categories"
+                            avatar={<span>{assignment.athlete.entity?.[cat as keyof Users]}</span>}
+                            label={label} color="primary" size="small" />
+                    );
+                }
+            });
+        }
+        */
+
+        if (docs.length === 0) {
+            if (assignment.athlete_id == user.id) {
+                docs.push(
+                    <Button
+                        sx={{ mt: 1 }}
+                        variant="contained"
+                        color="secondary"
+                        size="small"
+                        component={Link}
+                        to={`/assessments/${assignment.pre_assessment?.id}`}
+                    >
+                        Take Assessment
+                    </Button>
+                );
+            } else {
+                docs.push(
+                    <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5}>
+                        <AddAlert color="error" sx={{ fontSize: 15 }} />
+                        Awaiting Assessment submission
+                    </Typography>
+                );
+            }
+        }
+
+        return (
+            <CardHeader sx={{ mb: 1, p: 1, backgroundColor: 'background.default' }}
+                title={
+                    <React.Fragment>
+                        {assignment.athlete.str}
+                        <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                            {docs.length > 0 ? 'Last update: ' : 'Assigned: '}
+                            {timeAgo(assignment.last_update_at)}
+                        </Typography>
+                    </React.Fragment>
+                }
+                subheader={
+                    <Box display="flex" flexWrap="wrap" gap={2} mt={1} alignItems="center">
+                        {docs}
+                    </Box>
+                }
+            />
+        );
+    }
+
     if (error) {
         return (
             <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -108,14 +229,72 @@ const Dashboard: React.FC = () => {
         );
     }
 
+    function renderAthleteAssignment(forceDetail: boolean = false) {
+        return <Box sx={{ mb: 3, maxWidth: 1200, mx: 'auto' }}>
+            {athletes.length === 0 ? (
+                <Card>
+                    <CardContent>
+                        <Typography variant="body1" color="text.secondary" textAlign="center">
+                            No payment assignments found.
+                        </Typography>
+                    </CardContent>
+                </Card>
+            ) : (
+                athletes.map((athleteAssignment, index) => (
+                    viewMode === 'detail' || forceDetail ? (
+                        <FadedPaper elevation={0} sx={{ mb: 4, p: 2 }} key={athleteAssignment.athlete_id}>
+                            <Grid container spacing={1}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <PaymentAssignmentCard assignment={athleteAssignment} />
+                                </Grid>
+                                {athleteAssignment.athlete.entity && athleteAssignment.athlete.entity?.category_leadership && (
+                                    <Grid size={{ xs: 12, sm: 6 }}>
+                                        <SpiderChart data={structureSpiderData(athleteAssignment.athlete.entity)} height={250} showLegend={false} />
+                                    </Grid>
+                                )}
+                            </Grid>
+                            <Typography variant="h5" component="h2" sx={{ mt: 3, mb: 1 }}>
+                                {athleteAssignment.athlete.id == user.id ? 'My Progress' : 'Program Progress: ' + athleteAssignment.athlete.str}
+                            </Typography>
+                            {athleteAssignment.my_roles.includes('coach') ?
+                                <ProgramProgressStepperCoach assignment={athleteAssignment} key={index} />
+                                :
+                                <ProgramProgressStepper assignment={athleteAssignment} key={index} />}
+                        </FadedPaper>
+                    ) : (
+                        renderSummary(athleteAssignment)
+                    )
+                ))
+            )}
+        </Box>
+    }
+
+    if (athletes.length === 1 && offset === 0 && preAssessmentFilter === 'all') { // no toolbar
+        return <Box p={2}>{renderAthleteAssignment(true)}</Box>;
+    }
+
     return (
         <Box p={2}>
             {/* Toolbar with filters */}
-            <Paper sx={{ mb: 2 }}>
-                <Toolbar>
+            <FadedPaper sx={{ mb: 2 }}>
+                <Toolbar sx={{ flexWrap: 'wrap', gap: 1, p: 1 }}>
                     <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                        Athlete Assignments
+                        Athlete Assignments ({totalCount})
                     </Typography>
+                    <ButtonGroup sx={{ mr: 2 }} color="secondary">
+                        <Button
+                            variant={viewMode === 'list' ? 'contained' : 'outlined'}
+                            onClick={() => setViewMode('list')}
+                        >
+                            List
+                        </Button>
+                        <Button
+                            variant={viewMode === 'detail' ? 'contained' : 'outlined'}
+                            onClick={() => setViewMode('detail')}
+                        >
+                            Detail
+                        </Button>
+                    </ButtonGroup>
                     <TextField
                         select
                         label="Filter By"
@@ -143,7 +322,7 @@ const Dashboard: React.FC = () => {
                         <MenuItem value="least_confident">Least Confident</MenuItem>
                     </TextField>
                 </Toolbar>
-            </Paper>
+            </FadedPaper>
 
             {/* Auto-paginating athlete list */}
             <AutoPaginatingList
@@ -154,39 +333,7 @@ const Dashboard: React.FC = () => {
                 onSuccess={handleSuccess}
                 onError={handleError}
             >
-                <Box sx={{ mb: 3 }}>
-                    {athletes.length === 0 ? (
-                        <Card>
-                            <CardContent>
-                                <Typography variant="body1" color="text.secondary" textAlign="center">
-                                    No payment assignments found.
-                                </Typography>
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        athletes.map((athleteAssignment, index) => (
-                            <Paper elevation={3} sx={{ mb: 4, p: 2 }} key={athleteAssignment.athlete_id}>
-                                <Grid container spacing={1}>
-                                    <Grid size={{ xs: 12, sm: 6 }}>
-                                        <PaymentAssignmentCard assignment={athleteAssignment} />
-                                    </Grid>
-                                    {athleteAssignment.athlete.entity && athleteAssignment.athlete.entity?.category_leadership && (
-                                        <Grid size={{ xs: 12, sm: 6 }}>
-                                            <SpiderChart data={structureSpiderData(athleteAssignment.athlete.entity)} height={250} showLegend={false} />
-                                        </Grid>
-                                    )}
-                                </Grid>
-                                <Typography variant="h5" component="h2" sx={{ mt: 3, mb: 1 }}>
-                                    {athleteAssignment.athlete.id == user.id ? 'My Progress' : 'Program Progress: ' + athleteAssignment.athlete.str}
-                                </Typography>
-                                {athleteAssignment.my_roles.includes('coach') ? (
-                                    <ProgramProgressStepperCoach assignment={athleteAssignment} key={index} />
-                                ) :
-                                    <ProgramProgressStepper assignment={athleteAssignment} key={index} />}
-                            </Paper>
-                        ))
-                    )}
-                </Box>
+                {renderAthleteAssignment()}
             </AutoPaginatingList>
         </Box>
     );

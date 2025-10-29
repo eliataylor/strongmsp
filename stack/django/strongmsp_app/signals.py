@@ -1,8 +1,10 @@
 from allauth.account.signals import email_confirmed
 from django.contrib.auth.models import Group
 from django.dispatch import receiver
-
-from models import Cities
+# Add signal to update user category scores when assessments are submitted
+from django.db.models.signals import post_save
+from .models import PaymentAssignments
+from .services.confidence_analyzer import ConfidenceAnalyzer
 
 
 @receiver(email_confirmed)
@@ -18,20 +20,9 @@ def add_user_to_verified_group(request, email_address, **kwargs):
         print('adding user to verified group')
         user.groups.add(verified_group)
 
-# Add signals to update state aggregations when cities are deleted
-from django.db.models.signals import post_delete
-from django.dispatch import receiver
-
-@receiver(post_delete, sender=Cities)
-def update_state_on_city_delete(sender, instance, **kwargs):
-    if instance.state_id:
-        instance.state_id.update_aggregations()
 
 
-# Add signal to update user category scores when assessments are submitted
-from django.db.models.signals import post_save
-from .models import PaymentAssignments
-from .services.confidence_analyzer import ConfidenceAnalyzer
+
 
 @receiver(post_save, sender=PaymentAssignments)
 def update_user_category_scores_on_submission(sender, instance, **kwargs):

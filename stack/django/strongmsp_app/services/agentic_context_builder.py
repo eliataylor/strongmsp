@@ -28,23 +28,23 @@ CONTEXT_PREFIXES = {
     'COACH_NAME': 'COACH_NAME:',
     
     # Assessment fields
-    'ASSESSMENT_INFO': 'ASSESSMENT_INFO:',
-    'ASSESSMENT_RESPONSES': 'ASSESSMENT_RESPONSES:',
-    'ASSESSMENT_AGGREGATED': 'ASSESSMENT_AGGREGATED:',
+    'ASSESSMENT_INFO': 'ASSESSMENT INFORMATION:',
+    'ASSESSMENT_RESPONSES': 'ASSESSMENT RESPONSES:',
+    'ASSESSMENT_AGGREGATED': 'ASSESSMENT SUMMARY STATISTICS:',
     
     # Published content fields
-    'PUBLISHED_FEEDBACK_REPORT': 'PUBLISHED_FEEDBACK_REPORT:',
-    'PUBLISHED_CURRICULUM': 'PUBLISHED_CURRICULUM:',
-    'PUBLISHED_LESSON_PLAN': 'PUBLISHED_LESSON_PLAN:',
-    'PUBLISHED_TALKING_POINTS': 'PUBLISHED_TALKING_POINTS:',
-    'PUBLISHED_SCHEDULING_EMAIL': 'PUBLISHED_SCHEDULING_EMAIL:',
+    'PUBLISHED_FEEDBACK_REPORT': 'PREVIOUSLY PUBLISHED FEEDBACK REPORT:',
+    'PUBLISHED_CURRICULUM': 'PREVIOUSLY PUBLISHED CURRICULUM:',
+    'PUBLISHED_LESSON_PLAN': 'PREVIOUSLY PUBLISHED LESSON PLAN:',
+    'PUBLISHED_TALKING_POINTS': 'PREVIOUSLY PUBLISHED TALKING POINTS:',
+    'PUBLISHED_SCHEDULING_EMAIL': 'PREVIOUSLY PUBLISHED SCHEDULING EMAIL:',
     
     # Regeneration fields
-    'VERSION_HISTORY': 'VERSION_HISTORY:',
-    'CHANGE_REQUEST': 'CHANGE_REQUEST:',
+    'VERSION_HISTORY': 'PREVIOUS VERSION HISTORY:',
+    'CHANGE_REQUEST': 'COACH FEEDBACK - REQUIRED CHANGES:',
     
     # System
-    'SYSTEM_INSTRUCTIONS': 'SYSTEM_INSTRUCTIONS:',
+    'SYSTEM_INSTRUCTIONS': 'SYSTEM INSTRUCTIONS:',
 }
 
 # Token-to-context mapping for template replacement
@@ -459,9 +459,16 @@ class AgenticContextBuilder:
         
         # System instructions (if available)
         if 'system_instructions' in self.context_parts:
+            system_content = self.context_parts['system_instructions']
+            
+            # Enhance system instructions with change request guidance if change request is present
+            if 'change_request' in self.context_parts:
+                enhanced_instructions = f"{system_content}\n\nIMPORTANT: The COACH FEEDBACK - REQUIRED CHANGES section takes priority over all other instructions. The change request represents specific feedback from the coach and must be addressed directly in your response. Always incorporate the requested changes while maintaining the overall structure and quality of the content."
+                system_content = enhanced_instructions
+            
             messages.append({
                 'role': 'system',
-                'content': self.context_parts['system_instructions']
+                'content': system_content
             })
         
         # Prompt (if available)
@@ -469,6 +476,13 @@ class AgenticContextBuilder:
             messages.append({
                 'role': 'user',
                 'content': self.context_parts['prompt']
+            })
+        
+        # Change request - moved up to appear right after main prompt for priority
+        if 'change_request' in self.context_parts:
+            messages.append({
+                'role': 'user',
+                'content': f"{CONTEXT_PREFIXES['CHANGE_REQUEST']}\n\n{self.context_parts['change_request']}"
             })
         
         # Assessment info
@@ -512,17 +526,18 @@ class AgenticContextBuilder:
         if 'version_history' in self.context_parts:
             formatted_history = self.format_version_history()
             if formatted_history:
-                messages.append({
-                    'role': 'system',
-                    'content': formatted_history
-                })
-        
-        # Change request
-        if 'change_request' in self.context_parts:
-            messages.append({
-                'role': 'user',
-                'content': f"{CONTEXT_PREFIXES['CHANGE_REQUEST']}\n\n{self.context_parts['change_request']}"
-            })
+                # Add guidance on how to use version history when making changes
+                if 'change_request' in self.context_parts:
+                    version_guidance = f"{formatted_history}\n\nIMPORTANT: Use the PREVIOUS VERSION HISTORY above as reference for what to change. Compare the previous version with the requested changes to understand what modifications are needed. Maintain consistency with the overall style and structure while implementing the specific changes requested."
+                    messages.append({
+                        'role': 'system',
+                        'content': version_guidance
+                    })
+                else:
+                    messages.append({
+                        'role': 'system',
+                        'content': formatted_history
+                    })
         
         return messages
     

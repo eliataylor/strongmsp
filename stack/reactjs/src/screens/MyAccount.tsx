@@ -69,25 +69,24 @@ export default function MyAccount() {
 
     if (!me || !me?.id) {
         return (
-            <Box>
-                <Typography variant="h4" gutterBottom>
+            <Box sx={{ mt: 3 }} alignItems="center" justifyContent="center">
+                <Typography variant="h4" gutterBottom textAlign="center">
                     My Profile
                 </Typography>
-                <Typography>Please sign in to view your profile.</Typography>
+                <Typography textAlign="center">Please sign in to view your profile.</Typography>
             </Box>
         );
     }
 
     return (
-        <Box>
+        <Box p={2}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
                 <Typography variant="h4">My Profile</Typography>
                 {activeRole && (
                     <Chip
-                        size="medium"
+                        size="small"
                         label={getRoleConfig(activeRole).label}
                         color={getRoleConfig(activeRole).color}
-                        sx={{ fontSize: '0.8rem' }}
                     />
                 )}
             </Box>
@@ -105,9 +104,9 @@ export default function MyAccount() {
                         <Grid item xs={12} sm={6}>
                             <List dense>
                                 <NavBarItem
-                                    to={`/users/${me.id}`}
+                                    to={`/dashboard`}
                                     icon={<ProfileIcon fontSize={"small"} />}
-                                    name="View Profile"
+                                    name="My Dashboard"
                                 />
                                 <NavBarItem
                                     to="/account/email"

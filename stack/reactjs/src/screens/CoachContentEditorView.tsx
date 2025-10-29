@@ -8,12 +8,8 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
-    FormControl,
-    InputLabel,
     LinearProgress,
-    MenuItem,
     Paper,
-    Select,
     TextField,
     Typography,
     useTheme
@@ -58,23 +54,11 @@ const CoachContentEditorView: React.FC<CoachContentScreenProps> = ({
 
     // Edit form state
     const [editTitle, setEditTitle] = useState(entity.title);
-    const [editBody, setEditBody] = useState('');
-    const [editPrivacy, setEditPrivacy] = useState(entity.privacy);
-    const [editPurpose, setEditPurpose] = useState(entity.purpose);
+    const [editBody, setEditBody] = useState(entity.body);
 
     // Delivery status
     const deliveryStatus = getDeliveryStatus(entity);
     const sourceDraftInfo = getSourceDraftInfo(entity);
-
-    // Initialize edit form when entering edit mode
-    useEffect(() => {
-        if (isEditMode) {
-            setEditTitle(entity.title);
-            setEditBody(entity.body || ''); // Use Markdown directly
-            setEditPrivacy(entity.privacy);
-            setEditPurpose(entity.purpose);
-        }
-    }, [isEditMode, entity]);
 
     // Helper function to convert athlete category scores to SpiderChart data format
     const structureSpiderData = (entity: any) => {
@@ -150,8 +134,6 @@ const CoachContentEditorView: React.FC<CoachContentScreenProps> = ({
             const response = await ApiClient.put(`/api/coach-content/${entity.id}/`, {
                 title: editTitle,
                 body: editBody, // Save as Markdown directly
-                privacy: editPrivacy,
-                purpose: editPurpose
             });
 
             if (response.error) {
@@ -190,7 +172,7 @@ const CoachContentEditorView: React.FC<CoachContentScreenProps> = ({
 
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Paper elevation={2} sx={{ p: 4, borderRadius: 2 }}>
+            <Paper elevation={0} sx={{ p: 2, borderRadius: 2 }}>
                 {/* Header */}
                 <Box sx={{ mb: 4 }}>
                     <Typography
@@ -288,61 +270,42 @@ const CoachContentEditorView: React.FC<CoachContentScreenProps> = ({
                         </Box>
                     )}
 
-                    {/* Delivery Status */}
-                    <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-                        <Chip
-                            label={`Coach Delivered: ${deliveryStatus.coachDelivered ? 'Yes' : 'No'}`}
-                            color={deliveryStatus.coachDelivered ? 'success' : 'default'}
-                            size="small"
-                        />
-                        <Chip
-                            label={`Athlete Received: ${deliveryStatus.athleteReceived ? 'Yes' : 'No'}`}
-                            color={deliveryStatus.athleteReceived ? 'success' : 'default'}
-                            size="small"
-                        />
-                        <Chip
-                            label={`Parent Received: ${deliveryStatus.parentReceived ? 'Yes' : 'No'}`}
-                            color={deliveryStatus.parentReceived ? 'success' : 'default'}
-                            size="small"
-                        />
-                    </Box>
+                    {deliveryStatus.coachDelivered && (
+                        <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                            <Chip
+                                label={`Coach Delivered: ${deliveryStatus.coachDelivered ? 'Yes' : 'No'}`}
+                                color={deliveryStatus.coachDelivered ? 'success' : 'default'}
+                                size="small"
+                            />
+                            <Chip
+                                label={`Athlete Received: ${deliveryStatus.athleteReceived ? 'Yes' : 'No'}`}
+                                color={deliveryStatus.athleteReceived ? 'success' : 'default'}
+                                size="small"
+                            />
+                            <Chip
+                                label={`Parent Received: ${deliveryStatus.parentReceived ? 'Yes' : 'No'}`}
+                                color={deliveryStatus.parentReceived ? 'success' : 'default'}
+                                size="small"
+                            />
+                        </Box>
+                    )}
                 </Box>
 
+                {/* SpiderChart Section */}
+                {entity.athlete && (() => {
+                    const spiderData = structureSpiderData(entity.athlete);
+                    return spiderData.length > 0 && (
+                        <SpiderChart
+                            data={spiderData}
+                            height={300}
+                        />
+                    );
+                })()}
+
                 {/* Content Body */}
-                <Box sx={{ mb: 4 }}>
+                <Box sx={{ mb: 2, mt: 2 }}>
                     {isEditMode ? (
                         <Box>
-                            {/* Purpose and Privacy Selectors */}
-                            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                                <FormControl sx={{ minWidth: 120 }}>
-                                    <InputLabel>Purpose</InputLabel>
-                                    <Select
-                                        value={editPurpose}
-                                        onChange={(e) => setEditPurpose(e.target.value)}
-                                        label="Purpose"
-                                    >
-                                        <MenuItem value="lesson_plan">Lesson Plan</MenuItem>
-                                        <MenuItem value="curriculum">Curriculum</MenuItem>
-                                        <MenuItem value="talking_points">Talking Points</MenuItem>
-                                        <MenuItem value="feedback_report">Feedback Report</MenuItem>
-                                        <MenuItem value="scheduling_email">Scheduling Email</MenuItem>
-                                    </Select>
-                                </FormControl>
-                                <FormControl sx={{ minWidth: 120 }}>
-                                    <InputLabel>Privacy</InputLabel>
-                                    <Select
-                                        value={editPrivacy}
-                                        onChange={(e) => setEditPrivacy(e.target.value)}
-                                        label="Privacy"
-                                    >
-                                        <MenuItem value="public">Public</MenuItem>
-                                        <MenuItem value="authenticated">Authenticated</MenuItem>
-                                        <MenuItem value="mentioned">Mentioned</MenuItem>
-                                    </Select>
-                                </FormControl>
-                            </Box>
-
-                            {/* Markdown Editor */}
                             <MarkdownEditor
                                 value={editBody}
                                 onChange={setEditBody}
@@ -413,32 +376,6 @@ const CoachContentEditorView: React.FC<CoachContentScreenProps> = ({
                         </Box>
                     )}
                 </Box>
-
-                {/* SpiderChart Section */}
-                {entity.athlete && (() => {
-                    const spiderData = structureSpiderData(entity.athlete);
-                    return spiderData.length > 0 && (
-                        <Box sx={{ mb: 4 }}>
-                            <Typography
-                                variant="h5"
-                                component="h2"
-                                gutterBottom
-                                sx={{
-                                    fontWeight: 'bold',
-                                    color: 'primary.main',
-                                    mb: 3
-                                }}
-                            >
-                                Athlete Performance Profile
-                            </Typography>
-                            <SpiderChart
-                                data={spiderData}
-                                title={`${entity.athlete.str}'s Performance Profile`}
-                                height={400}
-                            />
-                        </Box>
-                    );
-                })()}
 
                 {/* Screenshots Section */}
                 {(entity.screenshot_light || entity.screenshot_dark) && (

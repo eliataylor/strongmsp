@@ -10,7 +10,7 @@ type GoogleFont = {
 const ALLFONTS: GoogleFont[] = [
   { family: "Roboto", variants: "Roboto:ital,wght@0,100..900;1,100..900" },
   { family: "Roboto Condensed", variants: "Roboto+Condensed:ital,wght@0,100..900;1,100..900" },
-  { family: "Montserrat", variants: "Montserrat:ital,wght@0,100..900;1,100..900&display=swap" },
+  { family: "Open Sans", variants: "Open+Sans:ital,wght@0,100..900;1,100..900&display=swap" },
   { family: "Noto Serif", variants: "Noto+Serif:ital,wght@0,100..900;1,100..900" },
   { family: "Merienda", variants: "Merienda:wght@300..900" },
   //  { family: "The Nautigal", variants: "The+Nautigal:wght@400;700" },

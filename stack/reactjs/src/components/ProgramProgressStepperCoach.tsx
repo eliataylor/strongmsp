@@ -17,7 +17,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../allauth/auth/hooks';
 import { AthletePaymentAssignment, PurposeNames } from '../object-actions/types/types';
-import { getUserRoleInAssignment } from '../utils/assignmentPermissions';
+import { getCoachContentForPurpose, getContentStage, getUserRoleInAssignment } from '../utils/assignmentPermissions';
 
 const ProgramProgressStepperCoach: React.FC<{ assignment: AthletePaymentAssignment }> = ({ assignment }) => {
     const auth = useAuth();
@@ -42,67 +42,13 @@ const ProgramProgressStepperCoach: React.FC<{ assignment: AthletePaymentAssignme
 
     // Determine if current user is a coach
     const userRole = getUserRoleInAssignment(currentUserId, assignment);
-    const isCoach = userRole === 'coach';
 
-    const agentProgress = assignment.agent_progress;
-    const contentProgress = assignment.content_progress;
-
-    // Helper function to check if coach content should be shown
-    const shouldShowCoachContent = (purpose: keyof typeof contentProgress) => {
-        const content = contentProgress[purpose];
-        if (!content || content.length === 0) return false;
-
-        // Always show for coaches
-        if (isCoach) return true;
-
-        // For non-coaches, only show if coach_delivered < now
-        const now = new Date();
-        return content.some(item => {
-            const coachDelivered = item.entity?.coach_delivered;
-            return coachDelivered && new Date(coachDelivered) < now;
-        });
-    };
-
-
-    const shouldShowAgentResponse = (purpose: keyof typeof contentProgress) => {
-        if (!isCoach) return false;
-
-        const coachContent = contentProgress[purpose];
-        if (coachContent && coachContent.length > 0) {
-            // if a parent or athlete already saw the content, don't show the agent response anymore even to the coach
-            const beenSeen = coachContent.some(item =>
-                (item.entity?.athlete_received && new Date(item.entity?.athlete_received) < new Date())
-                || (item.entity?.parent_received && new Date(item.entity?.parent_received) < new Date())
-            );
-            if (beenSeen) {
-                console.log("Agent response not shown because it has been seen by the athlete or parent");
-                return false;
-            }
-        }
-
-        const agentResponse = agentProgress[purpose];
-        if (!agentResponse || agentResponse.length === 0) return false;
-        return true;
+    // Get content for each purpose using the enhanced logic
+    const docs: Record<keyof typeof PurposeNames, any | null> = {} as any;
+    for (const purpose of Object.keys(PurposeNames)) {
+        docs[purpose as keyof typeof PurposeNames] = getCoachContentForPurpose(assignment, purpose as keyof typeof PurposeNames);
     }
 
-
-    // Helper function to get content to display for a purpose
-    const getContentForPurpose = (purpose: keyof typeof contentProgress) => {
-        const coachContent = contentProgress[purpose];
-        const agentContent = agentProgress[purpose];
-
-        // If coach content should be shown and exists, show it
-        if (shouldShowCoachContent(purpose) && coachContent && coachContent.length > 0) {
-            return coachContent;
-        }
-
-        // If user is coach and no coach content exists, show agent content
-        if (isCoach && agentContent && agentContent.length > 0) {
-            return agentContent;
-        }
-
-        return null;
-    };
 
     // Helper function to format date and time
     const formatDateTime = (dateString: string) => {
@@ -132,16 +78,6 @@ const ProgramProgressStepperCoach: React.FC<{ assignment: AthletePaymentAssignme
         }
 
         return null;
-    };
-
-    // Helper function to determine if content is at Agent Response or Coach Content stage
-    const getContentStage = (item: any) => {
-        if (item._type === 'CoachContent') {
-            return 'Coach Content';
-        } else if (item._type === 'AgentResponse') {
-            return 'Agent Response';
-        }
-        return 'Unknown';
     };
 
     // Helper function to get delivery status for each party with checkmarks
@@ -189,7 +125,7 @@ const ProgramProgressStepperCoach: React.FC<{ assignment: AthletePaymentAssignme
             <Box>
                 {itemsToShow.map((item, index) => {
                     const deliveryStatus = getDeliveryStatus(item);
-                    const contentStage = getContentStage(item);
+                    const contentStage = getContentStage(assignment, item);
                     const screenshotUrl = getScreenshotUrl(item);
                     let reportTitle = PurposeNames[purpose as keyof typeof PurposeNames];
                     if (content.length > 1) {
@@ -234,7 +170,6 @@ const ProgramProgressStepperCoach: React.FC<{ assignment: AthletePaymentAssignme
                                         <Chip
                                             label={contentStage}
                                             size="small"
-                                            color={contentStage === 'Coach Content' ? 'success' : 'default'}
                                             variant="outlined"
                                         />
                                     </Box>
@@ -326,11 +261,11 @@ const ProgramProgressStepperCoach: React.FC<{ assignment: AthletePaymentAssignme
                     </StepContent>
                 </Step>
             }
-            <Step expanded={shouldShowCoachContent('feedback_report') || shouldShowAgentResponse('feedback_report')}>
+            <Step expanded={docs['feedback_report'] && docs['feedback_report'].length > 0}>
                 <StepLabel>Feedback Report</StepLabel>
                 <StepContent>
                     {(() => {
-                        const content = getContentForPurpose('feedback_report');
+                        const content = docs['feedback_report'];
                         if (content && content.length > 0) {
                             return renderContentItems(content, 'feedback_report');
                         }
@@ -344,11 +279,11 @@ const ProgramProgressStepperCoach: React.FC<{ assignment: AthletePaymentAssignme
             </Step>
 
             {userRole === 'coach' && (
-                <Step expanded={shouldShowCoachContent('talking_points') || shouldShowAgentResponse('talking_points')}>
+                <Step expanded={docs['talking_points'] && docs['talking_points'].length > 0}>
                     <StepLabel>Talking Points</StepLabel>
                     <StepContent>
                         {(() => {
-                            const content = getContentForPurpose('talking_points');
+                            const content = docs['talking_points'];
                             if (content && content.length > 0) {
                                 return renderContentItems(content, 'talking_points');
                             }
@@ -363,11 +298,11 @@ const ProgramProgressStepperCoach: React.FC<{ assignment: AthletePaymentAssignme
             )}
 
             {userRole === 'coach' && (
-                <Step expanded={shouldShowCoachContent('scheduling_email') || shouldShowAgentResponse('scheduling_email')}>
+                <Step expanded={docs['scheduling_email'] && docs['scheduling_email'].length > 0}>
                     <StepLabel>Scheduling Email</StepLabel>
                     <StepContent>
                         {(() => {
-                            const content = getContentForPurpose('scheduling_email');
+                            const content = docs['scheduling_email'];
                             if (content && content.length > 0) {
                                 return renderContentItems(content, 'scheduling_email');
                             }
@@ -381,11 +316,11 @@ const ProgramProgressStepperCoach: React.FC<{ assignment: AthletePaymentAssignme
                 </Step>
             )}
 
-            <Step expanded={shouldShowCoachContent('curriculum') || shouldShowAgentResponse('curriculum')}>
+            <Step expanded={docs['curriculum'] && docs['curriculum'].length > 0}>
                 <StepLabel>12 Session Curriculum</StepLabel>
                 <StepContent>
                     {(() => {
-                        const content = getContentForPurpose('curriculum');
+                        const content = docs['curriculum'];
                         if (content && content.length > 0) {
                             return renderContentItems(content, 'curriculum');
                         }
@@ -398,11 +333,11 @@ const ProgramProgressStepperCoach: React.FC<{ assignment: AthletePaymentAssignme
                 </StepContent>
             </Step>
 
-            <Step expanded={shouldShowCoachContent('lesson_plan') || shouldShowAgentResponse('lesson_plan')}>
+            <Step expanded={docs['lesson_plan'] && docs['lesson_plan'].length > 0}>
                 <StepLabel>Lesson Plan</StepLabel>
                 <StepContent>
                     {(() => {
-                        const content = getContentForPurpose('lesson_plan');
+                        const content = docs['lesson_plan'];
                         if (content && content.length > 0) {
                             return renderContentItems(content, 'lesson_plan');
                         }

@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.html import format_html
 from django import forms
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.urls import reverse
 from .models import Users
 from .models import Assessments
 from .models import AssessmentQuestions
@@ -122,8 +123,23 @@ class CoachFilter(SimpleListFilter):
 @admin.register(Users)
 class UsersAdmin(BaseUserAdmin):
     fieldsets = BaseUserAdmin.fieldsets + (
-        (_('Additional Info'), {'fields': ('real_name', 'bio', 'gender', 'ethnicity', 'birthdate', 'zip_code')}),
+        (_('Additional Info'), {'fields': ('real_name', 'bio', 'gender', 'ethnicity', 'birthdate', 'zip_code', 'display_age')}),
         (_('Profile Images'), {'fields': ('avatar', 'photo', 'avatar_preview', 'photo_preview')}),
+        (_('Assessment Category Scores'), {
+            'fields': (
+                'display_category_scores',
+                'category_performance_mindset',
+                'category_emotional_regulation', 
+                'category_confidence',
+                'category_resilience_motivation',
+                'category_concentration',
+                'category_leadership',
+                'category_mental_wellbeing',
+                'category_total_score'
+            ),
+            'classes': ('collapse',),
+            'description': 'Cached assessment scores from most recent assessment'
+        }),
     )
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
         (None, {
@@ -153,11 +169,41 @@ class UsersAdmin(BaseUserAdmin):
     avatar_thumbnail.short_description = "Avatar"
     avatar_thumbnail.allow_tags = True
 
-    list_display = ('id', 'avatar_thumbnail', 'username', 'email', 'get_full_name', 'is_active', 'date_joined', 'last_login')
-    list_filter = ('is_active', 'is_staff', 'is_superuser', 'groups', 'date_joined', 'last_login')
-    search_fields = ('username', 'email', 'first_name', 'last_name', 'real_name')
+    def display_category_scores(self, obj):
+        """Display all category scores in a formatted way"""
+        scores = []
+        if obj.category_performance_mindset is not None:
+            scores.append(f"Performance: {obj.category_performance_mindset}")
+        if obj.category_emotional_regulation is not None:
+            scores.append(f"Emotional: {obj.category_emotional_regulation}")
+        if obj.category_confidence is not None:
+            scores.append(f"Confidence: {obj.category_confidence}")
+        if obj.category_resilience_motivation is not None:
+            scores.append(f"Resilience: {obj.category_resilience_motivation}")
+        if obj.category_concentration is not None:
+            scores.append(f"Concentration: {obj.category_concentration}")
+        if obj.category_leadership is not None:
+            scores.append(f"Leadership: {obj.category_leadership}")
+        if obj.category_mental_wellbeing is not None:
+            scores.append(f"Well-being: {obj.category_mental_wellbeing}")
+        
+        if scores:
+            return format_html('<br>'.join(scores))
+        return "No scores available"
+    display_category_scores.short_description = "Category Scores"
+    display_category_scores.allow_tags = True
+
+    def display_age(self, obj):
+        """Display calculated age from birthdate"""
+        age = obj.calculate_age()
+        return age if age is not None else "—"
+    display_age.short_description = "Age"
+
+    list_display = ('id', 'avatar_thumbnail', 'username', 'email', 'get_full_name', 'gender', 'zip_code', 'category_total_score', 'is_active', 'date_joined', 'last_login')
+    list_filter = ('is_active', 'is_staff', 'is_superuser', 'groups', 'gender', 'ethnicity', 'date_joined', 'last_login')
+    search_fields = ('username', 'email', 'first_name', 'last_name', 'real_name', 'zip_code')
     list_editable = ('is_active',)
-    readonly_fields = ('id', 'date_joined', 'last_login', 'avatar_preview', 'photo_preview')
+    readonly_fields = ('id', 'date_joined', 'last_login', 'avatar_preview', 'photo_preview', 'display_category_scores', 'display_age')
     date_hierarchy = 'date_joined'
     ordering = ('-date_joined',)
 
@@ -363,21 +409,30 @@ class PaymentAssignmentsAdmin(BaseModelAdmin):
     
     def display_athlete(self, obj):
         if obj.athlete:
-            return safe_display_name(obj.athlete)
+            url = reverse('admin:strongmsp_app_users_change', args=[obj.athlete.id])
+            return format_html('<a href="{}">{}</a>', url, safe_display_name(obj.athlete))
         return "No athlete assigned"
     display_athlete.short_description = "Athlete"
     
     def display_coaches(self, obj):
         coaches = obj.coaches.all()
         if coaches:
-            return ", ".join([safe_display_name(coach) for coach in coaches])
+            coach_links = []
+            for coach in coaches:
+                url = reverse('admin:strongmsp_app_users_change', args=[coach.id])
+                coach_links.append(f'<a href="{url}">{safe_display_name(coach)}</a>')
+            return mark_safe(", ".join(coach_links))
         return "No coaches assigned"
     display_coaches.short_description = "Coaches"
     
     def display_parents(self, obj):
         parents = obj.parents.all()
         if parents:
-            return ", ".join([safe_display_name(parent) for parent in parents])
+            parent_links = []
+            for parent in parents:
+                url = reverse('admin:strongmsp_app_users_change', args=[parent.id])
+                parent_links.append(f'<a href="{url}">{safe_display_name(parent)}</a>')
+            return mark_safe(", ".join(parent_links))
         return "No parents assigned"
     display_parents.short_description = "Parents"
     
@@ -629,6 +684,16 @@ class AgentResponsesAdmin(BaseModelAdmin):
         return "No assignment"
     display_assignment.short_description = "Assignment"
 
+    def display_author(self, obj):
+        return safe_display_name(obj.author)
+    display_author.short_description = "Author"
+
+    def display_assessment(self, obj):
+        if obj.assessment:
+            return obj.assessment.title
+        return "No assessment"
+    display_assessment.short_description = "Assessment"
+
     def display_message_preview(self, obj):
         if obj.message_body:
             return obj.message_body[:100] + "..." if len(obj.message_body) > 100 else obj.message_body
@@ -666,16 +731,16 @@ class AgentResponsesAdmin(BaseModelAdmin):
     token_usage_info.short_description = "Token Usage"
     token_usage_info.help_text = "Shows which tokens were used in the prompt template for this response"
 
-    list_display = ('id', 'display_athlete', 'display_purpose', 'display_template', 'display_assignment', 'display_message_preview', 'display_ai_response_preview', 'created_at', 'modified_at')
+    list_display = ('id', 'display_athlete', 'display_author', 'display_purpose', 'display_template', 'display_assignment', 'display_message_preview', 'display_ai_response_preview', 'created_at', 'modified_at')
     list_filter = ('purpose', 'created_at', 'modified_at', 'prompt_template', 'assignment')
     search_fields = ('message_body', 'ai_response', 'ai_reasoning', 'athlete__username', 'athlete__email', 'athlete__first_name', 'athlete__last_name', 'assignment__id')
-    readonly_fields = ('id', 'created_at', 'modified_at', 'token_usage_info')
+    readonly_fields = ('id', 'athlete', 'display_athlete', 'author', 'assessment', 'assignment', 'created_at', 'modified_at', 'token_usage_info')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
 
     fieldsets = (
         ('Response Information', {
-            'fields': ('athlete', 'assignment', 'purpose', 'prompt_template', 'message_body')
+            'fields': ('display_athlete', 'assessment', 'assignment', 'author', 'purpose', 'prompt_template', 'message_body')
         }),
         ('AI Response', {
             'fields': ('ai_response', 'ai_reasoning')

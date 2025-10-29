@@ -52,7 +52,7 @@ The builder ensures consistent TypeScript interfaces that match the Django model
 ***__Feel free to edit the file outside comment deliminators for each generated code block. If you edit inside, use git and be aware it could get editted by the builder if you rerun it later.__***
 
 
-Content States for Coach
+Progress States for Coach
 - Generated 
 - Edited
 - Published 
@@ -60,12 +60,12 @@ Content States for Coach
 - Received by Athlete 
 - Completed (can Mark as completed)
 
-Content States for Parent
+Progress States for Parent
 - Published
 - Received by ANY Parent
 - Completed (can Mark as completed)
 
-Content States for Athlete
+Progress States for Athlete
 - Published
 - Received
 - Completed

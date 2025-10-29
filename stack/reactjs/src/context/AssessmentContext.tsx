@@ -209,8 +209,7 @@ export const AssessmentProvider: React.FC<AssessmentProviderProps> = ({ children
         try {
             // Trigger agents and handle assessment completion
             const result = await ApiClient.post('/api/assessments/complete/', {
-                assessment_id: assessmentId,
-                responses: responses
+                assessment_id: assessmentId
             });
 
             if (!result.success) {

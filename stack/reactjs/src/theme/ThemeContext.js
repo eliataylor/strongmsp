@@ -1,10 +1,28 @@
 // ThemeContext.js
 import CssBaseline from "@mui/material/CssBaseline";
-import { green, orange } from "@mui/material/colors";
 import { createTheme, ThemeProvider as MuiThemeProvider, responsiveFontSizes } from "@mui/material/styles";
 import { createContext, useEffect, useMemo, useState } from "react";
 
 import GlobalStyles from "./GlobalStyles";
+
+const DEFAULT_PALETTE = {
+  light: {
+    primary: { main: "#877010" },
+    secondary: { main: "#2a74b7" },
+    background: { default: "#ffffff" },
+    paper: { main: "#fafafa" }
+  },
+  dark: {
+    primary: { main: "#0C2340" },
+    secondary: { main: "#8EB5DC" },
+    background: { default: "#000" },
+    paper: { main: "#000" }
+  }
+};
+
+const DEFAULT_TYPOGRAPHY = {
+  fontFamily: "Open Sans"
+};
 
 const ThemeContext = createContext();
 
@@ -15,7 +33,7 @@ const ThemeProvider = ({ children }) => {
   );
   const [fontFamily, setFamily] = useState(
     localStorage.getItem("themeFont") ? localStorage.getItem("themeFont") :
-      "Montserrat");
+      "Open Sans");
 
   // Branding settings state
   const [brandingSettings, setBrandingSettings] = useState({
@@ -23,23 +41,8 @@ const ThemeProvider = ({ children }) => {
     organizationName: "",
     organizationShortName: "",
     logoUrl: null,
-    palette: {
-      light: {
-        primary: { main: "#877010" },
-        secondary: { main: "#2a74b7" },
-        background: { default: "#ffffff" },
-        paper: { main: "#fafafa" }
-      },
-      dark: {
-        primary: { main: "#f4ab2a" },
-        secondary: { main: "#2ab1f4" },
-        background: { default: "#121212" },
-        paper: { main: "#1e1e1e" }
-      }
-    },
-    typography: {
-      fontFamily: "Montserrat"
-    }
+    palette: DEFAULT_PALETTE,
+    typography: DEFAULT_TYPOGRAPHY
   });
 
   // Load branding settings from localStorage on mount
@@ -53,29 +56,15 @@ const ThemeProvider = ({ children }) => {
         organizationName: "",
         organizationShortName: "",
         logoUrl: null,
-        palette: {
-          light: {
-            primary: { main: "#877010" },
-            secondary: { main: "#2a74b7" },
-            background: { default: "#ffffff" },
-            paper: { main: "#fafafa" }
-          },
-          dark: {
-            primary: { main: "#f4ab2a" },
-            secondary: { main: "#2ab1f4" },
-            background: { default: "#121212" },
-            paper: { main: "#1e1e1e" }
-          }
-        },
-        typography: {
-          fontFamily: "Montserrat"
-        }
+        palette: DEFAULT_PALETTE,
+        typography: DEFAULT_TYPOGRAPHY
       };
 
       if (logoBase64) {
         settings.customLogoBase64 = logoBase64;
       }
 
+      /*
       if (brandStyles) {
         const parsedStyles = JSON.parse(brandStyles);
         settings = {
@@ -86,6 +75,8 @@ const ThemeProvider = ({ children }) => {
       }
 
       setBrandingSettings(settings);
+      */
+
     } catch (error) {
       console.error('Error loading branding settings from localStorage:', error);
     }
@@ -134,19 +125,8 @@ const ThemeProvider = ({ children }) => {
       organizationName: "",
       organizationShortName: "",
       logoUrl: null,
-      palette: {
-        light: {
-          primary: { main: "#877010" },
-          secondary: { main: "#2a74b7" }
-        },
-        dark: {
-          primary: { main: "#f4ab2a" },
-          secondary: { main: "#2ab1f4" }
-        }
-      },
-      typography: {
-        fontFamily: "Montserrat"
-      }
+      palette: DEFAULT_PALETTE,
+      typography: DEFAULT_TYPOGRAPHY
     };
     setBrandingSettings(defaultSettings);
     localStorage.removeItem('logo_base64');
@@ -184,36 +164,14 @@ const ThemeProvider = ({ children }) => {
     const plt = {
       mode: darkMode ? "dark" : "light",
       background: {
-        default: darkMode ? "#32363F" : "#f4f4f4",
-        paper: darkMode ? "#1e2226" : "#f4f4f4"
+        default: darkMode ? DEFAULT_PALETTE.dark.background.default : DEFAULT_PALETTE.light.background.default,
+        paper: darkMode ? DEFAULT_PALETTE.dark.paper.main : DEFAULT_PALETTE.light.paper.main
       },
-      contrastText: darkMode ? "#e1e1e1" : "#202020",
-      text: {
-        primary: darkMode ? "#ffffff" : "#202020",
-        secondary: darkMode ? "#dadada" : "#333333"
-      },
-      grey: {
-        500: "#9e9e9e"
-      },
-      /*
-                // for meals: F5F5F5
-
-                color: theme.palette.getContrastText(theme.palette.primary.main),
-                 */
       primary: {
-        main: getPrimaryColor()
+        main: darkMode ? DEFAULT_PALETTE.dark.primary.main : DEFAULT_PALETTE.light.primary.main
       },
       secondary: {
-        main: getSecondaryColor()
-      },
-      warning: {
-        main: orange[500]
-      },
-      success: {
-        main: green[500]
-      },
-      link: {
-        main: darkMode ? "#a6d8fb" : "#1973af"
+        main: darkMode ? DEFAULT_PALETTE.dark.secondary.main : DEFAULT_PALETTE.light.secondary.main
       }
     };
 

@@ -227,6 +227,17 @@ class Command(BaseCommand):
             products = [products]
             
         for product in products:
+            # Check if assignment already exists for this athlete/product/organization combination
+            existing = PaymentAssignments.objects.filter(
+                athlete=athlete,
+                payment__organization=organization,
+                payment__product__pre_assessment=product.pre_assessment
+            ).exists()
+            
+            if existing:
+                self.stdout.write(f"Skipping {athlete} for {product.title}: already has assignment for this assessment in this org")
+                continue
+            
             # Create payment
             payment = Payments.objects.create(
                 product=product,

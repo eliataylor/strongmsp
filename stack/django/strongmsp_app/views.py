@@ -128,15 +128,29 @@ class AssessmentsViewSet(AutoAuthorViewSet):
             )
 
         # Validate user has access through PaymentAssignment
-        assignment_data = request.assignment_service.get_for_assessment(assessment_id)
+        from utils.helpers import get_subdomain_from_request
+        organization_slug = get_subdomain_from_request(request)
+        now = timezone.now().date()
+        
+        assignment = PaymentAssignments.objects.filter(
+            Q(athlete=request.user) |
+            Q(coaches=request.user) |
+            Q(parents=request.user) |
+            Q(payment__author=request.user),
+            payment__organization__slug=organization_slug,
+            payment__status='succeeded',
+            payment__product__is_active=True,
+            payment__product__pre_assessment_id=assessment_id
+        ).filter(
+            Q(payment__subscription_ends__isnull=True) |
+            Q(payment__subscription_ends__gte=now)
+        ).select_related('athlete').first()
 
-        if not assignment_data:
+        if not assignment:
             return Response(
                 {'detail': 'You do not have access to this assessment'},
                 status=status.HTTP_403_FORBIDDEN
             )
-
-        assignment = assignment_data['assignment']
 
         # Serialize with athlete context for response inclusion
         serializer = self.get_serializer(assessment, context={
@@ -163,17 +177,56 @@ class AssessmentsViewSet(AutoAuthorViewSet):
                 )
 
             # Validate user has access to this assessment
-            assignment_data = request.assignment_service.get_for_assessment(assessment_id)
+            from utils.helpers import get_subdomain_from_request
+            organization_slug = get_subdomain_from_request(request)
+            now = timezone.now().date()
+            
+            assignment = PaymentAssignments.objects.filter(
+                Q(athlete=request.user) |
+                Q(coaches=request.user) |
+                Q(parents=request.user) |
+                Q(payment__author=request.user),
+                payment__organization__slug=organization_slug,
+                payment__status='succeeded',
+                payment__product__is_active=True,
+                payment__product__pre_assessment_id=assessment_id
+            ).filter(
+                Q(payment__subscription_ends__isnull=True) |
+                Q(payment__subscription_ends__gte=now)
+            ).select_related('athlete').first()
 
-            if not assignment_data:
+            if not assignment:
                 return Response(
                     {'detail': 'You do not have access to this assessment'},
                     status=status.HTTP_403_FORBIDDEN
                 )
-
-            assignment = assignment_data['assignment']
-            # Get the athlete (the person taking the assessment)
+            
+            # Get the athlete, organization, and coach (already have payment relationship from assignment)
             athlete = assignment.athlete
+            organization = assignment.payment.organization
+            
+            if not athlete:
+                return Response(
+                    {'error': 'No athlete found for this assignment'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if not organization:
+                return Response(
+                    {'error': 'No organization found for this payment'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get coach from assignment
+            coach = None
+            if assignment.coaches.exists():
+                coach = assignment.coaches.first()
+            
+            if not coach:
+                return Response(
+                    {'error': 'No coach assigned to this athlete'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             # Get the assessment to validate question count
             try:
@@ -202,20 +255,42 @@ class AssessmentsViewSet(AutoAuthorViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # All questions answered - trigger agents
+            # All questions answered - trigger agents with full context
             orchestrator = AgentOrchestrator()
-            agent_responses = orchestrator.trigger_assessment_agents(athlete.id, assessment_id)
+            agent_responses = orchestrator.trigger_assessment_agents(
+                athlete=athlete,
+                assessment=assessment,
+                organization=organization,
+                assignment=assignment,
+                coach=coach
+            )
 
-            # Mark assessment as submitted in PaymentAssignment
+            # Mark assessment as submitted in all PaymentAssignments for this athlete and assessment
             now = timezone.now()
-            if assignment.payment.product and assignment.payment.product.pre_assessment_id == assessment_id:
-                assignment.pre_assessment_submitted = True
-                assignment.pre_assessment_submitted_at = now
-            elif assignment.payment.product and assignment.payment.product.post_assessment_id == assessment_id:
-                assignment.post_assessment_submitted = True
-                assignment.post_assessment_submitted_at = now
-
-            assignment.save()
+            
+            # Find all assignments for this athlete and assessment
+            all_assignments = PaymentAssignments.objects.filter(
+                athlete=athlete,
+                payment__organization=assignment.payment.organization,
+                payment__status='succeeded',
+                payment__product__is_active=True
+            ).select_related(
+                'payment',
+                'payment__product'
+            )
+            
+            updated_count = 0
+            for assignment_to_update in all_assignments:
+                if (assignment_to_update.payment.product and 
+                    assignment_to_update.payment.product.pre_assessment_id == assessment_id):
+                    assignment_to_update.pre_assessment_submitted_at = now
+                    assignment_to_update.save()
+                    updated_count += 1
+                elif (assignment_to_update.payment.product and 
+                      assignment_to_update.payment.product.post_assessment_id == assessment_id):
+                    assignment_to_update.post_assessment_submitted_at = now
+                    assignment_to_update.save()
+                    updated_count += 1
 
             return Response({
                 'success': True,
@@ -223,6 +298,7 @@ class AssessmentsViewSet(AutoAuthorViewSet):
                 'total_questions': total_questions,
                 'questions_answered': len(answered_questions),
                 'agents_triggered': len(agent_responses),
+                'assignments_updated': updated_count,
                 'assessment_id': assessment_id
             })
 
@@ -272,9 +348,75 @@ class QuestionResponsesViewSet(AutoAuthorViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
+            # Validate athlete has assignment and get organization
+            from django.utils import timezone
+            from django.db.models import Q
+            from utils.helpers import get_subdomain_from_request
+            
+            organization_slug = get_subdomain_from_request(request)
+            now = timezone.now().date()
+            
+            assignment = PaymentAssignments.objects.filter(
+                athlete_id=athlete_id,
+                payment__organization__slug=organization_slug,
+                payment__status='succeeded',
+                payment__product__is_active=True
+            ).filter(
+                Q(payment__subscription_ends__isnull=True) |
+                Q(payment__subscription_ends__gte=now)
+            ).select_related('payment__organization', 'athlete').first()
+            
+            if not assignment:
+                return Response(
+                    {'error': 'No valid assignment found for this athlete'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Get the full objects
+            athlete = assignment.athlete
+            organization = assignment.payment.organization
+            
+            if not athlete:
+                return Response(
+                    {'error': 'No athlete found for this assignment'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if not organization:
+                return Response(
+                    {'error': 'No organization found for this payment'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get coach from assignment
+            coach = None
+            if assignment.coaches.exists():
+                coach = assignment.coaches.first()
+            
+            if not coach:
+                return Response(
+                    {'error': 'No coach assigned to this athlete'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get assessment
+            try:
+                assessment = Assessments.objects.get(id=assessment_id)
+            except Assessments.DoesNotExist:
+                return Response(
+                    {'error': 'Assessment not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
             # Trigger agents
             orchestrator = AgentOrchestrator()
-            agent_responses = orchestrator.trigger_assessment_agents(athlete_id, assessment_id)
+            agent_responses = orchestrator.trigger_assessment_agents(
+                athlete=athlete,
+                assessment=assessment,
+                organization=organization,
+                assignment=assignment,
+                coach=coach
+            )
 
             return Response({
                 'status': 'triggered',
@@ -305,12 +447,16 @@ class AgentResponsesViewSet(AutoAuthorViewSet):
         if not self.request.user.is_authenticated:
             return AgentResponses.objects.none()
 
+        from utils.helpers import get_subdomain_from_request
+        organization_slug = get_subdomain_from_request(self.request)
+
         return AgentResponses.objects.filter(
             Q(athlete=self.request.user) |
             Q(assignment__athlete=self.request.user) |
             Q(assignment__coaches=self.request.user) |
             Q(assignment__parents=self.request.user) |
-            Q(assignment__payment__author=self.request.user)
+            Q(assignment__payment__author=self.request.user),
+            assignment__organization__slug=organization_slug
         ).distinct()
 
     def perform_create(self, serializer):
@@ -320,8 +466,29 @@ class AgentResponsesViewSet(AutoAuthorViewSet):
         # Always query for valid PaymentAssignments - never trust payload
         assignments = None
         if athlete:
-            assignment_data = self.request.assignment_service.get_for_athlete(athlete.id)
-            assignments = assignment_data['assignment'] if assignment_data else None
+            from utils.helpers import get_subdomain_from_request
+            organization_slug = get_subdomain_from_request(self.request)
+            now = timezone.now().date()
+            
+            assignments = PaymentAssignments.objects.filter(
+                Q(athlete=self.request.user) |
+                Q(coaches=self.request.user) |
+                Q(parents=self.request.user) |
+                Q(payment__author=self.request.user),
+                athlete_id=athlete.id,
+                payment__organization__slug=organization_slug,
+                payment__status='succeeded',
+                payment__product__is_active=True
+            ).filter(
+                Q(payment__subscription_ends__isnull=True) |
+                Q(payment__subscription_ends__gte=now)
+            ).first()
+
+            if not assignments:
+                return Response(
+                    {'error': 'No assignments found for this athlete'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
         # Single save with author and assignment
         serializer.save(author=self.request.user, assignment=assignments)
@@ -346,10 +513,39 @@ class AgentResponsesViewSet(AutoAuthorViewSet):
 
             # Trigger sequential agent
             orchestrator = AgentOrchestrator()
+            
+            if not agent_response.assignment:
+                return Response(
+                    {'error': 'No assignment found for this agent response'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if not agent_response.assessment:
+                return Response(
+                    {'error': 'No assessment found for this agent response'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            organization = agent_response.assignment.payment.organization if agent_response.assignment else None
+            
+            # Get coach from assignment
+            coach = None
+            if agent_response.assignment and agent_response.assignment.coaches.exists():
+                coach = agent_response.assignment.coaches.first()
+            
+            if not coach:
+                return Response(
+                    {'error': 'No coach assigned to this athlete'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
             new_response = orchestrator.trigger_sequential_agent(
                 agent_response.purpose,
-                agent_response.athlete.id,
-                agent_response.assessment.id if agent_response.assessment else None
+                athlete=agent_response.athlete,
+                assessment=agent_response.assessment,
+                organization=organization,
+                assignment=agent_response.assignment,
+                coach=coach
             )
 
             if not new_response:
@@ -385,12 +581,15 @@ class AgentResponsesViewSet(AutoAuthorViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
+            subdomain = get_subdomain_from_request(request)
+
             # Get all previous versions for same athlete/purpose/assessment
             previous_versions = AgentResponses.objects.filter(
                 athlete=agent_response.athlete,
                 purpose=agent_response.purpose,
-                assessment=agent_response.assessment
-            ).exclude(id=agent_response.id).order_by('-created_at')[:5]  # Limit to 5 most recent
+                assessment=agent_response.assessment,
+                assignment__organization__slug=subdomain
+            ).exclude(id=agent_response.id).order_by('-created_at').first()  # Get most recent previous version
 
             # Get coach from assignment
             coach = None
@@ -404,8 +603,12 @@ class AgentResponsesViewSet(AutoAuthorViewSet):
                 agent_response.athlete,
                 agent_response.assessment,
                 agent_response.purpose,
-                coach=coach
+                coach=coach,
+                organization=agent_response.assignment.payment.organization if agent_response.assignment else None
             )
+            
+            # Ensure assignment is in context_data (required for completion service)
+            context_data['assignment'] = agent_response.assignment
 
             # Run iterative completion
             new_response = completion_service.run_iterative_completion(
@@ -413,7 +616,7 @@ class AgentResponsesViewSet(AutoAuthorViewSet):
                 agent_response.athlete,
                 agent_response.assessment,
                 context_data,
-                previous_versions=list(previous_versions),
+                previous_versions=[previous_versions] if previous_versions else [],
                 change_request=change_request,
                 coach=coach
             )
@@ -490,13 +693,40 @@ class CoachContentViewSet(AutoAuthorViewSet):
             Q(assignment__payment__author=self.request.user)
         ).distinct()
 
-    def perform_create(self, serializer):
-        # Always query for valid PaymentAssignments based on coach - never trust payload
-        coach_assignments = self.request.assignment_service.get_by_role('coach')
-        assignments = coach_assignments[0]['assignment'] if coach_assignments else None
-
-        # Single save with author and assignment
-        serializer.save(author=self.request.user, assignment=assignments)
+    def perform_create(self, serializer): 
+        try:
+            # Get the validated data from serializer
+            validated_data = serializer.validated_data
+            
+            # Query for assignment by ID from payload
+            if 'assignment' not in validated_data or not validated_data['assignment']:
+                raise ValueError("Assignment ID is required in payload")
+            
+            assignment_id = validated_data['assignment']
+            assignment = PaymentAssignments.objects.filter(id=assignment_id).first()
+            
+            if not assignment:
+                raise ValueError(f"Assignment with ID {assignment_id} not found")
+            
+            # Validate that the current user is a coach for this assignment
+            if not assignment.coaches.filter(id=self.request.user.id).exists():
+                raise ValueError("Current user is not a coach for this assignment")
+            
+            # Validate that athlete from assignment matches payload athlete (if provided)
+            if 'athlete' in validated_data and validated_data['athlete']:
+                payload_athlete = validated_data['athlete']
+                if assignment.athlete != payload_athlete:
+                    raise ValueError("Athlete in payload does not match assignment athlete")
+            
+            # Single save with author and assignment
+            serializer.save(author=self.request.user, assignment=assignment)
+            
+        except Exception as e:
+            # Log the error and re-raise with a more user-friendly message
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in CoachContentViewSet.perform_create: {str(e)}")
+            raise ValueError(f"Failed to create coach content: {str(e)}")
 
     def retrieve(self, request, *args, **kwargs):
         """
@@ -614,12 +844,16 @@ class CoachContentViewSet(AutoAuthorViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
+            subdomain = get_subdomain_from_request(request)
+            organization = Organizations.objects.get(slug=subdomain)
+
             # Get all previous versions for same athlete/purpose/assessment
             previous_versions = AgentResponses.objects.filter(
                 athlete=coach_content.athlete,
                 purpose=coach_content.purpose,
-                assessment=coach_content.source_draft.assessment
-            ).exclude(id=coach_content.source_draft.id).order_by('-created_at')[:5]
+                assignment=coach_content.assignment,
+                assignment__organization__slug=subdomain
+            ).order_by('-created_at').first()
 
             # Get coach from assignment
             coach = None
@@ -633,7 +867,9 @@ class CoachContentViewSet(AutoAuthorViewSet):
                 coach_content.athlete,
                 coach_content.source_draft.assessment,
                 coach_content.purpose,
-                coach=coach
+                coach,
+                coach_content,
+                organization
             )
 
             # Run iterative completion
@@ -642,9 +878,9 @@ class CoachContentViewSet(AutoAuthorViewSet):
                 coach_content.athlete,
                 coach_content.source_draft.assessment,
                 context_data,
-                previous_versions=list(previous_versions),
-                change_request=change_request,
-                coach=coach
+                previous_versions,
+                change_request,
+                coach
             )
 
             if not new_response:
@@ -1267,6 +1503,22 @@ class PaymentAssignmentsViewSet(AutoAuthorViewSet):
             Q(payment__author=self.request.user)
         ).distinct()
 
+    def create(self, request, *args, **kwargs):
+        """
+        Override create to handle validation errors gracefully.
+        """
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            # Handle unique constraint violations and validation errors
+            if 'unique_athlete_assessment_org' in str(e) or 'already has an assignment' in str(e):
+                return Response(
+                    {'error': 'This athlete already has an assignment for this assessment in this organization.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            # Re-raise other exceptions
+            raise
+
     def update(self, request, *args, **kwargs):
         """
         Override update to add submission status validation.
@@ -1487,23 +1739,13 @@ class AthleteAssignmentsListView(APIView):
                 pre_assessment_submitted = False
         
         # Parse sort_by parameter - map UI values to internal values
-        sort_by = None
-        if sort_by_param:
-            sort_by_mapping = {
-                'most_confident': 'category_total_desc',
-                'least_confident': 'category_total_asc',
-                'newest': 'created_desc',
-                'oldest': 'created_asc',
-                'default': None
-            }
-            sort_by = sort_by_mapping.get(sort_by_param, None)
         
         # Get paginated results
         assignments_response = request.assignment_service.get_all_paginated(
             limit=limit,
             offset=offset,
             pre_assessment_submitted=pre_assessment_submitted,
-            sort_by=sort_by
+            sort_by=sort_by_param
         )
         
         # Format response

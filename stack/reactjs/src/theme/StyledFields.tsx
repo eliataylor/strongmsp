@@ -50,6 +50,12 @@ export const GradientButton = styled(IconButton)(({ theme }) => ({
 
 
 export const FadedPaper = styled(Paper)(({ theme }) => ({
+  backgroundColor: `linear-gradient(
+    107deg,
+    ${theme.palette.background.paper} 0%,
+    ${theme.palette.background.paper}B3 30%, /* 70% opacity */
+    ${theme.palette.background.default}00 70%   /* 0% opacity */
+  )`,
   background: `linear-gradient(
     107deg,
     ${theme.palette.background.paper} 0%,

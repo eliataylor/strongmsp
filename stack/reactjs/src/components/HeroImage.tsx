@@ -1,7 +1,5 @@
 import {
     Psychology,
-    Sports,
-    Star,
     TrendingUp
 } from '@mui/icons-material';
 import {
@@ -26,7 +24,6 @@ const HeroImage: React.FC<HeroImageProps> = ({
     const theme = useTheme();
 
     const stats = [
-        { icon: <Star />, label: "4.9/5 Rating", color: "primary" as const },
         { icon: <TrendingUp />, label: "1000+ Athletes", color: "success" as const },
         { icon: <Psychology />, label: "Evidence-Based", color: "info" as const }
     ];
@@ -145,69 +142,6 @@ const HeroImage: React.FC<HeroImageProps> = ({
                                     <Logo height={400} />
                                 </Box>
 
-                                {/* Floating Elements */}
-                                <Box
-                                    sx={{
-                                        position: 'absolute',
-                                        top: '10%',
-                                        right: '10%',
-                                        animation: 'float 3s ease-in-out infinite',
-                                        '@keyframes float': {
-                                            '0%, 100%': { transform: 'translateY(0px)' },
-                                            '50%': { transform: 'translateY(-10px)' }
-                                        }
-                                    }}
-                                >
-                                    <Sports
-                                        sx={{
-                                            fontSize: 60,
-                                            color: theme.palette.primary.main,
-                                            opacity: 0.7
-                                        }}
-                                    />
-                                </Box>
-
-                                <Box
-                                    sx={{
-                                        position: 'absolute',
-                                        bottom: '20%',
-                                        left: '5%',
-                                        animation: 'float 3s ease-in-out infinite 1.5s',
-                                        '@keyframes float': {
-                                            '0%, 100%': { transform: 'translateY(0px)' },
-                                            '50%': { transform: 'translateY(-10px)' }
-                                        }
-                                    }}
-                                >
-                                    <Psychology
-                                        sx={{
-                                            fontSize: 50,
-                                            color: theme.palette.secondary.main,
-                                            opacity: 0.7
-                                        }}
-                                    />
-                                </Box>
-
-                                <Box
-                                    sx={{
-                                        position: 'absolute',
-                                        top: '60%',
-                                        right: '5%',
-                                        animation: 'float 3s ease-in-out infinite 0.5s',
-                                        '@keyframes float': {
-                                            '0%, 100%': { transform: 'translateY(0px)' },
-                                            '50%': { transform: 'translateY(-10px)' }
-                                        }
-                                    }}
-                                >
-                                    <TrendingUp
-                                        sx={{
-                                            fontSize: 45,
-                                            color: theme.palette.success.main,
-                                            opacity: 0.7
-                                        }}
-                                    />
-                                </Box>
                             </Box>
                         </Fade>
                     </Grid>

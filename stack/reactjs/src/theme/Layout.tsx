@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Footer from "src/components/Footer";
 import PublicHeader from "src/components/PublicHeader";
+import Logo from "./Logo";
 
 const Layout: React.FC = () => {
   const location = useLocation();
@@ -47,13 +48,27 @@ const Layout: React.FC = () => {
         message={snack}
       />
 
-      <PublicHeader />
+      <main style={{ position: 'relative' }}>
+        <PublicHeader />
 
-      <Box id="layout-container" style={{ zIndex: 20, minHeight: 'calc(100vh - 100px)' }} >
-        <Outlet />
-      </Box>
+        <Box id="layout-container" style={{ position: 'relative', zIndex: 20, minHeight: 'calc(100vh - 100px)' }} >
+          <Outlet />
+        </Box>
 
-      <Footer />
+        <div id="logo-watermark"
+          style={{
+            position: 'fixed',
+            filter: 'grayscale(100%)',
+            pointerEvents: 'none',
+            zIndex: 0, top: '-9%', left: '-8%',
+            width: '120%', height: '120%', opacity: 0.02
+          }}>
+          <Logo height={window.innerHeight * 1.2} />
+        </div>
+
+        <Footer />
+      </main>
+
 
     </React.Fragment>
   );

@@ -14,97 +14,117 @@ from strongmsp_app.services.agentic_context_builder import AgenticContextBuilder
 User = get_user_model()
 
 
-def test_context_builder():
+def test_change_request_functionality():
     """
-    Test the AgenticContextBuilder functionality.
+    Test the change request functionality specifically.
     """
-    print("Testing AgenticContextBuilder...")
+    print("Testing Change Request Functionality...")
     
     try:
         # Initialize context builder
         builder = AgenticContextBuilder()
         print("✓ Context builder initialized")
         
-        # Test athlete context
-        mock_athlete = type('MockUser', (), {
-            'get_full_name': lambda: 'John Smith',
-            'username': 'john.smith',
-            'email': 'john@example.com',
-            'real_name': 'John Smith',
-            'bio': 'Elite athlete'
-        })()
-        
-        builder.add_athlete_context(mock_athlete)
-        athlete_profile = builder.get_context_value('athlete_profile')
-        print(f"✓ Athlete profile: {len(athlete_profile)} characters")
-        
-        # Test assessment context
-        mock_assessment = type('MockAssessment', (), {
-            'title': 'Pre-Season Assessment',
-            'description': 'Comprehensive performance evaluation',
-            'created_at': type('MockDateTime', (), {'strftime': lambda fmt: '2024-01-15 10:30'})()
-        })()
-        
-        builder.add_assessment_context(mock_assessment)
-        assessment_info = builder.get_context_value('assessment_info')
-        print(f"✓ Assessment info: {len(assessment_info)} characters")
-        
-        # Test question responses
-        mock_responses = [
-            {'question': 'How confident do you feel?', 'category': 'confidence', 'response': 4, 'scale': 'onetofive'},
-            {'question': 'Rate your focus', 'category': 'concentration', 'response': 3, 'scale': 'onetofive'},
-            {'question': 'How motivated are you?', 'category': 'resilience__motivation', 'response': 5, 'scale': 'onetofive'}
-        ]
-        
-        builder.add_question_responses(mock_responses)
-        question_data = builder.get_context_value('question_responses')
-        print(f"✓ Question responses: {len(question_data)} characters")
-        
-        # Test spider chart data
-        mock_spider_data = {
-            'confidence': {'avg': 4.2, 'total': 25, 'count': 6},
-            'concentration': {'avg': 3.8, 'total': 19, 'count': 5},
-            'resilience__motivation': {'avg': 4.5, 'total': 27, 'count': 6}
-        }
-        
-        builder.add_spider_chart_data(mock_spider_data)
-        spider_data = builder.get_context_value('spider_chart')
-        print(f"✓ Spider chart data: {len(spider_data)} characters")
-        
-        # Test previous agent output
-        mock_previous_output = "This is a sample report from a previous agent..."
-        builder.add_previous_agent_output(mock_previous_output)
-        previous_output = builder.get_context_value('previous_agent_output')
-        print(f"✓ Previous agent output: {len(previous_output)} characters")
-        
-        # Test template instructions
+        # Test template instructions with enhanced change request guidance
         mock_template = type('MockTemplate', (), {
             'instructions': 'You are an expert sports psychologist analyzing athlete performance data.',
-            'prompt': 'Generate a report for {athlete_name} based on {input_a} and {input_b}.'
+            'prompt': 'Generate a report based on the assessment data.'
         })()
         
         builder.add_template_instructions(mock_template)
         system_instructions = builder.get_context_value('system_instructions')
         print(f"✓ System instructions: {len(system_instructions)} characters")
         
-        # Test token replacement
-        template_text = "Generate a report for {athlete_name} based on {input_a} and {input_b}."
-        replaced_text = builder.replace_template_tokens(template_text)
-        print(f"✓ Token replacement: {replaced_text[:50]}...")
+        # Test 1: Verify enhanced instructions do NOT appear when no change request is present
+        messages_without_change_request = builder.build_messages()
+        system_message_without_change = messages_without_change_request[0]['content']
+        
+        if 'COACH FEEDBACK - REQUIRED CHANGES' not in system_message_without_change:
+            print("✓ Enhanced system instructions correctly absent when no change request")
+        else:
+            print("✗ Enhanced system instructions incorrectly present without change request")
+        
+        # Test 2: Add version history to test conditional guidance
+        mock_version_response = type('MockAgentResponse', (), {
+            'id': 1,
+            'created_at': type('MockDateTime', (), {'strftime': lambda self, fmt: '2024-01-15 10:30'})(),
+            'ai_response': 'Version 1: Previous report content here...'
+        })()
+        builder.add_previous_versions([mock_version_response])
+        print("✓ Version history added")
+        
+        # Test 2a: Verify version history without change request has no guidance
+        messages_with_version_only = builder.build_messages()
+        version_message_without_change = None
+        for message in messages_with_version_only:
+            if 'PREVIOUS VERSION HISTORY:' in message.get('content', ''):
+                version_message_without_change = message['content']
+                break
+        
+        if version_message_without_change and 'Use the PREVIOUS VERSION HISTORY' not in version_message_without_change:
+            print("✓ Version history correctly lacks guidance when no change request")
+        else:
+            print("✗ Version history incorrectly includes guidance without change request")
+        
+        # Test 2b: Add change request and verify enhanced instructions now appear
+        change_request = "Please address the athlete by her name 'Sophia' and make the report more concise."
+        builder.add_change_request(change_request)
+        print(f"✓ Change request added: {change_request}")
         
         # Test message building
         messages = builder.build_messages()
         print(f"✓ Built {len(messages)} messages for OpenAI")
         
-        # Test debug info
-        debug_info = builder.get_debug_info()
-        print(f"✓ Debug info: {debug_info}")
+        # Verify enhanced instructions include change request guidance
+        system_message_with_change = messages[0]['content']
+        if 'COACH FEEDBACK - REQUIRED CHANGES' in system_message_with_change:
+            print("✓ Enhanced system instructions include change request guidance")
+        else:
+            print("✗ Enhanced system instructions missing change request guidance")
         
-        print("✓ All context builder tests passed!")
+        # Test 2c: Verify version history now includes guidance with change request
+        version_message_with_change = None
+        for message in messages:
+            if 'PREVIOUS VERSION HISTORY:' in message.get('content', ''):
+                version_message_with_change = message['content']
+                break
+        
+        if version_message_with_change and 'Use the PREVIOUS VERSION HISTORY' in version_message_with_change:
+            print("✓ Version history correctly includes guidance with change request")
+        else:
+            print("✗ Version history missing guidance with change request")
+        
+        # Verify change request appears in correct position
+        change_request_found = False
+        change_request_position = -1
+        for i, message in enumerate(messages):
+            if 'COACH FEEDBACK - REQUIRED CHANGES:' in message.get('content', ''):
+                change_request_found = True
+                change_request_position = i
+                break
+        
+        if change_request_found:
+            print(f"✓ Change request found at position {change_request_position}")
+            # Verify it appears early in the message sequence (after system instructions and main prompt)
+            if change_request_position <= 2:
+                print("✓ Change request positioned correctly for priority")
+            else:
+                print(f"⚠ Change request at position {change_request_position} may be too late")
+        else:
+            print("✗ Change request not found in messages")
+        
+        # Print message structure for verification
+        print("\nMessage Structure:")
+        for i, message in enumerate(messages):
+            role = message.get('role', 'unknown')
+            content_preview = message.get('content', '')[:100].replace('\n', ' ')
+            print(f"  {i}: {role} - {content_preview}...")
+        
+        print("✓ Change request functionality test completed!")
         return True
         
     except Exception as e:
-        print(f"✗ Context builder test failed: {e}")
+        print(f"✗ Change request test failed: {e}")
         return False
 
 

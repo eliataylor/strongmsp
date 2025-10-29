@@ -36,8 +36,8 @@ const Logo: React.FC<LogoProps> = (props) => {
     sx: {
       height: '100%',
       maxWidth: '100%',
-      filter: `drop-shadow(0 1px 1px rgba(222, 222, 222, 0.6))`,
-      fill: darkMode === true ? '#FFF' : '#877010'
+      filter: `drop-shadow(0 1px 1px rgba(24, 17, 17, 0.6))`,
+      fill: darkMode === true ? '#877010' : '#2a74b7'
     }
   };
   if (props.height && props.height > 0) {

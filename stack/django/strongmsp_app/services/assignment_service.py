@@ -3,6 +3,8 @@ from django.db import connection
 from django.utils import timezone
 from ..models import PaymentAssignments, Assessments
 from utils.helpers import get_subdomain_from_request
+from ..models import AgentResponses, CoachContent
+from django.db.models import Q
 
 
 class AssignmentService:
@@ -15,54 +17,6 @@ class AssignmentService:
         self.request = request
         self.user = request.user
         self.organization_slug = get_subdomain_from_request(request)
-        self._assignments = None
-        self._assignments_by_athlete = {}
-        self._assignments_by_role = {}
-
-    def get_all(self):
-        """
-        Lazy loads all active assignments for the current user.
-        Returns list of dicts with assignment and user roles.
-        
-        DEPRECATED: This method is deprecated and will be removed in a future version.
-        Use get_all_paginated() instead for better performance and pagination support.
-        """
-        if self._assignments is None:
-            if not self.user.is_authenticated:
-                self._assignments = []
-                return self._assignments
-
-            now = timezone.now().date()
-
-            # Query all assignments where user is involved
-            assignments = PaymentAssignments.objects.filter(
-                Q(coaches=self.user) |
-                Q(parents=self.user) |
-                Q(athlete=self.user) |
-                Q(payment__author=self.user),
-                payment__organization__slug=self.organization_slug,
-                payment__status='succeeded',
-                payment__product__is_active=True
-            ).filter(
-                Q(payment__subscription_ends__isnull=True) |
-                Q(payment__subscription_ends__gte=now)
-            ).select_related(
-                'payment',
-                'payment__product',
-                'athlete'
-            ).prefetch_related('coaches', 'parents').distinct()
-
-            # Build assignment data with roles
-            self._assignments = []
-            for assignment in assignments:
-                roles = self.get_my_roles_in_assignment(assignment)
-                if roles:  # Only include if user has some role
-                    self._assignments.append({
-                        'assignment': assignment,
-                        'my_roles': roles
-                    })
-
-        return self._assignments
 
     def get_all_paginated(self, limit=None, offset=None, pre_assessment_submitted=None, sort_by=None):
         """
@@ -115,28 +69,31 @@ class AssignmentService:
                 limit_offset_clause += f" OFFSET {offset}"
 
         # Build the ORDER BY clause based on sort_by parameter
+        # MySQL doesn't support NULLS LAST syntax, so we handle NULLs explicitly
         order_by_clause = ""
-        if sort_by == 'category_total_asc':
-            order_by_clause = "ORDER BY athlete_user.category_total_score ASC NULLS LAST, pre_submitted DESC, post_submitted DESC, created_at DESC"
-        elif sort_by == 'category_total_desc':
-            order_by_clause = "ORDER BY athlete_user.category_total_score DESC NULLS LAST, pre_submitted DESC, post_submitted DESC, created_at DESC"
-        elif sort_by == 'created_asc':
-            order_by_clause = "ORDER BY created_at ASC, pre_submitted DESC, post_submitted DESC"
-        elif sort_by == 'created_desc':
-            order_by_clause = "ORDER BY created_at DESC, pre_submitted DESC, post_submitted DESC"
+        if sort_by == 'least_confident':
+            # For ASC with NULLs last in MySQL: use CASE to order NULLs after non-NULLs
+            order_by_clause = "ORDER BY CASE WHEN athlete_user.category_total_score IS NULL THEN 1 ELSE 0 END, athlete_user.category_total_score ASC, pre_submitted DESC, post_submitted DESC, paymentassignment_created_at DESC"
+        elif sort_by == 'most_confident':
+            # For DESC, NULLs come last by default in MySQL
+            order_by_clause = "ORDER BY athlete_user.category_total_score DESC, pre_submitted DESC, post_submitted DESC, paymentassignment_created_at DESC"
+        elif sort_by == 'oldest':
+            order_by_clause = "ORDER BY paymentassignment_created_at ASC, pre_submitted ASC, post_submitted ASC"
+        elif sort_by == 'newest':
+            order_by_clause = "ORDER BY paymentassignment_created_at DESC, pre_submitted DESC, post_submitted DESC"
         else:
             # Default sort order
-            order_by_clause = "ORDER BY pre_submitted DESC, post_submitted DESC, created_at DESC"
+            order_by_clause = "ORDER BY pre_submitted DESC, post_submitted DESC, paymentassignment_created_at DESC"
 
         # Base query (without pagination)
-        base_query = f"""SELECT DISTINCT pa.athlete_id, pr.pre_assessment_id,
+        base_query = f"""SELECT DISTINCT pa.athlete_id, pr.pre_assessment_id, athlete_user.category_total_score,
                 GROUP_CONCAT(distinct pr.post_assessment_id) as post_assessment_ids,
                 GROUP_CONCAT(distinct pa.id) as paymentassignment_ids,
                 GROUP_CONCAT(distinct p.id) as payment_ids,
                 GROUP_CONCAT(distinct pr.id) as product_ids,
                 GROUP_CONCAT(distinct c_m2m.users_id) as coach_ids,
                 GROUP_CONCAT(distinct pa_m2m.users_id) as parent_ids,
-                MAX(pa.created_at) as created_at,
+                MAX(pa.created_at) as paymentassignment_created_at,
                 MAX(distinct pa.post_assessment_submitted_at) as post_submitted,
                 MAX(distinct pa.pre_assessment_submitted_at) as pre_submitted
             FROM
@@ -185,171 +142,7 @@ class AssignmentService:
 
             athlete_states = []
             for row in rows:
-
-                def split_ids(id_string):
-                    """Split comma-separated IDs into a list of integers"""
-                    return [int(id_) for id_ in id_string.split(',')] if id_string else []
-
-                def get_user_relentity(user_id, role=None):
-                    """Create a RelEntity structure for a user"""
-                    from ..models import Users
-                    user = Users.objects.filter(id=user_id).first()
-                    if not user:
-                        return None
-                    rel = {
-                        'id': user.id,
-                        'str': str(user),
-                        '_type': 'Users',
-                        'img': user.photo.url if user.photo else None
-                    }
-                    if role == 'athlete':
-                        rel['entity'] = {
-                            'category_performance_mindset': float(user.category_performance_mindset) if user.category_performance_mindset else None,
-                            'category_emotional_regulation': float(user.category_emotional_regulation) if user.category_emotional_regulation else None,
-                            'category_confidence': float(user.category_confidence) if user.category_confidence else None,
-                            'category_resilience_motivation': float(user.category_resilience_motivation) if user.category_resilience_motivation else None,
-                            'category_concentration': float(user.category_concentration) if user.category_concentration else None,
-                            'category_leadership': float(user.category_leadership) if user.category_leadership else None,
-                            'category_mental_wellbeing': float(user.category_mental_wellbeing) if user.category_mental_wellbeing else None,
-                        }
-                    return rel
-
-                def get_assessment_relentity(id):
-                    """Create a RelEntity structure for an Assessment"""
-                    assessment = Assessments.objects.filter(id=id).first()
-                    if not assessment:
-                        return None
-                    rel = {
-                        'id': assessment.id,
-                        'str': str(assessment),
-                        '_type': 'Assessments',
-                        'img': assessment.photo.url if hasattr(assessment, 'photo') and assessment.photo else None
-                    }
-                    return rel
-
-                columns = [
-                    'athlete_id', 'pre_assessment_id', 'post_assessment_ids', 'paymentassignment_ids',
-                    'payment_ids', 'product_ids', 'coach_ids', 'parent_ids',
-                    'created_at', 'post_submitted', 'pre_submitted'
-                ]
-                row_data = dict(zip(columns, row))
-
-                # Split concatenated IDs into lists
-                paymentassignment_ids = split_ids(row_data['paymentassignment_ids'])
-                payment_ids = split_ids(row_data['payment_ids'])
-                product_ids = split_ids(row_data['product_ids'])
-                coach_ids = split_ids(row_data['coach_ids'])
-                parent_ids = split_ids(row_data['parent_ids'])
-
-                my_roles = {}
-
-                athlete_state = {
-                    'athlete_id': row_data['athlete_id'],
-                    'athlete': get_user_relentity(row_data['athlete_id'], role='athlete'),
-                    'paymentassignment_ids': paymentassignment_ids,
-                    'payment_ids': payment_ids,
-                    'product_ids': product_ids,
-                    'coaches': [],
-                    'parents': [],
-                    'my_roles': [],
-                    'pre_assessment_submitted_at': row_data['pre_submitted'],
-                    'post_assessment_submitted_at': row_data['post_submitted'],
-                    'pre_assessment': {},
-                    'post_assessments': [],
-                    'content_progress': {
-                        'lesson_plan': [],
-                        'curriculum': [],
-                        'talking_points': [],
-                        'feedback_report': [],
-                        'scheduling_email': []
-                    }
-                }
-
-                if row_data['athlete_id'] == self.user.id:
-                    my_roles['athlete'] = True
-
-                # Get coach and parent RelEntities
-                for coach_id in coach_ids:
-                    coach_relentity = get_user_relentity(coach_id, role='coach')
-                    athlete_state['coaches'].append(coach_relentity)
-                    if coach_id == self.user.id:
-                        my_roles['coach'] = True
-
-                for parent_id in parent_ids:
-                    parent_relentity = get_user_relentity(parent_id, role='parent')
-                    athlete_state['parents'].append(parent_relentity)
-                    if parent_id == self.user.id:
-                        my_roles['parent'] = True
-
-                # Initialize progress trackers
-                agent_progress = {purpose: [] for purpose in ['lesson_plan', 'curriculum', 'talking_points', 'feedback_report', 'scheduling_email']}
-                content_progress = {purpose: [] for purpose in ['lesson_plan', 'curriculum', 'talking_points', 'feedback_report', 'scheduling_email']}
-
-                # Fetch and populate progress data
-                from ..models import AgentResponses, CoachContent
-                from django.db.models import Q
-
-                agent_responses = AgentResponses.objects.filter(
-                    assignment_id__in=paymentassignment_ids
-                ).order_by('-created_at')
-
-                for agent_response in agent_responses:
-                    agent_progress[agent_response.purpose].append({
-                        'id': agent_response.id,
-                        'str': str(agent_response),
-                        '_type': 'AgentResponses',
-                        'entity': {
-                            'purpose': agent_response.purpose,
-                            'created_at': agent_response.created_at.isoformat(),
-                            'modified_at': agent_response.modified_at.isoformat(),
-                        }
-                    })
-
-                # Fetch and populate coach content
-                coach_contents = CoachContent.objects.filter(
-                    assignment_id__in=paymentassignment_ids
-                ).order_by('-created_at')
-
-                for content in coach_contents:
-                    content_progress[content.purpose].append({
-                        'id': content.id,
-                        'str': str(content),
-                        '_type': 'CoachContent',
-                        'entity': {
-                            'purpose': content.purpose,
-                            'created_at': content.created_at.isoformat(),
-                            'modified_at': content.modified_at.isoformat(),
-                            'coach_delivered': content.coach_delivered.isoformat() if content.coach_delivered else None,
-                            'athlete_received': content.athlete_received.isoformat() if content.athlete_received else None,
-                            'parent_received': content.parent_received.isoformat() if content.parent_received else None,
-                            'screenshot_light': content.screenshot_light.url if content.screenshot_light else None,
-                            'screenshot_dark': content.screenshot_dark.url if content.screenshot_dark else None,
-                        }
-                    })
-
-                # Fetch and populate pre assessment
-                if row_data['pre_assessment_id']:
-                    pre_assessment = get_assessment_relentity(row_data['pre_assessment_id'])
-                    if pre_assessment:
-                        athlete_state['pre_assessment'] = pre_assessment
-
-                # Fetch and populate post assessments
-                if row_data['post_assessment_ids']:
-                    post_ids = [int(pid) for pid in row_data['post_assessment_ids'].split(',') if pid]
-                    if post_ids:
-                        post_assessments = Assessments.objects.filter(
-                            id__in=post_ids
-                        ).order_by('-created_at')
-                        for assessment in post_assessments:
-                            athlete_state['post_assessments'].append({
-                                'id': assessment.id,
-                                'str': str(assessment),
-                                '_type': 'Assessments',
-                            })
-
-                athlete_state['my_roles'] = list(my_roles.keys())
-                athlete_state['agent_progress'] = agent_progress
-                athlete_state['content_progress'] = content_progress
+                athlete_state = self.build_row(row)                
                 athlete_states.append(athlete_state)
 
         return {
@@ -359,78 +152,211 @@ class AssignmentService:
             'offset': offset
         }
 
-    def get_for_athlete(self, athlete_id):
-        """
-        Returns first assignment where user can access the specified athlete.
-        Caches results by athlete_id.
-        """
-        if athlete_id in self._assignments_by_athlete:
-            return self._assignments_by_athlete[athlete_id]
+    def get_all_by_athlete(self, row):
+        pass # TODO: limit by athlete_id
 
-        if not self.user.is_authenticated:
-            self._assignments_by_athlete[athlete_id] = None
+    def build_row(self, row):
+        
+        columns = [
+            'athlete_id', 'pre_assessment_id', 'category_total_score', 'post_assessment_ids', 'paymentassignment_ids',
+            'payment_ids', 'product_ids', 'coach_ids', 'parent_ids',
+            'paymentassignment_created_at', 'post_submitted', 'pre_submitted'
+        ]
+        row_data = dict(zip(columns, row))
+
+        # Split concatenated IDs into lists
+        paymentassignment_ids = self.split_ids(row_data['paymentassignment_ids'])
+        payment_ids = self.split_ids(row_data['payment_ids'])
+        product_ids = self.split_ids(row_data['product_ids'])
+        coach_ids = self.split_ids(row_data['coach_ids'])
+        parent_ids = self.split_ids(row_data['parent_ids'])
+
+        my_roles = {}
+
+        athlete_state = {
+            'athlete_id': row_data['athlete_id'],
+            'last_update_at': row_data['paymentassignment_created_at'],
+            'athlete': self.get_user_relentity(row_data['athlete_id'], role='athlete'),
+            'paymentassignment_ids': paymentassignment_ids,
+            'payment_ids': payment_ids,
+            'product_ids': product_ids,
+            'coaches': [],
+            'parents': [],
+            'my_roles': [],
+            'pre_assessment_submitted_at': row_data['pre_submitted'],
+            'post_assessment_submitted_at': row_data['post_submitted'],
+            'pre_assessment': {},
+            'post_assessments': [],
+            'content_progress': {
+                'lesson_plan': [],
+                'curriculum': [],
+                'talking_points': [],
+                'feedback_report': [],
+                'scheduling_email': []
+            }
+        }
+
+        if row_data['athlete_id'] == self.user.id:
+            my_roles['athlete'] = True
+
+        # Get coach and parent RelEntities
+        for coach_id in coach_ids:
+            coach_relentity = self.get_user_relentity(coach_id, role='coach')
+            athlete_state['coaches'].append(coach_relentity)
+            if coach_id == self.user.id:
+                my_roles['coach'] = True
+
+        for parent_id in parent_ids:
+            parent_relentity = self.get_user_relentity(parent_id, role='parent')
+            athlete_state['parents'].append(parent_relentity)
+            if parent_id == self.user.id:
+                my_roles['parent'] = True
+
+        # Initialize progress trackers
+        agent_progress = {} #{purpose: [] for purpose in ['lesson_plan', 'curriculum', 'talking_points', 'feedback_report', 'scheduling_email']}
+        content_progress = {} # {purpose: [] for purpose in ['lesson_plan', 'curriculum', 'talking_points', 'feedback_report', 'scheduling_email']}
+
+        # Fetch and populate progress data
+
+        if "coach" in my_roles:
+            agent_responses = AgentResponses.objects.filter(
+                assignment__in=paymentassignment_ids,
+                athlete_id=row_data['athlete_id']
+            ).order_by('-created_at')
+
+            for agent_response in agent_responses:
+                if agent_response.purpose not in agent_progress:
+                    agent_progress[agent_response.purpose] = []
+                agent_progress[agent_response.purpose].append({
+                    'id': agent_response.id,
+                    'str': str(agent_response),
+                    '_type': 'AgentResponses',
+                    'entity': {
+                        'purpose': agent_response.purpose,
+                        'created_at': agent_response.created_at.isoformat(),
+                        'modified_at': agent_response.modified_at.isoformat(),
+                    }
+                })
+                # Ensure timezone-aware comparison
+                last_update_at = athlete_state['last_update_at']
+                if hasattr(last_update_at, 'tzinfo') and last_update_at.tzinfo is None:
+                    # Convert timezone-naive to timezone-aware using UTC
+                    from django.utils import timezone
+                    last_update_at = timezone.make_aware(last_update_at)
+                
+                if agent_response.modified_at > last_update_at:
+                    athlete_state['last_update_at'] = agent_response.modified_at
+
+        # Fetch and populate coach content
+        coach_contents = CoachContent.objects.filter(
+            assignment__in=paymentassignment_ids,
+            athlete_id=row_data['athlete_id']
+        ).order_by('-created_at')
+
+        for content in coach_contents:
+            if content.purpose not in content_progress:
+                content_progress[content.purpose] = []
+
+            if "coach" not in my_roles and content.coach_delivered is None:
+                continue
+
+            content_progress[content.purpose].append({
+                'id': content.id,
+                'str': str(content),
+                '_type': 'CoachContent',
+                'entity': {
+                    'purpose': content.purpose,
+                    'created_at': content.created_at.isoformat(),
+                    'modified_at': content.modified_at.isoformat(),
+                    'coach_delivered': content.coach_delivered.isoformat() if content.coach_delivered else None,
+                    'athlete_received': content.athlete_received.isoformat() if content.athlete_received else None,
+                    'parent_received': content.parent_received.isoformat() if content.parent_received else None,
+                    'screenshot_light': content.screenshot_light.url if content.screenshot_light else None,
+                    'screenshot_dark': content.screenshot_dark.url if content.screenshot_dark else None,
+                }
+            })
+            # Ensure timezone-aware comparison
+            last_update_at = athlete_state['last_update_at']
+            if hasattr(last_update_at, 'tzinfo') and last_update_at.tzinfo is None:
+                # Convert timezone-naive to timezone-aware using UTC
+                from django.utils import timezone
+                last_update_at = timezone.make_aware(last_update_at)
+            
+            if content.modified_at > last_update_at:
+                athlete_state['last_update_at'] = content.modified_at
+
+        # Fetch and populate pre assessment
+        if row_data['pre_assessment_id']:
+            pre_assessment = self.get_assessment_relentity(row_data['pre_assessment_id'])
+            if pre_assessment:
+                athlete_state['pre_assessment'] = pre_assessment
+
+        # Fetch and populate post assessments
+        if row_data['post_assessment_ids']:
+            post_ids = [int(pid) for pid in row_data['post_assessment_ids'].split(',') if pid]
+            if post_ids:
+                post_assessments = Assessments.objects.filter(
+                    id__in=post_ids
+                ).order_by('-created_at')
+                for assessment in post_assessments:
+                    athlete_state['post_assessments'].append({
+                        'id': assessment.id,
+                        'str': str(assessment),
+                        '_type': 'Assessments',
+                    })
+
+        athlete_state['my_roles'] = list(my_roles.keys())
+        athlete_state['agent_progress'] = agent_progress
+        athlete_state['content_progress'] = content_progress
+        return athlete_state
+
+    def split_ids(self, id_string):
+        """Split comma-separated IDs into a list of integers"""
+        return [int(id_) for id_ in id_string.split(',')] if id_string else []
+
+    def get_user_relentity(self, user_id, role=None):
+        """Create a RelEntity structure for a user"""
+        from ..models import Users
+        user = Users.objects.filter(id=user_id).first() if self.user.id != user_id else self.user
+        if not user:
             return None
+        rel = {
+            'id': user.id,
+            'str': str(user),
+            '_type': 'Users',
+            'img': user.photo.url if user.photo else None
+        }
+        if role == 'athlete':
+            rel['entity'] = {
+                'category_total_score': float(user.category_total_score) if user.category_total_score else None,
+                'category_performance_mindset': float(user.category_performance_mindset) if user.category_performance_mindset else None,
+                'category_emotional_regulation': float(user.category_emotional_regulation) if user.category_emotional_regulation else None,
+                'category_confidence': float(user.category_confidence) if user.category_confidence else None,
+                'category_resilience_motivation': float(user.category_resilience_motivation) if user.category_resilience_motivation else None,
+                'category_concentration': float(user.category_concentration) if user.category_concentration else None,
+                'category_leadership': float(user.category_leadership) if user.category_leadership else None,
+                'category_mental_wellbeing': float(user.category_mental_wellbeing) if user.category_mental_wellbeing else None,
+            }
+        return rel
 
-        now = timezone.now().date()
-
-        # Query for assignment where user can access this athlete
-        assignment = PaymentAssignments.objects.filter(
-            Q(athlete=self.user) |
-            Q(coaches=self.user) |
-            Q(parents=self.user) |
-            Q(payment__author=self.user),
-            Q(athlete_id=athlete_id),
-            payment__organization__slug=self.organization_slug,
-            payment__status='succeeded',
-            payment__product__is_active=True
-        ).filter(
-            Q(payment__subscription_ends__isnull=True) |
-            Q(payment__subscription_ends__gte=now)
-        ).select_related(
-            'payment',
-            'payment__product',
-            'payment__organization',
-            'athlete'
-        ).prefetch_related('coaches', 'parents').first()
-
-        if assignment:
-            roles = self.get_my_roles_in_assignment(assignment)
-            result = {
-                'assignment': assignment,
-                'my_roles': roles
-            } if roles else None
-        else:
-            result = None
-
-        self._assignments_by_athlete[athlete_id] = result
-        return result
-
-    def get_by_role(self, role):
-        """
-        Returns assignments where user has the specified role.
-        Caches results by role.
-        """
-        if role in self._assignments_by_role:
-            return self._assignments_by_role[role]
-
-        all_assignments = self.get_all()
-        filtered = [a for a in all_assignments if role in a['my_roles']]
-
-        self._assignments_by_role[role] = filtered
-        return filtered
+    def get_assessment_relentity(self, id):
+        """Create a RelEntity structure for an Assessment"""
+        assessment = Assessments.objects.filter(id=id).first()
+        if not assessment:
+            return None
+        rel = {
+            'id': assessment.id,
+            'str': str(assessment),
+            '_type': 'Assessments',
+            'img': assessment.photo.url if hasattr(assessment, 'photo') and assessment.photo else None
+        }
+        return rel
 
     def has_access_to_assignment(self, assignment_id):
         """
         Checks if user can access the specified assignment.
         Uses cached data if available, otherwise queries directly.
         """
-        # First check if we have it in our cached data
-        all_assignments = self.get_all()
-        for assignment_data in all_assignments:
-            if assignment_data['assignment'].id == assignment_id:
-                return True
-
-        # If not cached, do a direct query
         if not self.user.is_authenticated:
             return False
 
@@ -450,46 +376,6 @@ class AssignmentService:
             Q(payment__subscription_ends__gte=now)
         ).exists()
 
-    def get_for_assessment(self, assessment_id):
-        """
-        Returns assignment where user has access to the specified assessment.
-        Assessment can be either pre or post assessment of the product.
-        """
-        if not self.user.is_authenticated:
-            return None
-
-        now = timezone.now().date()
-
-        # Query for assignment where user has access to this assessment
-        assignment = PaymentAssignments.objects.filter(
-            Q(athlete=self.user) |
-            Q(coaches=self.user) |
-            Q(parents=self.user) |
-            Q(payment__author=self.user),
-            payment__organization__slug=self.organization_slug,
-            payment__status='succeeded',
-            payment__product__is_active=True
-        ).filter(
-            Q(payment__subscription_ends__isnull=True) |
-            Q(payment__subscription_ends__gte=now)
-        ).filter(
-            Q(payment__product__pre_assessment_id=assessment_id) |
-            Q(payment__product__post_assessment_id=assessment_id)
-        ).select_related(
-            'payment',
-            'payment__product',
-            'payment__organization',
-            'athlete'
-        ).prefetch_related('coaches', 'parents').first()
-
-        if assignment:
-            roles = self.get_my_roles_in_assignment(assignment)
-            return {
-                'assignment': assignment,
-                'my_roles': roles
-            } if roles else None
-
-        return None
 
     def get_my_roles_in_assignment(self, assignment):
         """

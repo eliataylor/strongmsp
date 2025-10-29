@@ -28,13 +28,14 @@ class AgentCompletionService:
             timeout=300
         )
     
-    def get_assignment_for_assessment(self, athlete, assessment):
+    def get_assignment_for_assessment(self, athlete, assessment, organization=None):
         """
         Get the PaymentAssignment for the given athlete and assessment.
         
         Args:
             athlete: User instance (athlete)
             assessment: Assessments instance
+            organization: Organization instance to filter by (optional but recommended)
             
         Returns:
             PaymentAssignments instance or None
@@ -46,10 +47,18 @@ class AgentCompletionService:
             now = timezone.now().date()
             
             # Query for assignment where athlete has access to this assessment
+            filter_kwargs = {
+                'athlete': athlete,
+                'payment__status': 'succeeded',
+                'payment__product__is_active': True
+            }
+            
+            # Filter by organization if provided (prevents cross-organization data leak)
+            if organization:
+                filter_kwargs['payment__organization'] = organization
+            
             assignment = PaymentAssignments.objects.filter(
-                athlete=athlete,
-                payment__status='succeeded',
-                payment__product__is_active=True
+                **filter_kwargs
             ).filter(
                 Q(payment__subscription_ends__isnull=True) |
                 Q(payment__subscription_ends__gte=now)
@@ -72,16 +81,21 @@ class AgentCompletionService:
             prompt_template: PromptTemplates instance
             athlete: User instance (athlete)
             assessment: Assessments instance
-            context_data: Dict with context information
+            context_data: Dict with context information (must include 'assignment', 'organization', and 'coach')
             
         Returns:
             AgentResponses instance
         """
         try:
-            # Get the assignment for this athlete and assessment
-            assignment = self.get_assignment_for_assessment(athlete, assessment)
+            # Get the assignment from context (should be pre-queried in views)
+            assignment = context_data.get('assignment')
             if not assignment:
-                raise ValueError(f"No valid assignment found for athlete {athlete.id} and assessment {assessment.id}")
+                raise ValueError(f"No assignment provided in context_data for athlete {athlete.id} and assessment {assessment.id}")
+            
+            # Get coach for author field (AI-generated content should have coach as author)
+            coach = context_data.get('coach')
+            if not coach:
+                raise ValueError(f"No coach provided in context_data for athlete {athlete.id} and assessment {assessment.id}")
             
             # Initialize context builder
             context_builder = AgenticContextBuilder()
@@ -137,8 +151,9 @@ class AgentCompletionService:
             processed_prompt = context_builder.replace_template_tokens(prompt_template.prompt)
             
             # Create AgentResponse record
+            # Author must be coach (content creator), no fallback
             agent_response = AgentResponses.objects.create(
-                author=athlete,
+                author=coach,
                 athlete=athlete,
                 assessment=assessment,
                 assignment=assignment,
@@ -165,11 +180,19 @@ class AgentCompletionService:
             except:
                 pass  # Use original prompt if context building fails
             
-            # Get assignment for error response
-            assignment = self.get_assignment_for_assessment(athlete, assessment)
+            # Get assignment and coach from context for error response
+            assignment = context_data.get('assignment')
+            if not assignment:
+                logger.error(f"No assignment in context for error response: athlete {athlete.id}, assessment {assessment.id}")
+                raise ValueError(f"No assignment available for error response")
+            
+            coach = context_data.get('coach')
+            if not coach:
+                logger.error(f"No coach in context for error response: athlete {athlete.id}, assessment {assessment.id}")
+                raise ValueError(f"Cannot create error response without coach")
             
             agent_response = AgentResponses.objects.create(
-                author=athlete,
+                author=coach,
                 athlete=athlete,
                 assessment=assessment,
                 assignment=assignment,
@@ -184,11 +207,20 @@ class AgentCompletionService:
         except Exception as e:
             logger.error(f"Unexpected error in completion: {e}")
             # Create error response
-            # Get assignment for error response
-            assignment = self.get_assignment_for_assessment(athlete, assessment)
+            # Get assignment and coach from context
+            assignment = context_data.get('assignment')
+            if not assignment:
+                logger.error(f"No assignment in context for error response: athlete {athlete.id}, assessment {assessment.id}")
+                # Cannot create error response without assignment
+                raise ValueError(f"Cannot create error response without assignment")
+            
+            coach = context_data.get('coach')
+            if not coach:
+                logger.error(f"No coach in context for error response: athlete {athlete.id}, assessment {assessment.id}")
+                raise ValueError(f"Cannot create error response without coach")
             
             agent_response = AgentResponses.objects.create(
-                author=athlete,
+                author=coach,
                 athlete=athlete,
                 assessment=assessment,
                 assignment=assignment,
@@ -200,7 +232,7 @@ class AgentCompletionService:
             )
             return agent_response
     
-    def prepare_context_data(self, athlete, assessment, purpose, coach=None, published_content=None):
+    def prepare_context_data(self, athlete, assessment, purpose, coach=None, published_content=None, organization=None):
         """
         Prepare context data for agent completion based on purpose.
         
@@ -210,20 +242,23 @@ class AgentCompletionService:
             purpose: Agent purpose (feedback_report, curriculum, lesson_plan, etc.)
             coach: User instance (coach) - optional, will be queried if not provided
             published_content: CoachContent instance - for sequential agents
+            organization: Organization instance - for proper assignment filtering
             
         Returns:
             Dict with semantic keys for context builder
         """
         context_data = {}
         
-        # Query coach from assignment if not provided
-        if not coach:
-            assignment = self.get_assignment_for_assessment(athlete, assessment)
-            if assignment and assignment.coaches.exists():
-                coach = assignment.coaches.first()
+        # Store organization if provided
+        context_data['organization'] = organization
         
-        context_data['coach'] = coach
-        
+        assignment = self.get_assignment_for_assessment(athlete, assessment, organization)
+        if assignment and assignment.coaches.exists():
+            coach = assignment.coaches.first()        
+            context_data['coach'] = coach
+
+        context_data['assignment'] = assignment
+
         # Initial agents need assessment data
         if purpose in ['feedback_report', 'talking_points', 'scheduling_email']:
             context_data['assessment_responses'] = ConfidenceAnalyzer.get_question_responses_data(
@@ -272,10 +307,15 @@ class AgentCompletionService:
             AgentResponses instance
         """
         try:
-            # Get the assignment for this athlete and assessment
-            assignment = self.get_assignment_for_assessment(athlete, assessment)
+            # Get the assignment from context (should be pre-queried)
+            assignment = context_data.get('assignment')
             if not assignment:
-                raise ValueError(f"No valid assignment found for athlete {athlete.id} and assessment {assessment.id}")
+                raise ValueError(f"No assignment provided in context_data for athlete {athlete.id} and assessment {assessment.id}")
+            
+            # Get coach for author field
+            agent_coach = coach if coach else context_data.get('coach')
+            if not agent_coach:
+                raise ValueError(f"No coach provided for iterative completion: athlete {athlete.id} and assessment {assessment.id}")
             
             # Initialize context builder
             context_builder = AgenticContextBuilder()
@@ -338,8 +378,9 @@ class AgentCompletionService:
             processed_prompt = context_builder.replace_template_tokens(prompt_template.prompt)
             
             # Create AgentResponse record
+            # Author must be coach (content creator), no fallback
             agent_response = AgentResponses.objects.create(
-                author=athlete,
+                author=agent_coach,
                 athlete=athlete,
                 assessment=assessment,
                 assignment=assignment,
@@ -366,11 +407,20 @@ class AgentCompletionService:
             except:
                 pass  # Use original prompt if context building fails
             
-            # Get assignment for error response
-            assignment = self.get_assignment_for_assessment(athlete, assessment)
+            # Get assignment and coach from context for error response
+            assignment = context_data.get('assignment')
+            if not assignment:
+                logger.error(f"No assignment in context for iterative error response: athlete {athlete.id}, assessment {assessment.id}")
+                raise ValueError(f"No assignment available for error response")
+            
+            # Coach must be provided, no fallback
+            agent_coach = coach if coach else context_data.get('coach')
+            if not agent_coach:
+                logger.error(f"No coach available for iterative error response: athlete {athlete.id}, assessment {assessment.id}")
+                raise ValueError(f"Cannot create error response without coach")
             
             agent_response = AgentResponses.objects.create(
-                author=athlete,
+                author=agent_coach,
                 athlete=athlete,
                 assessment=assessment,
                 assignment=assignment,
@@ -385,11 +435,20 @@ class AgentCompletionService:
         except Exception as e:
             logger.error(f"Unexpected error in iterative completion: {e}")
             # Create error response
-            # Get assignment for error response
-            assignment = self.get_assignment_for_assessment(athlete, assessment)
+            # Get assignment and coach from context
+            assignment = context_data.get('assignment')
+            if not assignment:
+                logger.error(f"No assignment in context for iterative error response: athlete {athlete.id}, assessment {assessment.id}")
+                raise ValueError(f"Cannot create error response without assignment")
+            
+            # Coach must be provided, no fallback
+            agent_coach = coach if coach else context_data.get('coach')
+            if not agent_coach:
+                logger.error(f"No coach available for iterative error response: athlete {athlete.id}, assessment {assessment.id}")
+                raise ValueError(f"Cannot create error response without coach")
             
             agent_response = AgentResponses.objects.create(
-                author=athlete,
+                author=agent_coach,
                 athlete=athlete,
                 assessment=assessment,
                 assignment=assignment,

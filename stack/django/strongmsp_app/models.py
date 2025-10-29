@@ -353,20 +353,82 @@ class PaymentAssignments(SuperModel):
 		abstract = False
 		verbose_name = "Payment Assignment"
 		verbose_name_plural = "Payment Assignments"
+		constraints = [
+			models.UniqueConstraint(
+				fields=['athlete', 'organization', 'pre_assessment'],
+				condition=models.Q(athlete__isnull=False),
+				name='unique_athlete_assessment_org',
+				violation_error_message='This athlete already has an assignment for this assessment in this organization.'
+			)
+		]
 
 	payment = models.ForeignKey('Payments', on_delete=models.CASCADE, related_name='assignments', verbose_name='Payment')
 	athlete = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, related_name='+', null=True, blank=True, verbose_name='Athlete')
 	coaches = models.ManyToManyField(get_user_model(), related_name='+', blank=True, verbose_name='Coaches')
 	parents = models.ManyToManyField(get_user_model(), related_name='+', blank=True, verbose_name='Parents')
 	
+	# Denormalized fields for unique constraint and query performance
+	# These are automatically populated from payment.organization and payment.product.pre_assessment
+	organization = models.ForeignKey(
+		'Organizations',
+		on_delete=models.CASCADE,
+		related_name='payment_assignments',
+		verbose_name='Organization',
+		help_text='Denormalized from payment.organization for constraint performance'
+	)
+	pre_assessment = models.ForeignKey(
+		'Assessments',
+		on_delete=models.PROTECT,
+		related_name='+',
+		verbose_name='Pre-Assessment',
+		help_text='Denormalized from payment.product.pre_assessment for constraint performance'
+	)
+	
 	# Assessment submission tracking
 	pre_assessment_submitted_at = models.DateTimeField(null=True, blank=True, verbose_name='Pre-Assessment Submitted At')
 	post_assessment_submitted_at = models.DateTimeField(null=True, blank=True, verbose_name='Post-Assessment Submitted At')
+
+	def save(self, *args, **kwargs):
+		"""Auto-populate denormalized fields from payment before saving"""
+		# Auto-populate denormalized fields from payment (payment is required, so no null check)
+		self.organization = self.payment.organization
+		self.pre_assessment = self.payment.product.pre_assessment
+		
+		super().save(*args, **kwargs)
+
+	def clean(self):
+		"""Validate uniqueness when athlete is assigned"""
+		super().clean()
+		
+		# Only validate uniqueness if athlete is assigned
+		if self.athlete:
+			existing = PaymentAssignments.objects.filter(
+				athlete=self.athlete,
+				organization=self.payment.organization,
+				pre_assessment=self.payment.product.pre_assessment
+			).exclude(pk=self.pk)
+			
+			if existing.exists():
+				from django.core.exceptions import ValidationError
+				raise ValidationError(
+					f"Athlete {self.athlete} already has an assignment for "
+					f"{self.payment.product.pre_assessment} in organization {self.payment.organization}"
+				)
 
 	def __str__(self):
 		athlete_name = self.athlete.get_full_name() if self.athlete and self.athlete.get_full_name() else (self.athlete.username if self.athlete else 'No Athlete')
 		product_title = self.payment.product.title if self.payment and self.payment.product else 'No Product'
 		return f"Assignment #{self.id} for {athlete_name} on {product_title}"
+
+	@property
+	def pre_assessment_submitted(self):
+		"""Boolean property to check if pre-assessment is submitted"""
+		return self.pre_assessment_submitted_at is not None
+
+	@property
+	def post_assessment_submitted(self):
+		"""Boolean property to check if post-assessment is submitted"""
+		return self.post_assessment_submitted_at is not None
 
 class PromptTemplates(SuperModel):
 	class Meta:

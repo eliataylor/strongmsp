@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     "allauth.headless",
     "allauth.usersessions",
 
-    'strongmsp_app',
+    'strongmsp_app.apps.StrongmspAppConfig',
     'oasheets_app',
     'drf_spectacular',
 ]

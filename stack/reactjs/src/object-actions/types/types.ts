@@ -1287,6 +1287,7 @@ export interface AthletePaymentAssignment {
   post_assessment_submitted_at: string | null;
   pre_assessment: RelEntity<'Assessments'> | null;
   post_assessments: RelEntity<'Assessments'>[];
+  last_update_at: string;
   paymentassignment_ids: number[];
   payment_ids: number[];
   product_ids: number[];

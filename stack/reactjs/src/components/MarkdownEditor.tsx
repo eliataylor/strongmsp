@@ -1,6 +1,6 @@
 import { Box, useTheme } from '@mui/material';
 import 'easymde/dist/easymde.min.css';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import SimpleMDE from 'react-simplemde-editor';
 
 interface MarkdownEditorProps {
@@ -20,7 +20,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 }) => {
   const theme = useTheme();
 
-  const options = {
+  const options = useMemo(() => ({
     placeholder,
     minHeight: `${minHeight}px`,
     readOnly,
@@ -55,7 +55,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
       toggleSideBySide: null,
       toggleFullScreen: null
     }
-  };
+  }), [placeholder, minHeight, readOnly]);
 
   useEffect(() => {
     // Custom CSS for Material-UI theme integration
@@ -85,7 +85,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
       }
       
       .CodeMirror-gutters {
-        background-color: ${theme.palette.grey[50]};
+        background-color: ${theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[50]};
         border-right: 1px solid ${theme.palette.divider};
       }
       
@@ -98,7 +98,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
       }
       
       .editor-toolbar {
-        background-color: ${theme.palette.grey[50]};
+        background-color: ${theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[50]};
         border: 1px solid ${theme.palette.divider};
         border-bottom: none;
         border-radius: ${theme.shape.borderRadius}px ${theme.shape.borderRadius}px 0 0;
@@ -154,14 +154,14 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
       }
       
       .editor-preview code {
-        background-color: ${theme.palette.grey[100]};
+        background-color: ${theme.palette.mode === 'dark' ? theme.palette.grey[700] : theme.palette.grey[100]};
         padding: 2px 4px;
         border-radius: ${theme.shape.borderRadius}px;
         font-family: ${theme.typography.fontFamily};
       }
       
       .editor-preview pre {
-        background-color: ${theme.palette.grey[100]};
+        background-color: ${theme.palette.mode === 'dark' ? theme.palette.grey[700] : theme.palette.grey[100]};
         padding: ${theme.spacing(2)};
         border-radius: ${theme.shape.borderRadius}px;
         overflow-x: auto;

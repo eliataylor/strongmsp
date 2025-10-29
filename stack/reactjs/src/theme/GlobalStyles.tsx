@@ -1,10 +1,42 @@
-import React from "react";
 import { GlobalStyles } from "@mui/material";
 import { Theme } from "@mui/material/styles";
+import React from "react";
+
+// Inline SVG as data URI for watermark
+const logoDataUri = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' version='1.1' viewBox='0 0 591.7 693.3'%3E%3Cpath fill='%23fff' d='M461.4,15.1l-155,231.5c-.2,2.1.1,1.3,1.5,1.5,3.6.5,8.2-.2,12,0,22.5,1.5,46.3,1.1,69,0,8.4-.4,17.1-1.7,25.5-2.5-10.8,15.7-23.2,30.2-34.4,45.6-45.9,63.1-90.6,127.2-137.2,189.8-50.3,67.6-101.5,134.5-154.4,200.1-.3-1.7.5-2.9,1.1-4.4,4.5-10.9,11.6-24.1,17-35,45.8-93.1,96.2-186,145.7-277.3,5.8-10.7,12.2-21.2,18.2-31.8-34-1.6-67.9,11.1-102,5L354.5,15.2c18.2,1.8,37,.7,55.4.9,2.4,0,4.6,1.1,6.9,1.1,14.9.1,29.7-.4,44.5-2Z'/%3E%3Cpath fill='%23fff' d='M498,92.5c54.8,46.7,74.9,118.2,54.7,187.3-30.3,103.7-157.5,222.3-241.8,287.2-4.1,3.2-17,14-20.5,15.5s-1.8.7-3,0l-44.6-37-2.4-5.1,25.7-33.5,24,20.8,1.3-.3c23.5-20.2,47.1-40.2,69.5-61.5,55.5-52.8,148.8-149.3,154.5-228.5,3.8-52.8-18.6-92.1-61.5-120.5-3.1-2-14.6-7.1-14.5-10.5l25.6-35.4c11.8,5.8,23,12.8,33,21.4Z'/%3E%3Cpath fill='%23fff' d='M252.3,126.1c-1.6,1.1-9.3-5.5-11.6-6.8-96.9-55.5-195.1,32.2-173.8,136.8,10.4,51.1,62.8,126.5,101,162,2.5,2.3,6.3,4.8,9.5,6l-24.5,42c-23.4-22.9-45.3-47.8-64.9-74.1-28-37.5-57.7-88-65.3-134.7-13.4-82.2,27.2-163.9,107.2-192.2,50.3-17.8,99.8-7.2,144.5,19.5l.6,1.5-22.6,39.9Z'/%3E%3Cpath fill='%23fff' d='M498.9,476.6c-6.4,5.4-17.3,1.7-21.3-5.1-7.6-12.8,10.3-29.1,21.9-17.9s7.1,16.6-.6,23Z'/%3E%3Cpath fill='%23fff' d='M99,474.7c-13.1,12.3-32-2.8-22.1-17.6s37.1,3.5,22.1,17.6Z'/%3E%3Cpath fill='%23fff' d='M89.1,504.3c11.8-2.7,23.3,5.5,18.2,18.2-6.1,15.3-30.1,8.4-27.8-6.8s5.8-10.5,9.6-11.4Z'/%3E%3Cpath fill='%23fff' d='M479.1,505.3c22-4.6,24.1,29.9,2.8,26.7s-19.6-23.2-2.8-26.7Z'/%3E%3Cpath fill='%23fff' d='M439.1,530.8c-1.9,2.6-10.3,4.7-13.4,3.6-18.4-7.2-6.6-30.3,9-21.1,5.5,3.2,8,12.5,4.3,17.6Z'/%3E%3C/svg%3E";
 
 const GlobalLinkStyles: React.FC = () => (
   <GlobalStyles
     styles={(theme: Theme) => ({
+      body: {
+        // Radial gradient background for dark mode
+        ...(theme.palette.mode === "dark" && {
+          background: "radial-gradient(circle at 25% 25%, #4F729E 0%, #02080E 100%)",
+          backgroundAttachment: "fixed",
+          backgroundSize: "cover",
+          position: "relative",
+          "&::before": {
+            content: '""',
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: `url(${logoDataUri})`,
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+            backgroundSize: "60% auto",
+            opacity: 0.03,
+            zIndex: 0,
+            pointerEvents: "none"
+          }
+        }),
+        // Ensure content is above the watermark
+        "& > *": {
+          position: "relative",
+          zIndex: 1
+        }
+      },
       "a, a:visited": {
         color: "inherit",
         // @ts-ignore

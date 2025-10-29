@@ -13,6 +13,7 @@ import {
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AthletePaymentAssignment, PurposeNames } from '../object-actions/types/types';
+import { getCoachContentForPurpose } from '../utils/assignmentPermissions';
 
 const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }> = ({ assignment }) => {
     const theme = useTheme();
@@ -33,33 +34,10 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
         });
     };
 
-    const agentProgress = assignment.agent_progress;
-    const contentProgress = assignment.content_progress;
-
-    // Helper function to check if content should be shown (athlete view)
-    const shouldShowContent = (purpose: keyof typeof contentProgress) => {
-        const content = contentProgress[purpose];
-        if (!content || content.length === 0) return false;
-
-        // Show if coach_delivered < now (content is available to athlete)
-        const now = new Date();
-        return content.some(item => {
-            const coachDelivered = item.entity?.coach_delivered;
-            return coachDelivered && new Date(coachDelivered) < now;
-        });
-    };
-
-    // Helper function to get content to display for a purpose
-    const getContentForPurpose = (purpose: keyof typeof contentProgress) => {
-        const coachContent = contentProgress[purpose];
-
-        // Show coach content if it should be shown and exists
-        if (shouldShowContent(purpose) && coachContent && coachContent.length > 0) {
-            return coachContent;
-        }
-
-        return null;
-    };
+    const docs: Record<keyof typeof PurposeNames, any | null> = {} as any;
+    for (const purpose of Object.keys(PurposeNames)) {
+        docs[purpose as keyof typeof PurposeNames] = getCoachContentForPurpose(assignment, purpose as keyof typeof PurposeNames);
+    }
 
     // Helper function to format date and time
     const formatDateTime = (dateString: string) => {
@@ -205,11 +183,11 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
                     </StepContent>
                 </Step>
             }
-            <Step expanded={shouldShowContent('feedback_report')}>
+            <Step expanded={docs['feedback_report'] && docs['feedback_report'].length > 0}>
                 <StepLabel>Feedback Report</StepLabel>
                 <StepContent>
                     {(() => {
-                        const content = getContentForPurpose('feedback_report');
+                        const content = docs['feedback_report'];
                         if (content && content.length > 0) {
                             return renderContentItems(content, 'feedback_report');
                         }
@@ -222,11 +200,11 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
                 </StepContent>
             </Step>
 
-            <Step expanded={shouldShowContent('curriculum')}>
+            <Step expanded={docs['curriculum'] && docs['curriculum'].length > 0}>
                 <StepLabel>12 Session Curriculum</StepLabel>
                 <StepContent>
                     {(() => {
-                        const content = getContentForPurpose('curriculum');
+                        const content = docs['curriculum'];
                         if (content && content.length > 0) {
                             return renderContentItems(content, 'curriculum');
                         }
@@ -239,11 +217,11 @@ const ProgramProgressStepper: React.FC<{ assignment: AthletePaymentAssignment }>
                 </StepContent>
             </Step>
 
-            <Step expanded={shouldShowContent('lesson_plan')}>
+            <Step expanded={docs['lesson_plan'] && docs['lesson_plan'].length > 0}>
                 <StepLabel>Lesson Plan</StepLabel>
                 <StepContent>
                     {(() => {
-                        const content = getContentForPurpose('lesson_plan');
+                        const content = docs['lesson_plan'];
                         if (content && content.length > 0) {
                             return renderContentItems(content, 'lesson_plan');
                         }

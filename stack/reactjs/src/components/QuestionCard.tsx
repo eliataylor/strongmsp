@@ -2,7 +2,6 @@ import {
   Alert,
   Box,
   Button,
-  Card,
   CardContent,
   Chip,
   FormControlLabel,
@@ -13,6 +12,7 @@ import {
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { FadedPaper } from 'src/theme/StyledFields';
 import { useAuthStatus } from '../allauth/auth';
 import { Questions } from '../object-actions/types/types';
 
@@ -131,13 +131,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     .map((k) => Number(k))
     .filter((n) => !Number.isNaN(n))
     .sort((a, b) => a - b);
-  const wrapOptions = optionValues.length >= 5;
+  const wrapOptions = optionValues.length > 5;
 
   return (
-    <Card
-      elevation={3}
+    <FadedPaper
+      elevation={0}
       sx={{
-        maxWidth: 800,
+        maxWidth: 900,
         width: '100%',
         mx: 'auto',
         background: theme.palette.background.paper,
@@ -147,9 +147,9 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     >
       <Box
         sx={{
-          background: `linear-gradient(180deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.light} 100%)`,
+          background: `linear-gradient(180deg, ${theme.palette.background.default} 0%, ${theme.palette.background.paper} 100%)`,
           color: 'white',
-          p: 3,
+          p: 2,
           textAlign: 'center'
         }}
       >
@@ -160,22 +160,23 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         }
         <Chip
           label={question.question_category?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'General'}
+          color="primary"
           sx={{
-            background: 'rgba(255,255,255,0.2)',
-            color: 'white',
             fontWeight: 'bold'
           }}
         />
       </Box>
 
-      <CardContent sx={{ p: 4 }}>
+      <CardContent sx={{ p: 2 }}>
         <Typography
           variant="h5"
           component="h2"
           gutterBottom
           sx={{
             fontWeight: 500,
-            color: theme.palette.text.primary
+            color: theme.palette.text.primary,
+            textAlign: 'center',
+            marginBottom: 2
           }}
         >
           {question.title}
@@ -187,7 +188,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           </Alert>
         )}
 
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: 3 }}>
 
           <RadioGroup
             value={selectedResponse || ''}
@@ -223,7 +224,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                   }
                   label={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Typography variant="h6" fontWeight="bold" color="primary">
+                      <Typography variant="h6" fontWeight="bold" color="secondary">
                         {value}
                       </Typography>
                       {value.toString() !== effectiveLabels[String(value)] &&
@@ -292,7 +293,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           </Button>
         </Box>
       </CardContent>
-    </Card>
+    </FadedPaper>
   );
 };
 

@@ -89,7 +89,7 @@ const CoachContentReadOnlyView: React.FC<CoachContentReadOnlyViewProps> = ({
                             component="h1"
                             sx={{
                                 fontWeight: 'bold',
-                                color: 'primary.main',
+                                color: 'secondary.main',
                                 mb: 1
                             }}
                         >
@@ -149,25 +149,10 @@ const CoachContentReadOnlyView: React.FC<CoachContentReadOnlyViewProps> = ({
                 {entity.athlete && (() => {
                     const spiderData = structureSpiderData(entity.athlete);
                     return spiderData.length > 0 && (
-                        <Box sx={{ mb: 4 }}>
-                            <Typography
-                                variant="h5"
-                                component="h2"
-                                gutterBottom
-                                sx={{
-                                    fontWeight: 'bold',
-                                    color: 'primary.main',
-                                    mb: 3
-                                }}
-                            >
-                                Athlete Performance Profile
-                            </Typography>
-                            <SpiderChart
-                                data={spiderData}
-                                title={`${entity.athlete.str}'s Performance Profile`}
-                                height={400}
-                            />
-                        </Box>
+                        <SpiderChart
+                            data={spiderData}
+                            height={250}
+                        />
                     );
                 })()}
 

@@ -62,14 +62,21 @@ class Command(BaseCommand):
 
         self.stdout.write(f'Found {user_orgs.count()} active users in the organization')
 
-        # Get the first 40 users from user_orgs
-        user_orgs = user_orgs[:40]
-        self.stdout.write(f'Processing first 40 users: {user_orgs.count()} users')
+        # Get the first 40 users from user_orgs and extract user IDs
+        user_orgs_list = list(user_orgs[:40])
+        user_ids = [uo.user.id for uo in user_orgs_list]
+        
+        self.stdout.write(f'Processing first 40 users: {len(user_orgs_list)} users')
+        self.stdout.write(f'User IDs: {user_ids[:5]}...')  # Debug: show first 5 user IDs
 
         # Get the first payment assignment to determine which assessment to use
         first_assignment = PaymentAssignments.objects.filter(
-            athlete_id__in=[uo.user.id for uo in user_orgs]
+            athlete_id__in=user_ids
         ).select_related('payment', 'payment__product', 'payment__product__pre_assessment').first()
+        
+        # Debug: Check if any assignments exist at all
+        total_assignments = PaymentAssignments.objects.filter(athlete_id__in=user_ids).count()
+        self.stdout.write(f'Total payment assignments found for these users: {total_assignments}')
 
         if not first_assignment:
             self.stdout.write(
@@ -96,7 +103,7 @@ class Command(BaseCommand):
         skipped_count = 0
         created_responses = 0
 
-        for user_org in user_orgs:
+        for user_org in user_orgs_list:
             user = user_org.user
             result = self._process_user_assessment(
                 user,

@@ -25,19 +25,24 @@ class AgentOrchestrator:
     def __init__(self):
         self.completion_service = AgentCompletionService()
     
-    def get_athlete_coach(self, athlete_id):
+    def get_athlete_coach(self, athlete_id, organization=None):
         """
         Get the coach assigned to an athlete via PaymentAssignments.
         
         Args:
             athlete_id: ID of the athlete
+            organization: Organization instance to filter by (optional)
             
         Returns:
             User instance (coach) or None
         """
         try:
             # Find coaches via PaymentAssignments
-            assignment = PaymentAssignments.objects.filter(athlete_id=athlete_id).prefetch_related('coaches').first()
+            filter_kwargs = {'athlete_id': athlete_id}
+            if organization:
+                filter_kwargs['payment__organization'] = organization
+            
+            assignment = PaymentAssignments.objects.filter(**filter_kwargs).prefetch_related('coaches').first()
             
             if assignment and assignment.coaches.exists():
                 return assignment.coaches.first()
@@ -236,22 +241,41 @@ class AgentOrchestrator:
             logger.error(f"Error fetching template for purpose {purpose}: {e}")
             return None
     
-    def trigger_assessment_agents(self, athlete_id, assessment_id):
+    def trigger_assessment_agents(self, athlete=None, assessment=None, organization=None, assignment=None, coach=None):
         """
         Trigger the first 3 agents (Dwayne, Sherly, Bobby) asynchronously.
         
         Args:
-            athlete_id: ID of the athlete
-            assessment_id: ID of the assessment
+            athlete: User instance (athlete)
+            assessment: Assessments instance
+            organization: Organization instance
+            assignment: PaymentAssignments instance
+            coach: User instance (coach)
             
         Returns:
             List of AgentResponses instances
         """
+        if not athlete:
+            logger.error("trigger_assessment_agents: athlete is required")
+            return []
+        
+        if not assessment:
+            logger.error("trigger_assessment_agents: assessment is required")
+            return []
+        
+        if not organization:
+            logger.error("trigger_assessment_agents: organization is required")
+            return []
+        
+        if not assignment:
+            logger.error("trigger_assessment_agents: assignment is required")
+            return []
+        
+        if not coach:
+            logger.error("trigger_assessment_agents: coach is required")
+            return []
+        
         try:
-            athlete = User.objects.get(id=athlete_id)
-            assessment = Assessments.objects.get(id=assessment_id)
-            coach = self.get_athlete_coach(athlete_id)
-            
             # Agent purposes for first 3
             purposes = ['feedback_report', 'talking_points', 'scheduling_email']
             agent_responses = []
@@ -268,8 +292,11 @@ class AgentOrchestrator:
                     
                     # Prepare context data
                     context_data = self.completion_service.prepare_context_data(
-                        athlete, assessment, purpose, coach
+                        athlete, assessment, purpose, coach=coach, organization=organization
                     )
+                    
+                    # Add assignment to context
+                    context_data['assignment'] = assignment
                     
                     # Run completion
                     agent_response = self.completion_service.run_completion(
@@ -298,7 +325,7 @@ class AgentOrchestrator:
             # Notify athlete and parents after all 3 complete
             self.notify_assessment_complete(athlete)
             
-            logger.info(f"Completed {len(agent_responses)} assessment agents for athlete {athlete_id}")
+            logger.info(f"Completed {len(agent_responses)} assessment agents for athlete {athlete.id}")
             return agent_responses
             
         except Exception as e:
@@ -335,13 +362,22 @@ class AgentOrchestrator:
             return None
         
         # Prepare context with published content
+        organization = coach_content.assignment.payment.organization if coach_content.assignment else None
         context_data = self.completion_service.prepare_context_data(
             athlete=coach_content.athlete,
             assessment=coach_content.source_draft.assessment if coach_content.source_draft else None,
             purpose=next_purpose,
             coach=coach_content.author,
-            published_content=coach_content
+            published_content=coach_content,
+            organization=organization
         )
+        
+        # Add assignment to context
+        if coach_content.assignment:
+            context_data['assignment'] = coach_content.assignment
+        else:
+            logger.error(f"No assignment found for CoachContent {coach_content.id}")
+            raise ValueError(f"No assignment found for CoachContent")
         
         # Run completion
         agent_response = self.completion_service.run_completion(
@@ -358,23 +394,42 @@ class AgentOrchestrator:
         logger.info(f"Triggered {next_purpose} from published {coach_content.purpose}")
         return agent_response
 
-    def trigger_sequential_agent(self, agent_purpose, athlete_id, assessment_id):
+    def trigger_sequential_agent(self, agent_purpose, athlete=None, assessment=None, organization=None, assignment=None, coach=None):
         """
         Trigger sequential agents (Sam, Patrick) synchronously.
         
         Args:
-            agent_purpose: Purpose of the agent ('12sessions' or 'lessonpackage')
-            athlete_id: ID of the athlete
-            assessment_id: ID of the assessment
+            agent_purpose: Purpose of the agent ('curriculum' or 'lesson_plan')
+            athlete: User instance (athlete)
+            assessment: Assessments instance
+            organization: Organization instance
+            assignment: PaymentAssignments instance
+            coach: User instance (coach)
             
         Returns:
             AgentResponses instance or None
         """
+        if not athlete:
+            logger.error("trigger_sequential_agent: athlete is required")
+            return None
+        
+        if not assessment:
+            logger.error("trigger_sequential_agent: assessment is required")
+            return None
+        
+        if not organization:
+            logger.error("trigger_sequential_agent: organization is required")
+            return None
+        
+        if not assignment:
+            logger.error("trigger_sequential_agent: assignment is required")
+            return None
+        
+        if not coach:
+            logger.error("trigger_sequential_agent: coach is required")
+            return None
+        
         try:
-            athlete = User.objects.get(id=athlete_id)
-            assessment = Assessments.objects.get(id=assessment_id)
-            coach = self.get_athlete_coach(athlete_id)
-            
             # Get template
             template = self.get_prompt_template_by_purpose(agent_purpose)
             if not template:
@@ -404,8 +459,11 @@ class AgentOrchestrator:
             
             # Prepare context data
             context_data = self.completion_service.prepare_context_data(
-                athlete, assessment, agent_purpose, coach
+                athlete, assessment, agent_purpose, coach=coach, organization=organization
             )
+            
+            # Add assignment to context
+            context_data['assignment'] = assignment
             
             # Run completion
             agent_response = self.completion_service.run_completion(
@@ -416,7 +474,7 @@ class AgentOrchestrator:
             if coach:
                 self.notify_coach(agent_response, coach)
             
-            logger.info(f"Completed sequential agent {agent_purpose} for athlete {athlete_id}")
+            logger.info(f"Completed sequential agent {agent_purpose} for athlete {athlete.id}")
             return agent_response
             
         except Exception as e:

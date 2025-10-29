@@ -348,7 +348,7 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
 
             {/* Submit Button when Complete */}
             {isComplete && (
-                <Box sx={{ my: 3, textAlign: 'center' }}>
+                <Box sx={{ m: 2, textAlign: 'center' }}>
                     <Button
                         variant="contained"
                         size="large"

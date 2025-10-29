@@ -50,6 +50,7 @@ const AgentResponseScreen: React.FC<AgentResponseScreenProps> = ({
         const loadVersionHistory = async () => {
             try {
                 const versions = await getVersionHistory(
+                    entity.id,
                     Number(entity.athlete.id),
                     entity.purpose,
                     undefined // assessment not available in AgentResponses interface
@@ -88,18 +89,24 @@ const AgentResponseScreen: React.FC<AgentResponseScreenProps> = ({
         setLoading(true);
         try {
             const response = await regenerateWithChanges(Number(entity.id), changeRequest);
-            setNewResponse(response);
             setRegenerateDialogOpen(false);
             setChangeRequest('');
             enqueueSnackbar('Response regenerated successfully!', { variant: 'success' });
 
-            // Refresh version history
-            const versions = await getVersionHistory(
-                Number(entity.athlete.id),
-                entity.purpose,
-                undefined // assessment not available in AgentResponses interface
-            );
-            setVersionHistory(versions);
+            if (response.id !== entity.id) {
+                navigate(`/agent-responses/${response.id}`);
+            } else {
+                setNewResponse(response);
+                // Refresh version history
+                const versions = await getVersionHistory(
+                    entity.id,
+                    Number(entity.athlete.id),
+                    entity.purpose,
+                    undefined // assessment not available in AgentResponses interface
+                );
+                setVersionHistory(versions);
+            }
+
         } catch (error) {
             enqueueSnackbar('Failed to regenerate response', { variant: 'error' });
         } finally {
@@ -108,7 +115,7 @@ const AgentResponseScreen: React.FC<AgentResponseScreenProps> = ({
     };
 
     return (
-        <Paper elevation={2} sx={{ p: 2, borderRadius: 2 }}>
+        <Paper elevation={0} sx={{ p: 2, m: 2, borderRadius: 2, backgroundColor: 'background.default' }}>
             {/* Header */}
             <Box sx={{ mb: 4 }}>
                 <Typography
@@ -126,18 +133,13 @@ const AgentResponseScreen: React.FC<AgentResponseScreenProps> = ({
 
                 <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
                     <Chip
-                        label={`Purpose: ${entity.purpose}`}
+                        label={`Purpose: ${entity.purpose.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}`}
                         color="primary"
-                        variant="outlined"
+                        variant="filled"
                     />
                     <Chip
                         label={`Athlete: ${entity.athlete.str}`}
                         color="secondary"
-                        variant="outlined"
-                    />
-                    <Chip
-                        label={`Template: ${entity.prompt_template.str}`}
-                        color="default"
                         variant="outlined"
                     />
                 </Box>
@@ -164,62 +166,13 @@ const AgentResponseScreen: React.FC<AgentResponseScreenProps> = ({
                 </Box>
             </Box>
 
-            {/* Message Body Section */}
-            <Box sx={{ mb: 4 }}>
-                <Typography
-                    variant="h5"
-                    component="h2"
-                    gutterBottom
-                    sx={{
-                        fontWeight: 'bold',
-                        color: 'text.primary',
-                        mb: 2
-                    }}
-                >
-                    Message Body
-                </Typography>
-                <Paper
-                    variant="outlined"
-                    style={{ whiteSpace: 'pre-wrap' }}
-                    sx={{
-                        p: 3,
-                        borderRadius: 1
-                    }}
-                >
-                    <ReactMarkdown>
-                        {entity.message_body}
-                    </ReactMarkdown>
-                </Paper>
-            </Box>
-
             <Divider sx={{ my: 4 }} />
 
             {/* AI Response Section */}
             <Box sx={{ mb: 4 }}>
-                <Typography
-                    variant="h5"
-                    component="h2"
-                    gutterBottom
-                    sx={{
-                        fontWeight: 'bold',
-                        color: 'text.primary',
-                        mb: 2
-                    }}
-                >
-                    AI Response
-                </Typography>
-                <Paper
-                    variant="outlined"
-                    sx={{
-                        p: 3,
-                        backgroundColor: 'primary.50',
-                        borderRadius: 1
-                    }}
-                >
-                    <ReactMarkdown>
-                        {entity.ai_response}
-                    </ReactMarkdown>
-                </Paper>
+                <ReactMarkdown>
+                    {entity.ai_response}
+                </ReactMarkdown>
             </Box>
 
             {/* AI Reasoning Section (if available) */}

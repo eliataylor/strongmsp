@@ -1,4 +1,4 @@
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React from 'react';
 import {
     PolarAngleAxis,
@@ -42,16 +42,14 @@ const SpiderChart: React.FC<SpiderChartProps> = ({
 
     if (!data || data.length === 0) {
         return (
-            <Paper sx={{ p: 2, textAlign: 'center' }}>
-                <Typography variant="h6" color="text.secondary">
-                    No data available for spider chart
-                </Typography>
-            </Paper>
+            <Typography variant="h6" color="text.secondary">
+                No data available for spider chart
+            </Typography>
         );
     }
 
     return (
-        <Paper>
+        <Box>
             {title && (
                 <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 2 }}>
                     {title}
@@ -99,7 +97,7 @@ const SpiderChart: React.FC<SpiderChartProps> = ({
                     ))}
                 </Box>
             )}
-        </Paper>
+        </Box>
     );
 };
 

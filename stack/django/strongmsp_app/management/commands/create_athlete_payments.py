@@ -83,6 +83,17 @@ class Command(BaseCommand):
         with transaction.atomic():
             for athlete in athletes_without_payments:
                 try:
+                    # Check if assignment already exists for this athlete/product combination
+                    # Note: This command doesn't specify organization, so we check across all organizations
+                    existing = PaymentAssignments.objects.filter(
+                        athlete=athlete,
+                        payment__product__pre_assessment=product.pre_assessment
+                    ).exists()
+                    
+                    if existing:
+                        self.stdout.write(f"Skipping {athlete}: already has assignment for this assessment")
+                        continue
+                    
                     # Create Payment
                     payment = Payments.objects.create(
                         product=product,

@@ -299,7 +299,7 @@ class PaymentAssignmentsSerializer(CustomSerializer):
     class Meta:
         model = PaymentAssignments
         fields = '__all__'
-        read_only_fields = ['author', 'pre_assessment_submitted', 'post_assessment_submitted', 'pre_assessment_submitted_at', 'post_assessment_submitted_at']
+        read_only_fields = ['author', 'organization', 'pre_assessment', 'pre_assessment_submitted', 'post_assessment_submitted', 'pre_assessment_submitted_at', 'post_assessment_submitted_at']
     
     def get_fields(self):
         """
