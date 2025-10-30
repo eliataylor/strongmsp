@@ -7,8 +7,10 @@ import {
     IconButton,
     Typography
 } from "@mui/material";
-import React from "react";
+import React, { useMemo, useState } from "react";
 import Login from "../allauth/account/Login";
+import Signup from "../allauth/account/Signup";
+import ClaimTeamForm from "./ClaimTeamForm";
 
 interface LoginModalProps {
     open: boolean;
@@ -16,9 +18,16 @@ interface LoginModalProps {
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
+    const [view, setView] = useState<"login" | "signup" | "claim">("login");
     const handleClose = () => {
         onClose();
     };
+
+    const title = useMemo(() => {
+        if (view === "signup") return "Sign Up";
+        if (view === "claim") return "Find My Team";
+        return "Sign In";
+    }, [view]);
 
     return (
         <Dialog
@@ -40,7 +49,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
                 pb: 1
             }}>
                 <Typography variant="h5" component="h2">
-                    Sign In
+                    {title}
                 </Typography>
                 <IconButton
                     aria-label="close"
@@ -52,7 +61,21 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
 
             <DialogContent sx={{ px: 3, py: 1 }}>
                 <Box sx={{ mt: 2 }}>
-                    <Login />
+                    {view === "login" && (
+                        <Login
+                            onShowSignup={() => setView("signup")}
+                            onShowClaim={() => setView("claim")}
+                        />
+                    )}
+                    {view === "signup" && (
+                        <Signup
+                            onShowLogin={() => setView("login")}
+                            onShowClaim={() => setView("claim")}
+                        />
+                    )}
+                    {view === "claim" && (
+                        <ClaimTeamForm />
+                    )}
                 </Box>
             </DialogContent>
         </Dialog>

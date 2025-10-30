@@ -37,6 +37,7 @@ import ManageProviders from "./allauth/socialaccount/ManageProviders";
 import ProviderCallback from "./allauth/socialaccount/ProviderCallback";
 import ProviderSignup from "./allauth/socialaccount/ProviderSignup";
 import Sessions from "./allauth/usersessions/Sessions";
+import ClaimTeamForm from "./components/ClaimTeamForm";
 import ProfileForm from "./components/ProfileForm";
 import { RoleProtectedRoute } from "./context/RoleProtectedRoute";
 import NewSchemaForm from "./object-actions/generator/NewSchemaForm";
@@ -68,6 +69,10 @@ function createRouter() {
         {
           path: "/",
           element: <LandingPage />
+        },
+        {
+          path: "/join-my-team",
+          element: <ClaimTeamForm />
         },
         {
           path: "/faqs",

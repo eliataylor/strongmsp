@@ -1,13 +1,13 @@
-import React, { useState } from "react";
-import FormErrors from "../components/FormErrors";
-import { signUp } from "../lib/allauth";
+import { Phone } from "@mui/icons-material";
+import { Box, Button, Grid, TextField, Typography } from "@mui/material";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useConfig } from "../auth";
+import FormErrors from "../components/FormErrors";
+import { signUp } from "../lib/allauth";
 import ProviderList from "../socialaccount/ProviderList";
-import { Box, Button, Grid, TextField, Typography } from "@mui/material";
-import { Phone } from "@mui/icons-material";
 
-export default function Signup () {
+export default function Signup(props) {
   const [email, setEmail] = useState("");
   const [password1, setPassword1] = useState("");
   const [password2, setPassword2] = useState("");
@@ -16,7 +16,7 @@ export default function Signup () {
   const config = useConfig();
   const hasProviders = config.data.socialaccount?.providers?.length > 0;
 
-  function submit () {
+  function submit() {
     if (password2 !== password1) {
       setPassword2Errors([
         { param: "password2", message: "Password does not match." }
@@ -57,9 +57,15 @@ export default function Signup () {
         </Grid>
         <Grid item>
           <Typography variant="body1">
-            <Link to="/account/login">
-              or <b>Sign-In</b>
-            </Link>
+            {props?.onShowLogin ? (
+              <Button size="small" onClick={() => props.onShowLogin()}>
+                or <b>Sign-In</b>
+              </Button>
+            ) : (
+              <Link to="/account/login">
+                or <b>Sign-In</b>
+              </Link>
+            )}
           </Typography>
         </Grid>
       </Grid>
@@ -132,6 +138,17 @@ export default function Signup () {
           color={"inherit"}
         >
           SMS
+        </Button>
+      </Grid>
+
+      <Grid mt={1}>
+        <Button
+          fullWidth
+          variant={"text"}
+          color={"primary"}
+          onClick={() => (props?.onShowClaim ? props.onShowClaim() : window.location.assign("/join-my-team"))}
+        >
+          Find My Team
         </Button>
       </Grid>
     </Box>

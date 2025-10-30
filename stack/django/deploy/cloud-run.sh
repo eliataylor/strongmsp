@@ -9,6 +9,7 @@ REQUIRED_VARS=("GCP_PROJECT_ID" \
               "GCP_BUCKET_API_NAME" \
               "DJANGO_SUPERUSER_EMAIL" \
               "DJANGO_SUPERUSER_USERNAME" \
+              "TENANT_ORIGINS" \
               "GCP_MYSQL_PROJECT_ID" \
               "GCP_MYSQL_ZONE" \
               "GCP_MYSQL_INSTANCE" \
@@ -74,6 +75,7 @@ gcloud run deploy $GCP_SERVICE_NAME-api-cloudrun \
     --set-env-vars OA_ENV_STORAGE=gcp \
     --set-env-vars OA_ENV_EMAIL=$OA_ENV_EMAIL \
     --set-env-vars DJANGO_DEBUG=$DJANGO_DEBUG \
+    --set-env-vars TENANT_ORIGINS=$TENANT_ORIGINS \
     --set-env-vars GCP_API_IP=$GCP_API_IP \
     --set-env-vars GCP_PROJECT_ID=$GCP_PROJECT_ID \
     --set-env-vars GCP_BUCKET_API_NAME=$GCP_BUCKET_API_NAME \

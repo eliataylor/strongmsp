@@ -7,7 +7,7 @@ import FormErrors, { hasError } from "../components/FormErrors";
 import { login } from "../lib/allauth";
 import ProviderList from "../socialaccount/ProviderList";
 
-export default function Login() {
+export default function Login(props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [response, setResponse] = useState({ fetching: false, content: null });
@@ -109,9 +109,15 @@ export default function Login() {
         </Grid>
         <Grid item>
           <Typography variant="body1">
-            <Link to="/account/signup">
-              or <b>Sign-Up</b>
-            </Link>
+            {props?.onShowSignup ? (
+              <Button size="small" onClick={() => props.onShowSignup()}>
+                or <b>Sign-Up</b>
+              </Button>
+            ) : (
+              <Link to="/account/signup">
+                or <b>Sign-Up</b>
+              </Link>
+            )}
           </Typography>
         </Grid>
       </Grid>
@@ -191,6 +197,16 @@ export default function Login() {
         color={"inherit"}
       >
         SMS
+      </Button>
+
+      <Button
+        sx={{ mt: 1 }}
+        fullWidth
+        variant={"text"}
+        color={"primary"}
+        onClick={() => (props?.onShowClaim ? props.onShowClaim() : window.location.assign("/join-my-team"))}
+      >
+        Find My Team
       </Button>
     </Grid>
   );

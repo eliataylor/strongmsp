@@ -1,12 +1,12 @@
+import { Box, Button, Typography } from "@mui/material";
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { logout } from "../lib/allauth";
-import { Box, Button, Typography } from "@mui/material";
 
-export default function Logout () {
+export default function Logout() {
   const [response, setResponse] = useState({ fetching: false, content: null });
 
-  function submit () {
+  function submit() {
     setResponse({ ...response, fetching: true });
     logout()
       .then((content) => {
@@ -29,7 +29,7 @@ export default function Logout () {
     return <Navigate to="/" />;
   }
   return (
-    <Box mt={7}>
+    <Box mt={7} sx={{ textAlign: 'center' }}>
       <Typography variant="body1" gutterBottom={true}>
         Are you sure you want to logout?
       </Typography>
