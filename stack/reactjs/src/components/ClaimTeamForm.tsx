@@ -8,7 +8,7 @@ interface ClaimResult {
     demo?: boolean;
 }
 
-export default function ClaimTeamForm() {
+export default function ClaimTeamForm(props?: { onShowLogin?: () => void; onShowSignup?: () => void }) {
     const [teamCode, setTeamCode] = useState("");
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -123,6 +123,29 @@ export default function ClaimTeamForm() {
                     >
                         {submitting ? "Submitting..." : "Continue"}
                     </Button>
+                </Grid>
+
+                <Grid item container spacing={1}>
+                    <Grid item xs={12} sm={6}>
+                        <Button
+                            fullWidth
+                            variant="text"
+                            color="primary"
+                            onClick={() => (props?.onShowLogin ? props.onShowLogin() : window.location.assign("/account/login"))}
+                        >
+                            Back to Sign In
+                        </Button>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                        <Button
+                            fullWidth
+                            variant="text"
+                            color="primary"
+                            onClick={() => (props?.onShowSignup ? props.onShowSignup() : window.location.assign("/account/signup"))}
+                        >
+                            Back to Sign Up
+                        </Button>
+                    </Grid>
                 </Grid>
             </Grid>
         </Box>

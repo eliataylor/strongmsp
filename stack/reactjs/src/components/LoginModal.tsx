@@ -1,13 +1,11 @@
 import { Close as CloseIcon } from "@mui/icons-material";
 import {
-    Box,
     Dialog,
     DialogContent,
     DialogTitle,
-    IconButton,
-    Typography
+    IconButton
 } from "@mui/material";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import Login from "../allauth/account/Login";
 import Signup from "../allauth/account/Signup";
 import ClaimTeamForm from "./ClaimTeamForm";
@@ -23,12 +21,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
         onClose();
     };
 
-    const title = useMemo(() => {
-        if (view === "signup") return "Sign Up";
-        if (view === "claim") return "Find My Team";
-        return "Sign In";
-    }, [view]);
-
     return (
         <Dialog
             open={open}
@@ -42,15 +34,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
                 }
             }}
         >
-            <DialogTitle sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                pb: 1
-            }}>
-                <Typography variant="h5" component="h2">
-                    {title}
-                </Typography>
+            <DialogTitle>
                 <IconButton
                     aria-label="close"
                     onClick={handleClose}
@@ -59,24 +43,25 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
                 </IconButton>
             </DialogTitle>
 
-            <DialogContent sx={{ px: 3, py: 1 }}>
-                <Box sx={{ mt: 2 }}>
-                    {view === "login" && (
-                        <Login
-                            onShowSignup={() => setView("signup")}
-                            onShowClaim={() => setView("claim")}
-                        />
-                    )}
-                    {view === "signup" && (
-                        <Signup
-                            onShowLogin={() => setView("login")}
-                            onShowClaim={() => setView("claim")}
-                        />
-                    )}
-                    {view === "claim" && (
-                        <ClaimTeamForm />
-                    )}
-                </Box>
+            <DialogContent sx={{ px: 2 }}>
+                {view === "login" && (
+                    <Login
+                        onShowSignup={() => setView("signup")}
+                        onShowClaim={() => setView("claim")}
+                    />
+                )}
+                {view === "signup" && (
+                    <Signup
+                        onShowLogin={() => setView("login")}
+                        onShowClaim={() => setView("claim")}
+                    />
+                )}
+                {view === "claim" && (
+                    <ClaimTeamForm
+                        onShowLogin={() => setView("login")}
+                        onShowSignup={() => setView("signup")}
+                    />
+                )}
             </DialogContent>
         </Dialog>
     );
