@@ -167,6 +167,41 @@ class UsersSerializer(CustomUsersSerializer):
         model = Users
         exclude = ('password', 'email', 'is_active', 'is_staff', 'is_superuser')
         
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Users
+        fields = (
+            'first_name',
+            'last_name',
+            'gender',
+            'ethnicity',
+            'birthdate',
+            'zip_code',
+            'bio',
+            'avatar',
+            'photo',
+        )
+
+    def validate_ethnicity(self, value):
+        """
+        Accept list/array for ethnicity JSONField. If a string is provided
+        (e.g. from multipart form), attempt to parse JSON or split by comma.
+        """
+        if value is None:
+            return value
+        if isinstance(value, list):
+            return value
+        if isinstance(value, str):
+            import json
+            try:
+                parsed = json.loads(value)
+                if isinstance(parsed, list):
+                    return parsed
+            except Exception:
+                # Fallback: comma-separated string → list of trimmed tokens
+                return [v.strip() for v in value.split(',') if v.strip()]
+        return value
+        
 class AssessmentsSerializer(serializers.ModelSerializer):
     """
     Serializer for Assessments that includes nested questions data.

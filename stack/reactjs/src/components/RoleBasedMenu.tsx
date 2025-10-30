@@ -19,10 +19,16 @@ const RoleBasedMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
     // Debug logging for menu state
     console.log("[MENU] RoleBasedMenu render - isAuthenticated:", isAuthenticated, "user:", user?.id, "activeRole:", activeRole);
 
-    // Return AnonymousMenu if not authenticated or no active role is set
-    if (!isAuthenticated || !user?.id || !activeRole) {
-        console.log("[MENU] Showing AnonymousMenu - isAuthenticated:", isAuthenticated, "user:", user?.id, "activeRole:", activeRole);
+    // If not authenticated, show anonymous menu
+    if (!isAuthenticated) {
+        console.log("[MENU] Showing AnonymousMenu - unauthenticated");
         return <AnonymousMenu layout={layout} />;
+    }
+
+    // When authenticated but user/role not yet resolved, avoid flashing AnonymousMenu
+    if (!user?.id || !activeRole) {
+        console.log("[MENU] Authenticated but awaiting user/role — rendering nothing to prevent flash");
+        return null;
     }
 
     // Conditionally render the appropriate menu component based on activeRole

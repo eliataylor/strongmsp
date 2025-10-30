@@ -1,3 +1,4 @@
+import { resolveApiBaseURL } from "../../config/apiHost";
 import { getCSRFToken } from "./django";
 
 const Client = Object.freeze({
@@ -7,7 +8,7 @@ const Client = Object.freeze({
 
 const CLIENT = Client.BROWSER;
 
-const BASE_HOST = process.env.REACT_APP_API_HOST;
+const BASE_HOST = resolveApiBaseURL();
 const BASE_URL = `${BASE_HOST}/_allauth/${CLIENT}/v1`;
 const ACCEPT_JSON = {
   accept: "application/json"
@@ -83,7 +84,7 @@ export const AuthenticatorType = Object.freeze({
   WEBAUTHN: "webauthn"
 });
 
-function postForm (action, data) {
+function postForm(action, data) {
   const f = document.createElement("form");
   f.method = "POST";
   f.action = action;
@@ -101,7 +102,7 @@ function postForm (action, data) {
 
 const tokenStorage = window.sessionStorage;
 
-async function request (method, path, data, headers) {
+async function request(method, path, data, headers) {
   const options = {
     method,
     headers: {
@@ -156,150 +157,150 @@ async function request (method, path, data, headers) {
   return msg;
 }
 
-export async function sms (data) {
+export async function sms(data) {
   return await request("POST", URLs.SMS_LOGIN, data);
 }
 
-export async function smsVerify (data) {
+export async function smsVerify(data) {
   return await request("POST", URLs.SMS_VERIFY, data);
 }
 
-export async function login (data) {
+export async function login(data) {
   return await request("POST", URLs.LOGIN, data);
 }
 
-export async function reauthenticate (data) {
+export async function reauthenticate(data) {
   return await request("POST", URLs.REAUTHENTICATE, data);
 }
 
-export async function logout () {
+export async function logout() {
   return await request("DELETE", URLs.SESSION);
 }
 
-export async function signUp (data) {
+export async function signUp(data) {
   return await request("POST", URLs.SIGNUP, data);
 }
 
-export async function providerSignup (data) {
+export async function providerSignup(data) {
   return await request("POST", URLs.PROVIDER_SIGNUP, data);
 }
 
-export async function getProviderAccounts () {
+export async function getProviderAccounts() {
   return await request("GET", URLs.PROVIDERS);
 }
 
-export async function disconnectProviderAccount (providerId, accountUid) {
+export async function disconnectProviderAccount(providerId, accountUid) {
   return await request("DELETE", URLs.PROVIDERS, {
     provider: providerId,
     account: accountUid
   });
 }
 
-export async function requestPasswordReset (email) {
+export async function requestPasswordReset(email) {
   return await request("POST", URLs.REQUEST_PASSWORD_RESET, { email });
 }
 
-export async function requestLoginCode (email) {
+export async function requestLoginCode(email) {
   return await request("POST", URLs.REQUEST_LOGIN_CODE, { email });
 }
 
-export async function confirmLoginCode (code) {
+export async function confirmLoginCode(code) {
   return await request("POST", URLs.CONFIRM_LOGIN_CODE, { code });
 }
 
-export async function getEmailVerification (key) {
+export async function getEmailVerification(key) {
   return await request("GET", URLs.VERIFY_EMAIL, undefined, {
     "X-Email-Verification-Key": key
   });
 }
 
-export async function getEmailAddresses () {
+export async function getEmailAddresses() {
   return await request("GET", URLs.EMAIL);
 }
 
-export async function getSessions () {
+export async function getSessions() {
   return await request("GET", URLs.SESSIONS);
 }
 
-export async function endSessions (ids) {
+export async function endSessions(ids) {
   return await request("DELETE", URLs.SESSIONS, { sessions: ids });
 }
 
-export async function getAuthenticators () {
+export async function getAuthenticators() {
   return await request("GET", URLs.AUTHENTICATORS);
 }
 
-export async function getTOTPAuthenticator () {
+export async function getTOTPAuthenticator() {
   return await request("GET", URLs.TOTP_AUTHENTICATOR);
 }
 
-export async function mfaAuthenticate (code) {
+export async function mfaAuthenticate(code) {
   return await request("POST", URLs.MFA_AUTHENTICATE, { code });
 }
 
-export async function mfaReauthenticate (code) {
+export async function mfaReauthenticate(code) {
   return await request("POST", URLs.MFA_REAUTHENTICATE, { code });
 }
 
-export async function activateTOTPAuthenticator (code) {
+export async function activateTOTPAuthenticator(code) {
   return await request("POST", URLs.TOTP_AUTHENTICATOR, { code });
 }
 
-export async function deactivateTOTPAuthenticator () {
+export async function deactivateTOTPAuthenticator() {
   return await request("DELETE", URLs.TOTP_AUTHENTICATOR);
 }
 
-export async function getRecoveryCodes () {
+export async function getRecoveryCodes() {
   return await request("GET", URLs.RECOVERY_CODES);
 }
 
-export async function generateRecoveryCodes () {
+export async function generateRecoveryCodes() {
   return await request("POST", URLs.RECOVERY_CODES);
 }
 
-export async function getConfig () {
+export async function getConfig() {
   return await request("GET", URLs.CONFIG);
 }
 
-export async function addEmail (email) {
+export async function addEmail(email) {
   return await request("POST", URLs.EMAIL, { email });
 }
 
-export async function deleteEmail (email) {
+export async function deleteEmail(email) {
   return await request("DELETE", URLs.EMAIL, { email });
 }
 
-export async function markEmailAsPrimary (email) {
+export async function markEmailAsPrimary(email) {
   return await request("PATCH", URLs.EMAIL, { email, primary: true });
 }
 
-export async function requestEmailVerification (email) {
+export async function requestEmailVerification(email) {
   return await request("PUT", URLs.EMAIL, { email });
 }
 
-export async function verifyEmail (key) {
+export async function verifyEmail(key) {
   return await request("POST", URLs.VERIFY_EMAIL, { key });
 }
 
-export async function getPasswordReset (key) {
+export async function getPasswordReset(key) {
   return await request("GET", URLs.RESET_PASSWORD, undefined, {
     "X-Password-Reset-Key": key
   });
 }
 
-export async function resetPassword (data) {
+export async function resetPassword(data) {
   return await request("POST", URLs.RESET_PASSWORD, data);
 }
 
-export async function changePassword (data) {
+export async function changePassword(data) {
   return await request("POST", URLs.CHANGE_PASSWORD, data);
 }
 
-export async function getAuth () {
+export async function getAuth() {
   return await request("GET", URLs.SESSION);
 }
 
-export async function authenticateByToken (
+export async function authenticateByToken(
   providerId,
   token,
   process = AuthProcess.LOGIN
@@ -311,7 +312,7 @@ export async function authenticateByToken (
   });
 }
 
-export function redirectToProvider (
+export function redirectToProvider(
   providerId,
   callbackURL,
   process = AuthProcess.LOGIN
@@ -324,7 +325,7 @@ export function redirectToProvider (
   });
 }
 
-export async function getWebAuthnCreateOptions (passwordless) {
+export async function getWebAuthnCreateOptions(passwordless) {
   let url = URLs.WEBAUTHN_AUTHENTICATOR;
   if (passwordless) {
     url += "?passwordless";
@@ -332,43 +333,43 @@ export async function getWebAuthnCreateOptions (passwordless) {
   return await request("GET", url);
 }
 
-export async function addWebAuthnCredential (name, credential) {
+export async function addWebAuthnCredential(name, credential) {
   return await request("POST", URLs.WEBAUTHN_AUTHENTICATOR, {
     name,
     credential
   });
 }
 
-export async function deleteWebAuthnCredential (ids) {
+export async function deleteWebAuthnCredential(ids) {
   return await request("DELETE", URLs.WEBAUTHN_AUTHENTICATOR, {
     authenticators: ids
   });
 }
 
-export async function updateWebAuthnCredential (id, data) {
+export async function updateWebAuthnCredential(id, data) {
   return await request("PUT", URLs.WEBAUTHN_AUTHENTICATOR, { id, ...data });
 }
 
-export async function getWebAuthnRequestOptionsForReauthentication () {
+export async function getWebAuthnRequestOptionsForReauthentication() {
   return await request("GET", URLs.REAUTHENTICATE_WEBAUTHN);
 }
 
-export async function reauthenticateUsingWebAuthn (credential) {
+export async function reauthenticateUsingWebAuthn(credential) {
   return await request("POST", URLs.REAUTHENTICATE_WEBAUTHN, { credential });
 }
 
-export async function authenticateUsingWebAuthn (credential) {
+export async function authenticateUsingWebAuthn(credential) {
   return await request("POST", URLs.AUTHENTICATE_WEBAUTHN, { credential });
 }
 
-export async function loginUsingWebAuthn (credential) {
+export async function loginUsingWebAuthn(credential) {
   return await request("POST", URLs.LOGIN_WEBAUTHN, { credential });
 }
 
-export async function getWebAuthnRequestOptionsForLogin () {
+export async function getWebAuthnRequestOptionsForLogin() {
   return await request("GET", URLs.LOGIN_WEBAUTHN);
 }
 
-export async function getWebAuthnRequestOptionsForAuthentication () {
+export async function getWebAuthnRequestOptionsForAuthentication() {
   return await request("GET", URLs.AUTHENTICATE_WEBAUTHN);
 }

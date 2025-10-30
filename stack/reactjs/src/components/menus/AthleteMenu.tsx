@@ -16,7 +16,8 @@ const AthleteMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
     const menuItems = [
         { path: "/dashboard", icon: DashboardIcon, label: "Dashboard", priority: true },
         // { path: "/notifications", icon: NotificationsIcon, label: "Notifications", priority: true },
-        { path: "/my-profile", icon: ProfileIcon, label: (user.display && layout === 'header') ? `${user.display}` : "My Account", priority: false }
+        { path: "/my-profile", icon: ProfileIcon, label: (user.display && layout === 'header') ? `${user.display}` : "My Profile", priority: false },
+        ...(layout !== 'header' ? [{ path: "/my-profile/settings", icon: ProfileIcon, label: "Settings", priority: false }] : [])
     ];
 
     const renderItems = () => {

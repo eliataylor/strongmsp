@@ -1,5 +1,6 @@
 import Snackbar from "@mui/material/Snackbar";
 import React, { createContext, ReactNode, useEffect, useState } from "react";
+import WaiverModal from "../../components/WaiverModal";
 import { AppContextProvider, useAppContext } from "../../context/AppContext";
 import SplashScreen from "../../screens/SplashScreen";
 import { getAuth, getConfig } from "../lib/allauth";
@@ -194,6 +195,7 @@ export function AuthContextProvider({ children }: Props) {
         <LoadingError msg={error} />
       ) : (
         <AppContextProvider>
+          <WaiverModal />
           <AppContextWrapper>{children}</AppContextWrapper>
         </AppContextProvider>
       )}

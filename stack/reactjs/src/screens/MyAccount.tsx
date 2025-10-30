@@ -8,7 +8,6 @@ import { USER_TYPE } from "../object-actions/types/types";
 import ProfileIcon from "../theme/icons/ProfileIcon";
 import ThemeSwitcher from "../theme/ThemeSwitcher";
 import { getRoleConfig } from "../utils/roleUtils";
-import UserView from "./UserView";
 
 interface PermissionProps {
     to: string;
@@ -90,9 +89,6 @@ export default function MyAccount() {
                     />
                 )}
             </Box>
-
-            {/* User Profile Section */}
-            <UserView />
 
             {/* Account Management Section */}
             <Card sx={{ mt: 3 }}>

@@ -36,6 +36,13 @@ class CustomHeadlessAdapter(DefaultHeadlessAdapter):
         # Call the original method to get the default serialized data
         user_data = super().serialize_user(user, **kwargs)
 
+        # Include waiver_signed flag so the frontend can prompt for acceptance
+        try:
+            user_data['waiver_signed'] = bool(getattr(user, 'waiver_signed', False))
+        except Exception:
+            # Be defensive in case custom user model lacks the field in some envs
+            user_data['waiver_signed'] = False
+
         # TODO: find first Image field type on Users model
         if hasattr(user, 'profile_picture'):
             user_data['profile_picture'] = user.profile_picture.url if user.profile_picture else None

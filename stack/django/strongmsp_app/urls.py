@@ -9,6 +9,7 @@ from .views import AvailableGroupsView
 from .views import GroupStatsView
 from .views import RenderFrontendIndex
 from .views import redirect_to_frontend
+from .views import UsersViewSet
 from .oa_testing import OATesterUserViewSet
 from .views import AssessmentsViewSet
 from .views import ProductsViewSet
@@ -23,6 +24,7 @@ from .views import NotificationsViewSet
 from .views import CurrentContextView
 from .views import CoachSearchView
 from .views import AthleteAssignmentsListView
+from .views import UserProfileView
 ####OBJECT-ACTIONS-URL-IMPORTS-ENDS####
 urlpatterns = [path('', RenderFrontendIndex.as_view(), name='index')]
 
@@ -30,6 +32,7 @@ urlpatterns = [path('', RenderFrontendIndex.as_view(), name='index')]
 
 OARouter = DefaultRouter(trailing_slash=False)
 OARouter.register(r'oa-testers', OATesterUserViewSet, basename='oa-tester')
+OARouter.register('users', UsersViewSet, basename='users')
 OARouter.register('assessments', AssessmentsViewSet, basename='assessments')
 OARouter.register('products', ProductsViewSet, basename='products')
 OARouter.register('payments', PaymentsViewSet, basename='payments')
@@ -51,6 +54,7 @@ urlpatterns += [
     path('api/users/search-coaches', CoachSearchView.as_view(), name='coach-search'),
     path('api/context/current', CurrentContextView.as_view(), name='current-context'),
     path('api/athlete-assignments', AthleteAssignmentsListView.as_view(), name='athlete-assignments-list'),
+    path('api/account/profile', UserProfileView.as_view(), name='account-profile'),
     path('api/', include(OARouter.urls)),
 ]
 ####OBJECT-ACTIONS-URLS-ENDS####

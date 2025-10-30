@@ -75,7 +75,7 @@ const HeroImage: React.FC<HeroImageProps> = ({
                                         fontSize: { xs: '2.5rem', md: '3.5rem' },
                                         fontWeight: 'bold',
                                         mb: 2,
-                                        background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                                        background: `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.main}, ${theme.palette.primary.dark})`,
                                         backgroundClip: 'text',
                                         WebkitBackgroundClip: 'text',
                                         WebkitTextFillColor: 'transparent'
@@ -148,18 +148,6 @@ const HeroImage: React.FC<HeroImageProps> = ({
                 </Grid>
             </Container>
 
-            {/* Bottom Wave Effect */}
-            <Box
-                sx={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: 100,
-                    background: `linear-gradient(to top, ${theme.palette.background.default}, transparent)`,
-                    zIndex: 1
-                }}
-            />
         </Box>
     );
 };

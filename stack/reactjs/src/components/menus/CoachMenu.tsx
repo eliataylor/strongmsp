@@ -17,7 +17,8 @@ const CoachMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
         // { path: "/notifications", icon: NotificationsIcon, label: "Notifications", priority: true },
         //        { path: "/agent-responses", icon: SmartToyIcon, label: "Agent Responses", priority: false },
         //        { path: "/coach-content", icon: SportsIcon, label: "Coach Content", priority: false },
-        { path: "/my-profile", icon: ProfileIcon, label: (user.display && layout === 'header') ? `${user.display}` : "My Account", priority: false }
+        { path: "/my-profile", icon: ProfileIcon, label: (user.display && layout === 'header') ? `${user.display}` : "My Account", priority: false },
+        ...(layout !== 'header' ? [{ path: "/my-profile/settings", icon: ProfileIcon, label: "Settings", priority: false }] : [])
     ];
 
     const renderItems = () => {

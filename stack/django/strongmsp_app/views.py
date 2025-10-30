@@ -1,5 +1,6 @@
 from rest_framework import viewsets, permissions, filters, generics, status
 from rest_framework.views import APIView
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .pagination import CustomLimitOffsetPagination
@@ -19,6 +20,7 @@ from django.contrib.auth.models import Group
 from django.db.models import Q
 from django.db import models
 from .serializers import UsersSerializer
+from .serializers import UserProfileSerializer
 from .models import AssessmentQuestions, Users
 from .serializers import AssessmentsSerializer
 from .models import Assessments
@@ -53,6 +55,7 @@ from allauth.account.utils import complete_signup, perform_login
 from allauth.socialaccount.sessions import LoginSession
 from rest_framework import status
 from .serializers import VerifyPhoneSerializer, PhoneNumberSerializer
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 import os
 
@@ -68,6 +71,26 @@ class AutoAuthorViewSet(viewsets.ModelViewSet):
             serializer.save(author=self.request.user)
         else:
             serializer.save()
+
+class UsersViewSet(AutoAuthorViewSet):
+    queryset = Users.objects.all().order_by('id')
+    serializer_class = UsersSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['username', 'email', 'real_name']
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff or user.is_superuser:
+            return super().get_queryset()
+        return super().get_queryset().filter(id=user.id)
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        user = self.request.user
+        if instance.id != user.id:
+            raise PermissionDenied('You do not have permission to modify this user.')
+        return super().perform_update(serializer)
 
     def perform_update(self, serializer):
         # Only set author if the model has an author field
@@ -1033,6 +1056,22 @@ class NotificationsViewSet(AutoAuthorViewSet):
 ####OBJECT-ACTIONS-VIEWSETS-ENDS####
 
 
+class UserProfileView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get(self, request):
+        serializer = UserProfileSerializer(request.user, context={'request': request})
+        return Response(serializer.data)
+
+    def put(self, request):
+        user = request.user
+        serializer = UserProfileSerializer(user, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 ####OBJECT-ACTIONS-CORE-STARTS####
 SEARCH_FIELDS_MAPPING = {
   "Users": [
@@ -1416,6 +1455,42 @@ class VerifyCodeView(APIView):
                                         status=status.HTTP_200_OK)
                 response.url = redirect_url
                 response.apiVersion = timezone.now()
+                try:
+                    from utils.tenant_domains import get_tenant_cookie_domain
+                    from django.conf import settings as dj_settings
+
+                    cookie_domain = get_tenant_cookie_domain(request.get_host())
+                    if cookie_domain:
+                        # Session cookie
+                        if getattr(request, 'session', None) and request.session.session_key:
+                            response.set_cookie(
+                                key=dj_settings.SESSION_COOKIE_NAME,
+                                value=request.session.session_key,
+                                domain=cookie_domain,
+                                secure=getattr(dj_settings, 'SESSION_COOKIE_SECURE', True),
+                                httponly=getattr(dj_settings, 'SESSION_COOKIE_HTTPONLY', True),
+                                samesite=getattr(dj_settings, 'SESSION_COOKIE_SAMESITE', 'Lax'),
+                                path=getattr(dj_settings, 'SESSION_COOKIE_PATH', '/'),
+                            )
+
+                        # CSRF cookie
+                        csrf_token = request.META.get('CSRF_COOKIE') or request.COOKIES.get(getattr(dj_settings, 'CSRF_COOKIE_NAME', 'csrftoken'))
+                        if csrf_token:
+                            response.set_cookie(
+                                key=getattr(dj_settings, 'CSRF_COOKIE_NAME', 'csrftoken'),
+                                value=csrf_token,
+                                domain=cookie_domain,
+                                secure=getattr(dj_settings, 'CSRF_COOKIE_SECURE', True),
+                                samesite=getattr(dj_settings, 'CSRF_COOKIE_SAMESITE', 'Lax'),
+                                path=getattr(dj_settings, 'CSRF_COOKIE_PATH', '/'),
+                            )
+
+                        # Clear legacy broad-domain cookies
+                        for broad_domain in ('.strongmindstrongperformance.com',):
+                            response.set_cookie(dj_settings.SESSION_COOKIE_NAME, '', domain=broad_domain, max_age=0, path='/')
+                            response.set_cookie(getattr(dj_settings, 'CSRF_COOKIE_NAME', 'csrftoken'), '', domain=broad_domain, max_age=0, path='/')
+                except Exception:
+                    pass
                 return response
 
             return JsonResponse({"error": "Invalid code"}, status=status.HTTP_400_BAD_REQUEST)

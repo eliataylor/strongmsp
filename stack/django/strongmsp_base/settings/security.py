@@ -80,6 +80,22 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 
 logger.debug(f"Allowing Hosts: {", ".join(ALLOWED_HOSTS)}")
 
+# Optionally extend allowed origins from env (comma-separated). Validate scheme/netloc.
+TENANT_ORIGINS = os.getenv('TENANT_ORIGINS', '')
+if TENANT_ORIGINS:
+    def _is_valid_origin(origin: str) -> bool:
+        try:
+            parsed = urlparse(origin)
+            return parsed.scheme in ('http', 'https') and bool(parsed.netloc)
+        except Exception:
+            return False
+
+    extra_origins = [o.strip() for o in TENANT_ORIGINS.split(',') if o.strip()]
+    extra_origins = [o for o in extra_origins if _is_valid_origin(o)]
+    for o in extra_origins:
+        if o not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(o)
+
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 
 # Add regex support for CSRF trusted origins to match organization subdomains
@@ -113,14 +129,15 @@ CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read the CSRF cookie
 CSRF_COOKIE_SAMESITE = 'Lax'
 
 # Set cookie domain to parent domain so both subdomains can access it
-CSRF_COOKIE_DOMAIN = '.strongmindstrongperformance.com'
+# Avoid a broad cookie domain; set per-response to the tenant domain
+CSRF_COOKIE_DOMAIN = None
 # CSRF_COOKIE_SAMESITE = None
 
 logger.debug(f"Allowed Origins: {CSRF_COOKIE_DOMAIN}")
 logger.debug(f"Allowed Trusted/CSRF Domains: {", ".join(CSRF_TRUSTED_ORIGINS)}")
 
 # same for session cookies
-SESSION_COOKIE_DOMAIN = CSRF_COOKIE_DOMAIN
+SESSION_COOKIE_DOMAIN = None
 SESSION_COOKIE_SAMESITE = CSRF_COOKIE_SAMESITE
 SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE
 SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY

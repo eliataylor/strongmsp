@@ -37,6 +37,7 @@ import ManageProviders from "./allauth/socialaccount/ManageProviders";
 import ProviderCallback from "./allauth/socialaccount/ProviderCallback";
 import ProviderSignup from "./allauth/socialaccount/ProviderSignup";
 import Sessions from "./allauth/usersessions/Sessions";
+import ProfileForm from "./components/ProfileForm";
 import { RoleProtectedRoute } from "./context/RoleProtectedRoute";
 import NewSchemaForm from "./object-actions/generator/NewSchemaForm";
 import WorksheetList from "./object-actions/generator/WorksheetList";
@@ -50,6 +51,7 @@ import EntityList from "./screens/EntityList";
 import EntityView from "./screens/EntityView";
 import MyAccount from "./screens/MyAccount";
 import NotificationsScreen from "./screens/Notifications";
+import ProfilePage from "./screens/ProfilePage";
 import RoleSelection from "./screens/RoleSelection";
 import RoleSwitchPrompt from "./screens/RoleSwitchPrompt";
 
@@ -316,6 +318,22 @@ function createRouter() {
         },
         {
           path: "/my-profile",
+          element: (
+            <AuthenticatedRoute>
+              <ProfilePage />
+            </AuthenticatedRoute>
+          )
+        },
+        {
+          path: "/my-profile/edit",
+          element: (
+            <AuthenticatedRoute>
+              <ProfileForm />
+            </AuthenticatedRoute>
+          )
+        },
+        {
+          path: "/my-profile/settings",
           element: (
             <AuthenticatedRoute>
               <MyAccount />

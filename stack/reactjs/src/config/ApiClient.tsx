@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { getCSRFToken } from "../allauth/lib/django";
+import { resolveApiBaseURL } from "./apiHost";
 
 export interface HttpResponse<T = any> {
   success: boolean;
@@ -13,7 +14,7 @@ class ApiClient {
 
   constructor() {
     this.client = axios.create({
-      baseURL: process.env.REACT_APP_API_HOST,
+      baseURL: resolveApiBaseURL(),
       withCredentials: true
     });
 
@@ -28,7 +29,7 @@ class ApiClient {
     const timeout = setTimeout(() => controller.abort(), 5 * 60 * 1000); // 5 minutes
 
     try {
-      const url = this.normalizeUrl(`${process.env.REACT_APP_API_HOST}${endpoint}`);
+      const url = this.normalizeUrl(`${resolveApiBaseURL()}${endpoint}`);
       const response = await fetch(url, {
         method: "POST",
         headers: {

@@ -45,7 +45,6 @@ class Users(AbstractUser, BumpParentsModelMixin):
 		other = ("other", "Other")
 		prefer_not_to_say = ("prefer_not_to_say", "Prefer Not to Say")
 
-	real_name = models.CharField(max_length=255, blank=True, null=True, verbose_name='Real Name')
 	bio = models.TextField(blank=True, null=True, verbose_name='Bio')
 	avatar = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Avatar')
 	photo = models.ImageField(upload_to=upload_file_path, blank=True, null=True, verbose_name='Photo')
@@ -56,6 +55,7 @@ class Users(AbstractUser, BumpParentsModelMixin):
 		help_text='Array of ethnicity choices - allows multiple selection')
 	birthdate = models.DateField(blank=True, null=True, verbose_name='Birthdate')
 	zip_code = models.CharField(max_length=10, blank=True, null=True, verbose_name='Zip Code')
+	waiver_signed = models.BooleanField(default=False, verbose_name='Waiver Signed')
 	
 	# Assessment category scores (cached from most recent assessment)
 	category_performance_mindset = models.DecimalField(
