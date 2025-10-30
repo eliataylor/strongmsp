@@ -333,6 +333,7 @@ const AssessmentScreen: React.FC<AssessmentScreenProps> = ({
             <Fade in={true} timeout={300}>
                 <Box>
                     <QuestionCard
+                        key={currentQuestion.id}
                         question={currentQuestion}
                         onResponseSubmit={handleResponseSubmit}
                         onNext={handleNext}

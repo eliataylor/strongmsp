@@ -851,8 +851,8 @@ export const TypeFieldSchema: ITypeFieldSchema = {
     },
     "ai_response": {
       "machine": "ai_response",
-      "singular": "AI Response",
-      "plural": "AI Responses",
+      "singular": "Agent Response",
+      "plural": "Agent Responses",
       "field_type": "textarea",
       "data_type": "string",
       "cardinality": 1,
@@ -862,8 +862,8 @@ export const TypeFieldSchema: ITypeFieldSchema = {
     },
     "ai_reasoning": {
       "machine": "ai_reasoning",
-      "singular": "AI Reasoning",
-      "plural": "AI Reasoning",
+      "singular": "Reasoning",
+      "plural": "Reasoning",
       "field_type": "textarea",
       "data_type": "string",
       "cardinality": 1,
@@ -1474,7 +1474,7 @@ export const ROLE_CONFIG = {
     description: "Review all athletes assigned to you, trigger agent responses, and create shared content",
     features: [
       "Review athlete data and progress",
-      "Trigger AI agent responses",
+      "Trigger agent responses",
       "Create and customize coach content",
       "Share content with athletes and parents"
     ]
@@ -1495,7 +1495,7 @@ export const ROLE_CONFIG = {
     icon: 'SmartToy',
     label: "Agent",
     color: "info" as const,
-    description: "AI agent with specialized access to system functions and data processing",
+    description: "Agent with specialized access to system functions and data processing",
     features: [
       "Process automated tasks",
       "Access system data for analysis",

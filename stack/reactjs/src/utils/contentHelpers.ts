@@ -159,7 +159,7 @@ export const getSourceDraftInfo = (coachContent: CoachContent) => {
 
     return {
         id: coachContent.source_draft.id,
-        displayText: `Based on AI Draft #${coachContent.source_draft.id}`
+        displayText: `Based on Agent Draft #${coachContent.source_draft.id}`
     };
 };
 

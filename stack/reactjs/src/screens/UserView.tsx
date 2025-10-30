@@ -46,7 +46,7 @@ const UserView: React.FC = () => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       const response = await ApiClient.get(
-        `/api/users/${uid}${location.search}`
+        `/api/athlete-assignments`
       );
       if (response.error) {
         return showSnackBar(response.error);

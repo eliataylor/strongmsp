@@ -128,7 +128,7 @@ const AgentResponseScreen: React.FC<AgentResponseScreenProps> = ({
                         mb: 2
                     }}
                 >
-                    AI Agent Response
+                    Agent Response
                 </Typography>
 
                 <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
@@ -168,14 +168,14 @@ const AgentResponseScreen: React.FC<AgentResponseScreenProps> = ({
 
             <Divider sx={{ my: 4 }} />
 
-            {/* AI Response Section */}
+            {/* Agent Response Section */}
             <Box sx={{ mb: 4 }}>
                 <ReactMarkdown>
                     {entity.ai_response}
                 </ReactMarkdown>
             </Box>
 
-            {/* AI Reasoning Section (if available) */}
+            {/* Agent Reasoning Section (if available) */}
             {entity.ai_reasoning && (
                 <>
                     <Divider sx={{ my: 4 }} />
@@ -190,7 +190,7 @@ const AgentResponseScreen: React.FC<AgentResponseScreenProps> = ({
                                 mb: 2
                             }}
                         >
-                            AI Reasoning
+                            Agent Reasoning
                         </Typography>
                         <Paper
                             variant="outlined"

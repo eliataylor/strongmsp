@@ -1,7 +1,6 @@
 import { Box } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import React from "react";
-import SpiderChart from "../../components/SpiderChart";
 import EntityCard from "../../object-actions/components/EntityCard";
 import { ModelType } from "../../object-actions/types/types";
 
@@ -40,14 +39,6 @@ const AgentView: React.FC<AgentViewProps> = ({
                     Manage client relationships and track business metrics.
                 </Typography>
             </Box>
-
-            {/* Question Response Category Stats Spider Chart */}
-            {questionResponseStats && questionResponseStats.category_stats.length > 0 && (
-                <SpiderChart
-                    data={questionResponseStats.category_stats}
-                    height={400}
-                />
-            )}
         </Box>
     );
 };

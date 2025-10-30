@@ -317,7 +317,7 @@ class QuestionResponses(SuperModel):
 	author = models.ForeignKey(get_user_model(), on_delete=models.PROTECT, related_name='+', null=False, verbose_name='Athlete')
 	question = models.ForeignKey('Questions', on_delete=models.PROTECT, related_name='+', null=False, verbose_name='Question')
 	assessment = models.ForeignKey('Assessments', on_delete=models.PROTECT, related_name='+', null=False, verbose_name='Assessment')
-	response = models.IntegerField(verbose_name='Response')
+	response = models.IntegerField(verbose_name='Response', null=False)
 
 class Payments(SuperModel):
 	class Meta:
@@ -663,6 +663,7 @@ class UserOrganizations(SuperModel):
 
 	user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='user_organizations')
 	organization = models.ForeignKey('Organizations', on_delete=models.CASCADE, related_name='organization_users')
+	is_coach = models.BooleanField(default=False, verbose_name='Is Coach', null=True, blank=True)
 	
 	joined_at = models.DateTimeField(auto_now_add=True, verbose_name='Joined At')
 	is_active = models.BooleanField(default=True, verbose_name='Is Active')

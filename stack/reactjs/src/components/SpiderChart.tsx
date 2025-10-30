@@ -26,8 +26,8 @@ interface SpiderChartProps {
 const SpiderChart: React.FC<SpiderChartProps> = ({
     data,
     title = undefined,
-    showLegend = true,
-    height = 400
+    showLegend = false,
+    height = 250
 }) => {
     // Transform data for the radar chart
     const chartData = data.map(item => ({

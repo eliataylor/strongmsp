@@ -1,20 +1,20 @@
-import React, { useState } from "react";
-import FormErrors, { hasError } from "../components/FormErrors";
-import { login } from "../lib/allauth";
+import { Phone } from "@mui/icons-material";
+import { Button, FormHelperText, Grid, TextField, Typography } from "@mui/material";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useConfig } from "../auth";
+import FormErrors, { hasError } from "../components/FormErrors";
+import { login } from "../lib/allauth";
 import ProviderList from "../socialaccount/ProviderList";
-import { Button, FormHelperText, Grid, TextField, Typography } from "@mui/material";
-import { Phone } from "@mui/icons-material";
 
-export default function Login () {
+export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [response, setResponse] = useState({ fetching: false, content: null });
   const config = useConfig();
   const hasProviders = config.data.socialaccount?.providers?.length > 0;
 
-  function submit () {
+  function submit() {
     setResponse({ ...response, fetching: true });
     const payload = { password };
     if (email.indexOf("@") > -1) {
@@ -25,10 +25,66 @@ export default function Login () {
     login(payload)
       .then((content) => {
         setResponse((r) => {
-          return { ...r, content };
+          // Normalize responses that only contain a status code or have no content
+          let normalized = content;
+          try {
+            const isEmpty =
+              content == null ||
+              (typeof content === "object" && Object.keys(content).length === 0);
+
+            const isStatusOnly =
+              typeof content === "object" &&
+              content !== null &&
+              "status" in content &&
+              !("errors" in content) &&
+              !("detail" in content) &&
+              !("message" in content) &&
+              !("text" in content);
+
+            if (isEmpty) {
+              normalized = {
+                errors: [
+                  {
+                    code: "empty_response",
+                    message:
+                      "Unexpected empty response from server. Please try again.",
+                  },
+                ],
+              };
+            } else if (isStatusOnly) {
+              const status = content.status;
+              let code = "server_error";
+              let message = `Request failed with status ${status}. Please try again.`;
+              if (status === 409) {
+                code = "invalid_credentials";
+                message = "Invalid email or password.";
+              } else if (status === 401) {
+                code = "unauthorized";
+                message = "Unauthorized. Please check your credentials.";
+              } else if (status >= 500) {
+                code = "server_error";
+                message = "Server error. Please try again later.";
+              }
+              normalized = { errors: [{ code, message }] };
+            }
+          } catch (e) {
+            // If normalization fails, surface a generic error
+            normalized = {
+              errors: [
+                {
+                  code: "parse_error",
+                  message: "Unable to process server response. Please try again.",
+                },
+              ],
+            };
+          }
+          return { ...r, content: normalized };
         });
       })
       .catch((e) => {
+        setResponse((r) => {
+          return { ...r, content: { errors: [{ code: 'invalid_credentials', message: e.toString() }] } };
+        });
         console.error(e);
         window.alert(e);
       })
@@ -105,7 +161,7 @@ export default function Login () {
           </FormHelperText>
         </Grid>
       </Grid>
-      <Grid item>
+      <Grid item style={{ textAlign: "center" }}>
         <FormErrors errors={response.content?.errors} />
       </Grid>
       {/*

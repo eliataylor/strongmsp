@@ -50,10 +50,8 @@ import EntityList from "./screens/EntityList";
 import EntityView from "./screens/EntityView";
 import MyAccount from "./screens/MyAccount";
 import NotificationsScreen from "./screens/Notifications";
-import PromptTesterScreen from "./screens/PromptTesterScreen";
 import RoleSelection from "./screens/RoleSelection";
 import RoleSwitchPrompt from "./screens/RoleSwitchPrompt";
-import UserView from "./screens/UserView";
 
 function createRouter() {
   const allRoutes = [
@@ -392,8 +390,6 @@ function createRouter() {
     }
   ];
 
-  allRoutes[0].children.push({ path: `/users/:uid`, element: <UserView /> });
-
   allRoutes[0].children.push({
     path: `/assessments/:id`,
     element: <AssessmentScreen />
@@ -431,15 +427,6 @@ function createRouter() {
   allRoutes[0].children.push({
     path: `/forms/:model/0/add`,
     element: <EntityForm />
-  });
-
-  allRoutes[0].children.push({
-    path: `/prompt-tester`,
-    element: (
-      <RoleProtectedRoute requiredRoles={['coach', 'admin', 'agent']} requireAll={false}>
-        <PromptTesterScreen />
-      </RoleProtectedRoute>
-    )
   });
 
   allRoutes[0].children.push({

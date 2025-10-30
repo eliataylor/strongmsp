@@ -1,4 +1,3 @@
-####OBJECT-ACTIONS-VIEWSET-IMPORTS-STARTS####
 from rest_framework import viewsets, permissions, filters, generics, status
 from rest_framework.views import APIView
 from rest_framework.decorators import action
@@ -20,7 +19,7 @@ from django.contrib.auth.models import Group
 from django.db.models import Q
 from django.db import models
 from .serializers import UsersSerializer
-from .models import Users
+from .models import AssessmentQuestions, Users
 from .serializers import AssessmentsSerializer
 from .models import Assessments
 from .serializers import ProductsSerializer
@@ -47,7 +46,16 @@ from .services.agent_orchestrator import AgentOrchestrator
 from urllib.parse import urlparse
 from .permissions import AgentResponsePermission, CoachContentPermission, PaymentAssignmentPermission
 from utils.helpers import get_subdomain_from_request
-####OBJECT-ACTIONS-VIEWSET-IMPORTS-ENDS####
+from django.contrib.auth import get_user_model
+from django.conf import settings
+from allauth.account.models import EmailAddress
+from allauth.account.utils import complete_signup, perform_login
+from allauth.socialaccount.sessions import LoginSession
+from rest_framework import status
+from .serializers import VerifyPhoneSerializer, PhoneNumberSerializer
+
+import os
+
 
 class AutoAuthorViewSet(viewsets.ModelViewSet):
     """
@@ -67,37 +75,6 @@ class AutoAuthorViewSet(viewsets.ModelViewSet):
             serializer.save(author=self.request.user)
         else:
             serializer.save()
-
-
-####OBJECT-ACTIONS-VIEWSETS-STARTS####
-class UsersViewSet(AutoAuthorViewSet):
-    queryset = Users.objects.all().order_by('id')
-    serializer_class = UsersSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
-    search_fields = ['first_name', 'last_name', 'username', 'email']
-    filterset_fields = ['groups']
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-
-        # Always filter by coaches group in UserOrganizations
-        coaches_group = Group.objects.get(name='coach')
-        queryset = queryset.filter(
-            user_organizations__groups=coaches_group,
-            user_organizations__is_active=True
-        ).distinct()
-
-        # Filter by organization if organization query parameter is provided
-        organization_slug = self.request.query_params.get('organization')
-        if organization_slug:
-            queryset = queryset.filter(
-                user_organizations__organization__slug=organization_slug,
-                user_organizations__is_active=True
-            ).distinct()
-
-        return queryset
-
 
 class AssessmentsViewSet(AutoAuthorViewSet):
     queryset = Assessments.objects.prefetch_related(
@@ -168,9 +145,8 @@ class AssessmentsViewSet(AutoAuthorViewSet):
         """
         try:
             assessment_id = request.data.get('assessment_id')
-            responses_data = request.data.get('responses', [])
 
-            if not assessment_id or not responses_data:
+            if not assessment_id:
                 return Response(
                     {'error': 'assessment_id and responses are required'},
                     status=status.HTTP_400_BAD_REQUEST
@@ -239,17 +215,11 @@ class AssessmentsViewSet(AutoAuthorViewSet):
                 )
 
             # Validate all questions have been answered
-            answered_questions = set()
-            for response_data in responses_data:
-                question_id = response_data.get('question')
-                response_value = response_data.get('response')
-
-                if question_id and response_value is not None:
-                    answered_questions.add(question_id)
+            answered_questions = QuestionResponses.objects.filter(assessment=assessment, author=athlete).count()
 
             # Check if all questions are answered
-            if len(answered_questions) < total_questions:
-                missing_count = total_questions - len(answered_questions)
+            if answered_questions < total_questions:
+                missing_count = total_questions - answered_questions
                 return Response(
                     {'error': f'Assessment incomplete. {missing_count} questions still need to be answered.'},
                     status=status.HTTP_400_BAD_REQUEST
@@ -296,7 +266,7 @@ class AssessmentsViewSet(AutoAuthorViewSet):
                 'success': True,
                 'message': 'Assessment completed successfully',
                 'total_questions': total_questions,
-                'questions_answered': len(answered_questions),
+                'questions_answered': answered_questions,
                 'agents_triggered': len(agent_responses),
                 'assignments_updated': updated_count,
                 'assessment_id': assessment_id
@@ -1363,18 +1333,6 @@ def redirect_to_frontend(request, provider=None):
     response = redirect(f'{frontend_url}{redirect_path}?{query_string}')
     return response
 
-####OBJECT-ACTIONS-CORE-ENDS####
-
-from django.contrib.auth import get_user_model
-from django.conf import settings
-from allauth.account.models import EmailAddress
-from allauth.account.utils import complete_signup, perform_login
-from allauth.socialaccount.sessions import LoginSession
-from rest_framework import status
-from .serializers import VerifyPhoneSerializer, PhoneNumberSerializer
-
-import os
-
 
 class SendCodeView(APIView):
     permission_classes = [permissions.AllowAny]  # Allow any user to access this view
@@ -1564,47 +1522,53 @@ class CoachSearchView(APIView):
     Search for coaches by name or email within an organization.
     Returns users with coach role that match the search term.
     """
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = []  # Allow anonymous access for public About page and autocomplete
 
     def get(self, request):
         search_term = request.query_params.get('q', '').strip()
-        organization_id = request.query_params.get('organization')
+        detail_param = (request.query_params.get('detail', '') or '').strip().lower()
+        include_detail = detail_param in ['1', 'true', 'yes', 'full']
+        organization_slug = request.query_params.get('organization', '').strip() or get_subdomain_from_request(request)
 
-        if not search_term:
-            return Response({'results': []})
+        # If we still don't have an organization, return empty
+        if not organization_slug:
+            return Response({'results': []}, status=status.HTTP_200_OK)
 
-        # Base queryset for users with coach role
-        queryset = Users.objects.filter(
-            groups__name__in=['coach', 'Coach']  # Assuming coach role is in groups
+        # Base queryset: find Users who are marked coach in this organization
+        users_qs = Users.objects.filter(
+            user_organizations__is_coach=True,
+            user_organizations__organization__slug=organization_slug,
+            user_organizations__is_active=True,
         ).distinct()
 
-        # Filter by organization if provided
-        if organization_id:
-            # Assuming there's an organization relationship
-            # This might need adjustment based on your organization model
-            queryset = queryset.filter(
-                # Add organization filter here based on your model structure
+        # Apply search term to both modes if provided
+        if search_term:
+            users_qs = users_qs.filter(
+                Q(username__icontains=search_term) |
+                Q(email__icontains=search_term) |
+                Q(first_name__icontains=search_term) |
+                Q(last_name__icontains=search_term)
             )
 
-        # Search in username, email, first_name, last_name
-        queryset = queryset.filter(
-            Q(username__icontains=search_term) |
-            Q(email__icontains=search_term) |
-            Q(first_name__icontains=search_term) |
-            Q(last_name__icontains=search_term)
-        )[:20]  # Limit results
+        if include_detail:
+            # Full user objects (used by About page); do not hard-limit count
+            serializer = UsersSerializer(users_qs.order_by('last_name', 'first_name'), many=True, context={'request': request})
+            return Response({'results': serializer.data}, status=status.HTTP_200_OK)
 
-        # Serialize results
+        # Default: RelEntity for autocomplete; if no search term, return empty to avoid flooding
+        if not search_term:
+            return Response({'results': []}, status=status.HTTP_200_OK)
+
+        slim = users_qs.order_by('last_name', 'first_name')[:20]
         results = []
-        for user in queryset:
+        for user in slim:
             results.append({
                 'id': user.id,
                 'str': user.get_full_name() or user.username,
                 '_type': 'Users',
                 'img': user.photo.url if user.photo else None
             })
-
-        return Response({'results': results})
+        return Response({'results': results}, status=status.HTTP_200_OK)
 
 
 """

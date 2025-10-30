@@ -10,7 +10,6 @@ from .views import GroupStatsView
 from .views import RenderFrontendIndex
 from .views import redirect_to_frontend
 from .oa_testing import OATesterUserViewSet
-from .views import UsersViewSet
 from .views import AssessmentsViewSet
 from .views import ProductsViewSet
 from .views import PaymentsViewSet
@@ -31,7 +30,6 @@ urlpatterns = [path('', RenderFrontendIndex.as_view(), name='index')]
 
 OARouter = DefaultRouter(trailing_slash=False)
 OARouter.register(r'oa-testers', OATesterUserViewSet, basename='oa-tester')
-OARouter.register('users', UsersViewSet, basename='users')
 OARouter.register('assessments', AssessmentsViewSet, basename='assessments')
 OARouter.register('products', ProductsViewSet, basename='products')
 OARouter.register('payments', PaymentsViewSet, basename='payments')
@@ -49,11 +47,7 @@ if urlpatterns is None:
 urlpatterns += [
     re_path(r'^account/.*$', redirect_to_frontend, name='provider_callback_no_provider'),
         
-    path('api/users/<int:user_id>/<str:model_name>/list', UserModelListView.as_view(), name='user-model-list'),
-    path('api/users/<int:user_id>/<str:model_name>/stats', UserStatsView.as_view(), name='user-model-stats'),
     path('api/users/<int:user_id>/question-response-category-stats', QuestionResponseCategoryStatsView.as_view(), name='question-response-category-stats'),
-    path('api/groups/available', AvailableGroupsView.as_view(), name='available-groups'),
-    path('api/groups/stats', GroupStatsView.as_view(), name='group-stats'),
     path('api/users/search-coaches', CoachSearchView.as_view(), name='coach-search'),
     path('api/context/current', CurrentContextView.as_view(), name='current-context'),
     path('api/athlete-assignments', AthleteAssignmentsListView.as_view(), name='athlete-assignments-list'),

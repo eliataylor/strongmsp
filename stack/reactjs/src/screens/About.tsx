@@ -12,7 +12,6 @@ import {
     Typography
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import PublicHeader from "../components/PublicHeader";
 import ApiClient, { HttpResponse } from "../config/ApiClient";
 import { ApiListResponse, Users } from "../object-actions/types/types";
 
@@ -25,7 +24,7 @@ const About: React.FC = () => {
         const fetchCoaches = async () => {
             try {
                 setLoading(true);
-                const response: HttpResponse<ApiListResponse<'Users'>> = await ApiClient.get('/api/users?organization=smsp');
+                const response: HttpResponse<ApiListResponse<'Users'>> = await ApiClient.get('/api/users/search-coaches?organization=smsp&detail=1');
                 if (response.success && response.data) {
                     setCoaches(response.data.results);
                 } else {

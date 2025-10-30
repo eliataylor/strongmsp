@@ -106,17 +106,6 @@ const AdminMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
                 <ListItemText primary="Branding" />
             </ListItemButton>
 
-            {/* Prompt Tester */}
-            <ListItemButton
-                component={Link}
-                to="/prompt-tester"
-                selected={location.pathname === "/prompt-tester"}
-            >
-                <ListItemAvatar style={{ display: "flex" }}>
-                    <DescriptionIcon fontSize="small" />
-                </ListItemAvatar>
-                <ListItemText primary="Prompt Tester" />
-            </ListItemButton>
 
             <RoleSwitchPrompt />
 

@@ -264,7 +264,7 @@ const CoachContentEditorView: React.FC<CoachContentScreenProps> = ({
                                     onClick={() => setRegenerateDialogOpen(true)}
                                     sx={{ ml: 1 }}
                                 >
-                                    Request Changes from AI
+                                    Request Changes
                                 </Button>
                             )}
                         </Box>
@@ -507,13 +507,13 @@ const CoachContentEditorView: React.FC<CoachContentScreenProps> = ({
                     maxWidth="sm"
                     fullWidth
                 >
-                    <DialogTitle>Request Changes from AI</DialogTitle>
+                    <DialogTitle>Request Changes</DialogTitle>
                     <DialogContent>
                         <TextField
                             autoFocus
                             margin="dense"
                             label="Change Request"
-                            placeholder="Describe what changes you'd like the AI to make..."
+                            placeholder="Describe what changes you'd like..."
                             fullWidth
                             multiline
                             rows={4}
