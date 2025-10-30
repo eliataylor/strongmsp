@@ -31,6 +31,7 @@ const AnonymousMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
                 key={path}
                 component={Link}
                 to={path}
+                fullWidth={layout === 'drawer'}
                 startIcon={<Icon fontSize="small" color="secondary" />}
                 color={location.pathname === path ? "primary" : "inherit"}
                 onClick={action}

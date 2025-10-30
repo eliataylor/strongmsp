@@ -120,6 +120,20 @@ const AdminMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
                 </ListItemAvatar>
                 <ListItemText primary="My Account" />
             </ListItemButton>
+
+            {/* Profile Settings - Drawer/Footer only */}
+            {(['drawer', 'footer'] as MenuLayout[]).includes(layout!) && (
+                <ListItemButton
+                    component={Link}
+                    to="/my-profile/settings"
+                    selected={location.pathname === "/my-profile/settings"}
+                >
+                    <ListItemAvatar style={{ display: "flex" }}>
+                        <ProfileIcon fontSize="small" />
+                    </ListItemAvatar>
+                    <ListItemText primary="Settings" />
+                </ListItemButton>
+            )}
         </div>
     );
 };

@@ -1,5 +1,6 @@
 import {
-    Dashboard as DashboardIcon
+    Dashboard as DashboardIcon,
+    Settings as SettingsIcon
 } from "@mui/icons-material";
 import { Box } from "@mui/material";
 import React from "react";
@@ -18,8 +19,10 @@ const CoachMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
         //        { path: "/agent-responses", icon: SmartToyIcon, label: "Agent Responses", priority: false },
         //        { path: "/coach-content", icon: SportsIcon, label: "Coach Content", priority: false },
         { path: "/my-profile", icon: ProfileIcon, label: (user.display && layout === 'header') ? `${user.display}` : "My Account", priority: false },
-        ...(layout !== 'header' ? [{ path: "/my-profile/settings", icon: ProfileIcon, label: "Settings", priority: false }] : [])
     ];
+    if (layout !== 'header') {
+        menuItems.push({ path: "/my-profile/settings", icon: SettingsIcon, label: "Settings", priority: false });
+    }
 
     const renderItems = () => {
         return menuItems.map(({ path, icon: Icon, label }) => (
@@ -28,6 +31,7 @@ const CoachMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
                 component={Link}
                 to={path}
                 startIcon={<Icon fontSize="small" />}
+                fullWidth={layout === 'drawer'}
                 color={location.pathname === path ? "primary" : "inherit"}
                 sx={{
                     justifyContent: layout === 'drawer' ? 'flex-start' : 'center',

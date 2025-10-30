@@ -32,7 +32,7 @@ const PublicPagesMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
                 component={Link}
                 to={path}
                 variant="text"
-                fullWidth={true}
+                fullWidth={layout === 'drawer'}
                 startIcon={<Icon fontSize="small" />}
                 sx={{
                     justifyContent: layout === 'drawer' ? 'flex-start' : 'center',

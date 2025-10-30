@@ -1,5 +1,6 @@
 import {
-    Dashboard as DashboardIcon
+    Dashboard as DashboardIcon,
+    Settings as SettingsIcon
 } from "@mui/icons-material";
 import { Box } from "@mui/material";
 import React from "react";
@@ -17,15 +18,18 @@ const ParentMenu: React.FC<MenuProps> = ({ layout = 'drawer' }) => {
         //        { path: "/users", icon: PersonIcon, label: "Users", priority: false },
         //        { path: "/payments", icon: PaymentIcon, label: "Payments", priority: false },
         //        { path: "/coach-content", icon: SportsIcon, label: "Coach Content", priority: false },
-        { path: "/my-profile", icon: ProfileIcon, label: "My Account", priority: false }
+        { path: "/my-profile", icon: ProfileIcon, label: "My Account", priority: false },
     ];
-
+    if (layout !== 'header') {
+        menuItems.push({ path: "/my-profile/settings", icon: SettingsIcon, label: "Settings", priority: false });
+    }
     const renderItems = () => {
         return menuItems.map(({ path, icon: Icon, label }) => (
             <MenuButton
                 key={path}
                 component={Link}
                 to={path}
+                fullWidth={layout === 'drawer'}
                 startIcon={<Icon fontSize="small" />}
                 color={location.pathname === path ? "primary" : "inherit"}
                 sx={{
